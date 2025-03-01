@@ -84,5 +84,22 @@
     <!-- Firebase with v9 SDK (using modules) -->
     <script type="module" src="../js/firebase-config.js"></script>
     <script type="module" src="../js/auth.js"></script>
+    
+    <!-- Add debugging info -->
+    <script>
+        console.log("Login page loaded");
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM fully loaded");
+            
+            // Check if login form exists
+            const loginForm = document.getElementById('login-form');
+            console.log("Login form found:", loginForm ? true : false);
+            
+            // Check if forgot password link exists
+            const forgotPasswordLink = document.getElementById('forgot-password');
+            console.log("Forgot password link found:", forgotPasswordLink ? true : false);
+        });
+    </script>
 </body>
 </html>
