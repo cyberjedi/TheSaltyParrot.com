@@ -3,7 +3,8 @@ import {
   onAuthStateChanged, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
-  signOut 
+  signOut
+  sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 import { auth } from "./firebase-config.js";
 
@@ -135,4 +136,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         });
     }
+      // Password Reset functionality
+      const forgotPasswordLink = document.getElementById('forgot-password');
+      if (forgotPasswordLink) {
+          forgotPasswordLink.addEventListener('click', function(e) {
+              e.preventDefault();
+              const loginForm = document.getElementById('login-form');
+              const errorMessage = document.getElementById('error-message');
+              const email = document.getElementById('email').value;
+      
+              if (!email) {
+                  errorMessage.textContent = "Please enter your email address";
+                  errorMessage.style.display = 'block';
+                  return;
+              }
+      
+              sendPasswordResetEmail(auth, email)
+                  .then(() => {
+                      errorMessage.textContent = "Password reset email sent. Check your inbox.";
+                      errorMessage.style.display = 'block';
+                      errorMessage.style.color = '#2ecc71';  // Green color for success
+                  })
+                  .catch((error) => {
+                      errorMessage.textContent = error.message;
+                      errorMessage.style.display = 'block';
+                  });
+          });
+      }
 });
