@@ -85,20 +85,83 @@
         <p>&copy; 2025 The Salty Parrot</p>
     </footer>
 
-    <!-- Firebase with v9 SDK (using modules) -->
-    <script type="module" src="../js/firebase-config.js"></script>
-    <script type="module" src="../js/auth.js"></script>
+    <!-- Direct signup script - no module imports -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     
-    <!-- Add debugging info -->
     <script>
-        console.log("Signup page loaded");
+        // Initialize Firebase with compatibility version
+        const firebaseConfig = {
+            apiKey: "AIzaSyDzSPll8gZKWBhmD6o-QAAnT89TWucFkr0",
+            authDomain: "salty-parrot.firebaseapp.com",
+            projectId: "salty-parrot",
+            storageBucket: "salty-parrot.appspot.com",
+            messagingSenderId: "598113689428",
+            appId: "1:598113689428:web:fb57b75af8efc6e051f2c1"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
         
         document.addEventListener('DOMContentLoaded', function() {
-            console.log("DOM fully loaded");
+            console.log("Signup page loaded");
             
-            // Check if signup form exists
+            // Get form and error message elements
             const signupForm = document.getElementById('signup-form');
+            const errorMessage = document.getElementById('error-message');
+            
             console.log("Signup form found:", signupForm ? true : false);
+            
+            // Check if user is already signed in
+            firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    // User is already signed in, redirect to home
+                    console.log("User is already signed in:", user.email);
+                    window.location.href = "../index.html";
+                }
+            });
+            
+            // Handle signup form submission
+            if (signupForm) {
+                signupForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    console.log("Signup form submitted");
+                    
+                    const email = document.getElementById('email').value;
+                    const password = document.getElementById('password').value;
+                    const confirmPassword = document.getElementById('confirm-password').value;
+                    
+                    // Clear previous error message
+                    if (errorMessage) {
+                        errorMessage.textContent = "";
+                        errorMessage.style.display = 'none';
+                    }
+                    
+                    // Check if passwords match
+                    if (password !== confirmPassword) {
+                        errorMessage.textContent = "Passwords do not match";
+                        errorMessage.style.display = 'block';
+                        return;
+                    }
+                    
+                    console.log("Attempting signup with:", email);
+                    
+                    // Create account with Firebase
+                    firebase.auth().createUserWithEmailAndPassword(email, password)
+                        .then((userCredential) => {
+                            // Signed up
+                            console.log("Signup successful for:", userCredential.user.email);
+                            window.location.href = "../index.html";
+                        })
+                        .catch((error) => {
+                            console.error("Signup error:", error);
+                            if (errorMessage) {
+                                errorMessage.textContent = error.message;
+                                errorMessage.style.display = 'block';
+                            }
+                        });
+                });
+            }
         });
     </script>
 </body>
