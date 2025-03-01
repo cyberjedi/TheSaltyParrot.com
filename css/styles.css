@@ -473,3 +473,83 @@ footer p {
         grid-template-columns: 1fr;
     }
 }
+/* Ship Generator Specific Styles */
+.ship-generator-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.generator-card {
+    text-align: center;
+    padding: 30px;
+}
+
+.ship-details {
+    margin-top: 20px;
+}
+
+.ship-details p {
+    margin-bottom: 15px;
+}
+
+.ship-details h3 {
+    margin-top: 25px;
+    margin-bottom: 10px;
+    color: var(--secondary);
+}
+
+#cargo-list {
+    list-style-type: none;
+    padding-left: 10px;
+}
+
+#cargo-list li {
+    margin-bottom: 8px;
+    position: relative;
+    padding-left: 20px;
+}
+
+#cargo-list li:before {
+    content: '•';
+    color: var(--secondary);
+    position: absolute;
+    left: 0;
+    font-size: 1.2em;
+}
+
+.sidebar-btn.active {
+    background-color: rgba(191, 157, 97, 0.2);
+    border-left: 3px solid var(--secondary);
+}
+
+/* Print styles for the ship generator */
+@media print {
+    .sidebar, .dashboard-header, .generator-card, footer, #generate-ship-btn {
+        display: none !important;
+    }
+    
+    body, .app-container, .main-content, .ship-generator-content {
+        background: white;
+        color: black;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    #ship-result {
+        display: block !important;
+        border: none;
+        box-shadow: none;
+        margin: 0;
+        padding: 1cm;
+    }
+    
+    .ship-details h3 {
+        color: #333;
+    }
+    
+    #cargo-list li:before {
+        color: #333;
+    }
+}
