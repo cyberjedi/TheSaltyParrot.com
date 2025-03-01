@@ -283,10 +283,15 @@ footer p {
     margin-bottom: 10px;
 }
 
-.user-info .username {
+}.user-info .username {
     font-weight: bold;
     margin-bottom: 5px;
     word-break: break-all;
+    font-size: 0.85rem; /* Reduce font size */
+    white-space: nowrap; /* Prevent wrapping */
+    overflow: hidden; /* Hide overflow */
+    text-overflow: ellipsis; /* Add ellipsis for overflow */
+    max-width: 200px; /* Set maximum width */
 }
 
 .logout-btn {
