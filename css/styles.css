@@ -335,6 +335,14 @@ footer p {
     opacity: 0.8;
 }
 
+.user-email {
+    font-size: 0.9rem;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .dashboard-content h2 {
     color: var(--secondary);
     margin-bottom: 25px;
