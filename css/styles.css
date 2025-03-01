@@ -230,7 +230,7 @@ footer p {
 .sidebar-header h2 {
     color: var(--secondary);
     font-size: 1.2rem;
-    margin: a;
+    margin: 0;
 }
 
 .sidebar-section {
