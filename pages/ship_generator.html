@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ship Generator - The Salty Parrot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Left Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-skull-crossbones"></i>
+                <h2>Navigation</h2>
+            </div>
+            
+            <!-- Auth Section -->
+            <div id="auth-section" class="sidebar-section">
+                <!-- Login button will be here -->
+            </div>
+            
+            <!-- Navigation Links -->
+            <div class="sidebar-section">
+                <h3>Tools</h3>
+                <button class="sidebar-btn">
+                    <i class="fas fa-dice-d20"></i> Dice Roller
+                </button>
+                <button class="sidebar-btn">
+                    <i class="fas fa-user"></i> Character Manager
+                </button>
+                <button class="sidebar-btn active">
+                    <i class="fas fa-ship"></i> Ship Generator
+                </button>
+                <button class="sidebar-btn">
+                    <i class="fas fa-coins"></i> Loot Generator
+                </button>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>Reference</h3>
+                <button class="sidebar-btn">
+                    <i class="fas fa-book"></i> Rules Reference
+                </button>
+                <button class="sidebar-btn">
+                    <i class="fas fa-map"></i> Maps
+                </button>
+            </div>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <div class="dashboard-header">
+                <div class="logo">
+                    <i class="fas fa-ship"></i>
+                    <h1>Ship Generator</h1>
+                </div>
+            </div>
+            
+            <div class="ship-generator-content">
+                <div class="generator-card dashboard-card">
+                    <h2>Generate a Random Ship</h2>
+                    <p>Click the button below to create a random pirate ship for your game.</p>
+                    <button id="generate-ship-btn" class="btn btn-primary">
+                        <i class="fas fa-ship"></i> Generate Ship
+                    </button>
+                </div>
+                
+                <div id="ship-result" class="dashboard-card" style="display: none; margin-top: 20px;">
+                    <h2 id="ship-name">Ship Name</h2>
+                    <div class="ship-details">
+                        <p><strong>Vessel Class:</strong> <span id="vessel-class">Unknown</span></p>
+                        <p><strong>Armament:</strong> <span id="armament">Unknown</span></p>
+                        <p><strong>Crew:</strong> The crew are <span id="crew-quantity">unknown</span> and are <span id="crew-quality">unknown</span></p>
+                        
+                        <h3>Cargo:</h3>
+                        <ul id="cargo-list">
+                            <li>None</li>
+                        </ul>
+                        
+                        <h3>Plot Twist (Optional):</h3>
+                        <p id="plot-twist">Unknown</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <footer>
+        <p>The Salty Parrot is an independent production by Stuart Greenwell. It is not affiliated with Limithron LLC. It is published under the PIRATE BORG Third Party License. PIRATE BORG is ©2022 Limithron LLC.</p>
+        <p>&copy; 2025 The Salty Parrot</p>
+    </footer>
+
+    <!-- Firebase (if you want to keep authentication) -->
+    <script type="module" src="../js/firebase-config.js"></script>
+    <script type="module" src="../js/auth.js"></script>
+    
+    <!-- JavaScript for the ship generator -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get DOM elements
+            const generateButton = document.getElementById('generate-ship-btn');
+            const shipResult = document.getElementById('ship-result');
+            const shipName = document.getElementById('ship-name');
+            const vesselClass = document.getElementById('vessel-class');
+            const armament = document.getElementById('armament');
+            const crewQuantity = document.getElementById('crew-quantity');
+            const crewQuality = document.getElementById('crew-quality');
+            const cargoList = document.getElementById('cargo-list');
+            const plotTwist = document.getElementById('plot-twist');
+            
+            // Add event listener to the generate button
+            if (generateButton) {
+                generateButton.addEventListener('click', generateShip);
+            }
+            
+            // Function to generate a ship
+            function generateShip() {
+                // Show loading state
+                generateButton.disabled = true;
+                generateButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+                
+                // Make API request to generate_ship.php
+                fetch('../api/generate_ship.php')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            const ship = data.ship;
+                            
+                            // Update UI with ship details
+                            shipName.textContent = ship.ship_name;
+                            vesselClass.textContent = ship.vessel_class;
+                            armament.textContent = ship.armament;
+                            crewQuantity.textContent = ship.crew_quantity;
+                            crewQuality.textContent = ship.crew_quality;
+                            
+                            // Update cargo list
+                            cargoList.innerHTML = '';
+                            if (ship.cargo && ship.cargo.length > 0) {
+                                ship.cargo.forEach(item => {
+                                    const li = document.createElement('li');
+                                    li.textContent = item;
+                                    cargoList.appendChild(li);
+                                });
+                            } else {
+                                const li = document.createElement('li');
+                                li.textContent = 'None';
+                                cargoList.appendChild(li);
+                            }
+                            
+                            // Update plot twist
+                            plotTwist.textContent = ship.plot_twist;
+                            
+                            // Show the ship result
+                            shipResult.style.display = 'block';
+                            
+                            // Scroll to result
+                            shipResult.scrollIntoView({ behavior: 'smooth' });
+                        } else {
+                            // Handle error
+                            alert('Error generating ship: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while generating the ship.');
+                    })
+                    .finally(() => {
+                        // Reset button state
+                        generateButton.disabled = false;
+                        generateButton.innerHTML = '<i class="fas fa-ship"></i> Generate Ship';
+                    });
+            }
+        });
+    </script>
+</body>
+</html>
