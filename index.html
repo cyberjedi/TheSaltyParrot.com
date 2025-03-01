@@ -37,9 +37,20 @@
             
             <div class="sidebar-section">
                 <h3>Reference</h3>
-                <button class="sidebar-btn disabled">
-                    <i class="fas fa-ship"></i> Ship Generator (Coming Soon)
+                <button id="ship-generator-btn" class="sidebar-btn">
+                    <i class="fas fa-ship"></i> Ship Generator
                 </button>
+                
+                <script>
+                    // Add this to your existing JavaScript
+                    const shipGeneratorBtn = document.getElementById('ship-generator-btn');
+                    if (shipGeneratorBtn) {
+                        shipGeneratorBtn.addEventListener('click', function() {
+                            window.location.href = 'pages/ship_generator.html';
+                        });
+                    }
+                </script>
+                
                 <button class="sidebar-btn disabled">
                     <i class="fas fa-coins"></i> Loot Generator (Coming Soon)
                 </button>
