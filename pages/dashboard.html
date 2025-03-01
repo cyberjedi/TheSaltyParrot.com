@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - The Salty Parrot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Left Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-skull-crossbones"></i>
+                <h2>Navigation</h2>
+            </div>
+            
+            <!-- Auth Section - will be handled by auth.js -->
+            <div id="auth-section" class="sidebar-section">
+                <!-- User info and logout button will be inserted here by auth.js -->
+            </div>
+            
+            <!-- Navigation Links -->
+            <div class="sidebar-section">
+                <h3>Tools</h3>
+                <button id="dice-roller-btn" class="sidebar-btn">
+                    <i class="fas fa-dice-d20"></i> Dice Roller
+                </button>
+                <button id="character-btn" class="sidebar-btn">
+                    <i class="fas fa-user"></i> Character Manager
+                </button>
+                <button id="ship-btn" class="sidebar-btn">
+                    <i class="fas fa-ship"></i> Ship Generator
+                </button>
+                <button id="loot-btn" class="sidebar-btn">
+                    <i class="fas fa-coins"></i> Loot Generator
+                </button>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>Reference</h3>
+                <button id="rules-btn" class="sidebar-btn">
+                    <i class="fas fa-book"></i> Rules Reference
+                </button>
+                <button id="maps-btn" class="sidebar-btn">
+                    <i class="fas fa-map"></i> Maps
+                </button>
+            </div>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <div class="dashboard-header">
+                <div class="logo">
+                    <i class="fas fa-skull-crossbones"></i>
+                    <h1>Dashboard</h1>
+                </div>
+                <div class="user-controls">
+                    <span id="user-email">Loading...</span>
+                </div>
+            </div>
+            
+            <div class="dashboard-content">
+                <h2>Welcome, Pirate!</h2>
+                
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>Quick Tools</h3>
+                        <div class="tools-grid">
+                            <button class="tool-button" id="quick-dice">
+                                <i class="fas fa-dice-d20"></i>
+                                <span>Roll Dice</span>
+                            </button>
+                            <button class="tool-button" id="quick-character">
+                                <i class="fas fa-user"></i>
+                                <span>Characters</span>
+                            </button>
+                            <button class="tool-button" id="quick-npc">
+                                <i class="fas fa-user-friends"></i>
+                                <span>Generate NPC</span>
+                            </button>
+                            <button class="tool-button" id="quick-ship">
+                                <i class="fas fa-ship"></i>
+                                <span>Generate Ship</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <h3>Your Characters</h3>
+                        <div id="characters-list">
+                            <p>You haven't created any characters yet.</p>
+                            <button class="btn btn-outline" id="create-character-btn">
+                                <i class="fas fa-plus"></i> Create Character
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dashboard-grid" style="margin-top: 20px;">
+                    <div class="dashboard-card">
+                        <h3>Recent Activity</h3>
+                        <div id="recent-activity">
+                            <p>No recent activity to display.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <h3>Pirate Resources</h3>
+                        <ul style="list-style: none; padding-left: 10px;">
+                            <li style="margin-bottom: 10px;">
+                                <i class="fas fa-book" style="color: var(--secondary); margin-right: 8px;"></i>
+                                <a href="#" style="color: var(--light); text-decoration: none;">Pirate Borg Rules Reference</a>
+                            </li>
+                            <li style="margin-bottom: 10px;">
+                                <i class="fas fa-compass" style="color: var(--secondary); margin-right: 8px;"></i>
+                                <a href="#" style="color: var(--light); text-decoration: none;">Navigation Guide</a>
+                            </li>
+                            <li style="margin-bottom: 10px;">
+                                <i class="fas fa-map" style="color: var(--secondary); margin-right: 8px;"></i>
+                                <a href="#" style="color: var(--light); text-decoration: none;">Caribbean Maps</a>
+                            </li>
+                            <li style="margin-bottom: 10px;">
+                                <i class="fas fa-users" style="color: var(--secondary); margin-right: 8px;"></i>
+                                <a href="#" style="color: var(--light); text-decoration: none;">Crew Management</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <footer>
+        <p>The Salty Parrot is an independent production by Stuart Greenwell. It is not affiliated with Limithron LLC. It is published under the PIRATE BORG Third Party License. PIRATE BORG is ©2022 Limithron LLC.</p>
+        <p>&copy; 2025 The Salty Parrot</p>
+    </footer>
+
+    <!-- Firebase with v9 SDK (using modules) -->
+    <script type="module" src="../js/firebase-config.js"></script>
+    <script type="module" src="../js/auth.js"></script>
+    <script type="module" src="../js/dashboard.js"></script>
+</body>
+</html>
