@@ -71,6 +71,11 @@
                     </div>
                     <p class="progress-text">Website Progress: 25% - Building the ship...</p>
                 </div>
+                
+                <div class="auth-buttons">
+                    <a href="pages/login.html" class="btn btn-primary">Login</a>
+                    <a href="pages/signup.html" class="btn btn-outline">Sign Up</a>
+                </div>
             </div>
             
             <div class="features">
@@ -101,5 +106,21 @@
     <!-- Firebase with v9 SDK (using modules) -->
     <script type="module" src="js/firebase-config.js"></script>
     <script type="module" src="js/auth.js"></script>
+    
+    <!-- Add direct login button handling as a fallback -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Homepage DOM loaded");
+            
+            // Direct login button handler in case module doesn't work
+            const loginBtn = document.getElementById('login-btn');
+            if (loginBtn) {
+                loginBtn.addEventListener('click', function() {
+                    console.log("Login button clicked (direct handler)");
+                    window.location.href = 'pages/login.html';
+                });
+            }
+        });
+    </script>
 </body>
 </html>
