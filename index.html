@@ -103,23 +103,105 @@
         <p>&copy; 2025 The Salty Parrot</p>
     </footer>
 
-    <!-- Firebase with v9 SDK (using modules) -->
-    <script type="module" src="js/firebase-config.js"></script>
-    <script type="module" src="js/auth.js"></script>
+    <!-- Firebase with compatibility mode -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     
-    <!-- Add direct login button handling as a fallback -->
     <script>
+        // Initialize Firebase with compatibility version
+        const firebaseConfig = {
+            apiKey: "AIzaSyDzSPll8gZKWBhmD6o-QAAnT89TWucFkr0",
+            authDomain: "salty-parrot.firebaseapp.com",
+            projectId: "salty-parrot",
+            storageBucket: "salty-parrot.appspot.com",
+            messagingSenderId: "598113689428",
+            appId: "1:598113689428:web:fb57b75af8efc6e051f2c1"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        
         document.addEventListener('DOMContentLoaded', function() {
             console.log("Homepage DOM loaded");
             
-            // Direct login button handler in case module doesn't work
+            const authSection = document.getElementById('auth-section');
             const loginBtn = document.getElementById('login-btn');
+            
+            // Direct login button handler
             if (loginBtn) {
                 loginBtn.addEventListener('click', function() {
                     console.log("Login button clicked (direct handler)");
                     window.location.href = 'pages/login.html';
                 });
             }
+            
+            // Check auth state
+            firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    // User is signed in
+                    console.log("User is signed in:", user.email);
+                    
+                    // Update sidebar auth section
+                    if (authSection) {
+                        authSection.innerHTML = `
+                            <div class="user-info">
+                                <div class="username">${user.email}</div>
+                            </div>
+                            <button id="logout-btn" class="sidebar-btn logout-btn">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </button>
+                        `;
+                        
+                        // Add event listener to the logout button
+                        const logoutBtn = document.getElementById('logout-btn');
+                        if (logoutBtn) {
+                            logoutBtn.addEventListener('click', function() {
+                                firebase.auth().signOut().then(() => {
+                                    console.log('User signed out');
+                                    window.location.reload();
+                                }).catch((error) => {
+                                    console.error('Logout Error:', error);
+                                });
+                            });
+                        }
+                    }
+                    
+                    // Enable navigation buttons
+                    const disabledButtons = document.querySelectorAll('.sidebar-btn.disabled');
+                    disabledButtons.forEach(button => {
+                        button.classList.remove('disabled');
+                    });
+                } else {
+                    // User is signed out
+                    console.log("User is signed out");
+                    
+                    // Update sidebar auth section
+                    if (authSection) {
+                        authSection.innerHTML = `
+                            <button id="login-btn" class="sidebar-btn">
+                                <i class="fas fa-sign-in-alt"></i> Login
+                            </button>
+                        `;
+                        
+                        // Add event listener to the login button
+                        const loginBtnUpdated = document.getElementById('login-btn');
+                        if (loginBtnUpdated) {
+                            loginBtnUpdated.addEventListener('click', function() {
+                                console.log("Login button clicked");
+                                window.location.href = 'pages/login.html';
+                            });
+                        }
+                    }
+                    
+                    // Disable navigation buttons
+                    const navButtons = document.querySelectorAll('.sidebar-btn:not(#login-btn)');
+                    navButtons.forEach(button => {
+                        if (!button.classList.contains('disabled')) {
+                            button.classList.add('disabled');
+                        }
+                    });
+                }
+            });
         });
     </script>
 </body>
