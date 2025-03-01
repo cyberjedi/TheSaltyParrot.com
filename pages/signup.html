@@ -88,5 +88,18 @@
     <!-- Firebase with v9 SDK (using modules) -->
     <script type="module" src="../js/firebase-config.js"></script>
     <script type="module" src="../js/auth.js"></script>
+    
+    <!-- Add debugging info -->
+    <script>
+        console.log("Signup page loaded");
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM fully loaded");
+            
+            // Check if signup form exists
+            const signupForm = document.getElementById('signup-form');
+            console.log("Signup form found:", signupForm ? true : false);
+        });
+    </script>
 </body>
 </html>
