@@ -1,4 +1,11 @@
-// auth.js - Handles authentication logic
+// auth.js - Updated for Firebase v9
+import { 
+  onAuthStateChanged, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut 
+} from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+import { auth } from "./firebase-config.js";
 
 document.addEventListener('DOMContentLoaded', function() {
     const authSection = document.getElementById('auth-section');
@@ -7,12 +14,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle login button click
     if (loginBtn) {
         loginBtn.addEventListener('click', function() {
-            window.location.href = 'pages/login.html';
+            window.location.href = window.location.pathname.includes('/pages/') 
+                ? 'login.html' 
+                : 'pages/login.html';
         });
     }
     
     // Check authentication state
-    firebase.auth().onAuthStateChanged(function(user) {
+    onAuthStateChanged(auth, (user) => {
         if (user) {
             // User is signed in
             
@@ -29,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Add event listener to the logout button
                 document.getElementById('logout-btn').addEventListener('click', function() {
-                    firebase.auth().signOut().then(() => {
+                    signOut(auth).then(() => {
                         console.log('User signed out');
                     }).catch((error) => {
                         console.error('Logout Error:', error);
@@ -83,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const password = document.getElementById('password').value;
             const errorMessage = document.getElementById('error-message');
             
-            firebase.auth().signInWithEmailAndPassword(email, password)
+            signInWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
                     // Login successful, redirect to home
                     window.location.href = '../index.html';
@@ -114,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            firebase.auth().createUserWithEmailAndPassword(email, password)
+            createUserWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
                     // Signup successful, redirect to home
                     window.location.href = '../index.html';
