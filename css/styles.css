@@ -504,12 +504,14 @@ footer p {
 #cargo-list {
     list-style-type: none;
     padding-left: 0;
+    margin-left: 0;
 }
 
 #cargo-list li {
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     position: relative;
     padding-left: 25px;
+    display: block;
 }
 
 #cargo-list li:before {
@@ -517,6 +519,7 @@ footer p {
     color: var(--secondary);
     position: absolute;
     left: 5px;
+    top: 0;
     font-size: 1.2em;
 }
 
