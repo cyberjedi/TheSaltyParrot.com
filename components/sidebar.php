@@ -30,54 +30,141 @@ $base_path = getBasePath();
     </div>
     
     <div class="sidebar-section">
-        <h3>Game Tools</h3>
-        <a href="<?php echo $base_path; ?>pages/ship_generator.php" class="sidebar-btn <?php echo ($current_page == 'ship_generator') ? 'active' : ''; ?>">
+        <h3>Generators</h3>
+        <button id="ship-generator-btn" class="sidebar-btn">
             <i class="fas fa-ship"></i> Ship Generator
-        </a>
-        <a href="<?php echo $base_path; ?>pages/loot_generator.php" class="sidebar-btn <?php echo ($current_page == 'loot_generator') ? 'active' : ''; ?>">
+        </button>
+<button id="loot-generator-btn" class="sidebar-btn">
             <i class="fas fa-coins"></i> Loot Generator
-        </a>
-        <a href="#" class="sidebar-btn" id="dice-roller-sidebar">
+        </button>
+        <button id="dice-roller-btn" class="sidebar-btn">
             <i class="fas fa-dice-d20"></i> Dice Roller
-        </a>
-        <a href="#" class="sidebar-btn" id="character-creator-sidebar">
-            <i class="fas fa-user-plus"></i> Character Creator
-        </a>
-        <a href="#" class="sidebar-btn" id="npc-generator-sidebar">
+        </button>
+        <button id="npc-generator-btn" class="sidebar-btn">
             <i class="fas fa-user-friends"></i> NPC Generator
-        </a>
+        </button>
+        <button id="treasure-generator-btn" class="sidebar-btn">
+            <i class="fas fa-gem"></i> Treasure Generator
+        </button>
+    </div>
+    
+    <div class="sidebar-section">
+        <h3>Character</h3>
+        <button id="character-creator-btn" class="sidebar-btn">
+            <i class="fas fa-user-plus"></i> Create Character
+        </button>
+        <button id="character-list-btn" class="sidebar-btn">
+            <i class="fas fa-users"></i> My Characters
+        </button>
     </div>
     
     <div class="sidebar-section">
         <h3>Resources</h3>
-        <a href="#" class="sidebar-btn" id="rules-reference-sidebar">
+        <button id="rules-reference-btn" class="sidebar-btn">
             <i class="fas fa-book"></i> Rules Reference
-        </a>
-        <a href="#" class="sidebar-btn" id="treasure-maps-sidebar">
+        </button>
+        <button id="treasure-maps-btn" class="sidebar-btn">
             <i class="fas fa-map"></i> Treasure Maps
-        </a>
+        </button>
     </div>
 </aside>
 
 <script>
-    // Add event listeners for sidebar links
+    // Add event listeners for sidebar generator buttons
     document.addEventListener('DOMContentLoaded', function() {
-        const comingSoonLinks = [
-            'dice-roller-sidebar',
-            'character-creator-sidebar',
-            'npc-generator-sidebar',
-            'rules-reference-sidebar',
-            'treasure-maps-sidebar'
-        ];
+        // Check if we're on the dashboard page where the window.Generators object exists
+        const isDashboard = window.location.pathname.includes('dashboard');
         
-        comingSoonLinks.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    alert("This feature is coming soon!");
-                });
-            }
-        });
+        // Ship Generator
+        const shipGeneratorBtn = document.getElementById('ship-generator-btn');
+        if (shipGeneratorBtn) {
+            shipGeneratorBtn.addEventListener('click', function() {
+                if (isDashboard && window.Generators) {
+                    window.Generators.generateShip();
+                } else {
+                    window.location.href = '<?php echo $base_path; ?>pages/dashboard.php?generator=ship';
+                }
+            });
+        }
+        
+        // Loot Generator
+        const lootGeneratorBtn = document.getElementById('loot-generator-btn');
+        if (lootGeneratorBtn) {
+            lootGeneratorBtn.addEventListener('click', function() {
+                if (isDashboard && window.Generators) {
+                    window.Generators.generateLoot();
+                } else {
+                    window.location.href = '<?php echo $base_path; ?>pages/dashboard.php?generator=loot';
+                }
+            });
+        }
+        
+        // Dice Roller
+        const diceRollerBtn = document.getElementById('dice-roller-btn');
+        if (diceRollerBtn) {
+            diceRollerBtn.addEventListener('click', function() {
+                if (isDashboard && window.Generators) {
+                    window.Generators.diceRoller();
+                } else {
+                    window.location.href = '<?php echo $base_path; ?>pages/dashboard.php?generator=dice';
+                }
+            });
+        }
+        
+        // NPC Generator
+        const npcGeneratorBtn = document.getElementById('npc-generator-btn');
+        if (npcGeneratorBtn) {
+            npcGeneratorBtn.addEventListener('click', function() {
+                if (isDashboard && window.Generators) {
+                    window.Generators.npcGenerator();
+                } else {
+                    window.location.href = '<?php echo $base_path; ?>pages/dashboard.php?generator=npc';
+                }
+            });
+        }
+        
+        // Treasure Generator
+        const treasureGeneratorBtn = document.getElementById('treasure-generator-btn');
+        if (treasureGeneratorBtn) {
+            treasureGeneratorBtn.addEventListener('click', function() {
+                if (isDashboard && window.Generators) {
+                    window.Generators.treasureGenerator();
+                } else {
+                    window.location.href = '<?php echo $base_path; ?>pages/dashboard.php?generator=treasure';
+                }
+            });
+        }
+        
+        // Character Creator
+        const characterCreatorBtn = document.getElementById('character-creator-btn');
+        if (characterCreatorBtn) {
+            characterCreatorBtn.addEventListener('click', function() {
+                alert("Character creator coming soon!");
+            });
+        }
+        
+        // Character List
+        const characterListBtn = document.getElementById('character-list-btn');
+        if (characterListBtn) {
+            characterListBtn.addEventListener('click', function() {
+                alert("Character list coming soon!");
+            });
+        }
+        
+        // Rules Reference
+        const rulesReferenceBtn = document.getElementById('rules-reference-btn');
+        if (rulesReferenceBtn) {
+            rulesReferenceBtn.addEventListener('click', function() {
+                alert("Rules reference coming soon!");
+            });
+        }
+        
+        // Treasure Maps
+        const treasureMapsBtn = document.getElementById('treasure-maps-btn');
+        if (treasureMapsBtn) {
+            treasureMapsBtn.addEventListener('click', function() {
+                alert("Treasure maps coming soon!");
+            });
+        }
     });
 </script>
