@@ -26,6 +26,10 @@ $current_page = 'ship_generator';
             </div>
             
             <div class="ship-generator-content">
+                <div class="source-reference">
+                    <i class="fas fa-book"></i> This generator is based on the "Pirate Borg Core Book" page 114-115 "Sails! Ships at sea and their cargo".
+                </div>
+                
                 <div class="generator-card dashboard-card">
                     <h2>Generate a Random Ship</h2>
                     <p>Click the button below to create a random pirate ship for your game.</p>
@@ -39,7 +43,7 @@ $current_page = 'ship_generator';
                     <div class="ship-details">
                         <p><strong>Vessel Class:</strong> <span id="vessel-class">Unknown</span></p>
                         <p><strong>Armament:</strong> <span id="armament">Unknown</span></p>
-                        <p><strong>Crew:</strong> The crew are <span id="crew-quantity">unknown</span> and are <span id="crew-quality">unknown</span></p>
+                        <p><strong>Crew:</strong> The crew are <span id="crew-quantity">unknown</span> and are <span id="crew-quality">unknown</span>.</p>
                         
                         <h3>Cargo:</h3>
                         <ul id="cargo-list">
