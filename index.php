@@ -14,7 +14,7 @@ $current_page = 'index';
 <body>
     <div class="app-container">
         <!-- Include the sidebar -->
-        <?php include 'components/sidebar.php'; ?>
+        <?php include './components/sidebar.php'; ?>
         
         <!-- Main Content Area -->
         <main class="main-content">
@@ -92,14 +92,6 @@ $current_page = 'index';
             const authSection = document.getElementById('auth-section');
             const loginBtn = document.getElementById('login-btn');
             
-            // Direct login button handler
-            if (loginBtn) {
-                loginBtn.addEventListener('click', function() {
-                    console.log("Login button clicked (direct handler)");
-                    window.location.href = 'pages/login.php';
-                });
-            }
-            
             // Check auth state
             firebase.auth().onAuthStateChanged((user) => {
                 if (user) {
@@ -130,12 +122,6 @@ $current_page = 'index';
                             });
                         }
                     }
-                    
-                    // Enable navigation buttons
-                    const disabledButtons = document.querySelectorAll('.sidebar-btn.disabled');
-                    disabledButtons.forEach(button => {
-                        button.classList.remove('disabled');
-                    });
                 } else {
                     // User is signed out
                     console.log("User is signed out");
@@ -157,14 +143,6 @@ $current_page = 'index';
                             });
                         }
                     }
-                    
-                    // Disable navigation buttons
-                    const navButtons = document.querySelectorAll('.sidebar-btn:not(#login-btn)');
-                    navButtons.forEach(button => {
-                        if (!button.classList.contains('disabled')) {
-                            button.classList.add('disabled');
-                        }
-                    });
                 }
             });
         });
