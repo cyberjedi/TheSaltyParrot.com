@@ -11,7 +11,7 @@ $current_page = 'ship_generator';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../css/styles.css">
     <style>
-        /* Additional styling to fix bullet points */
+        /* Additional styling fixes */
         #cargo-list {
             list-style-type: none;
             padding-left: 0;
@@ -32,6 +32,44 @@ $current_page = 'ship_generator';
             left: 5px;
             top: 0;
             font-size: 1.2em;
+        }
+        
+        .ship-details h3 {
+            margin-top: 40px; /* Increased from 30px */
+            margin-bottom: 20px; /* Increased from 15px */
+            color: var(--secondary);
+            border-bottom: 1px solid rgba(191, 157, 97, 0.3);
+            padding-bottom: 5px;
+        }
+
+        .source-reference {
+            margin: 20px 0;
+            font-style: italic;
+        }
+        
+        .source-reference i {
+            color: var(--secondary);
+            margin-right: 10px;
+        }
+        
+        .print-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .print-buttons {
+                flex-direction: column;
+            }
+            
+            .print-buttons button {
+                margin: 5px 0 !important;
+                width: 100%;
+            }
         }
         
         @media print {
@@ -84,10 +122,10 @@ $current_page = 'ship_generator';
                         <button id="generate-ship-btn" class="btn btn-primary">
                             <i class="fas fa-ship"></i> Generate Ship
                         </button>
-                        <button id="print-ship-btn" class="btn btn-outline" style="margin-left: 10px;">
+                        <button id="print-ship-btn" class="btn btn-outline">
                             <i class="fas fa-print"></i> Print Ship
                         </button>
-                        <button id="home-btn" class="btn btn-secondary" style="margin-left: 10px;">
+                        <button id="home-btn" class="btn btn-secondary">
                             <i class="fas fa-home"></i> Back to Home
                         </button>
                     </div>
@@ -285,7 +323,8 @@ $current_page = 'ship_generator';
                                 }
                                 h3 {
                                     color: #805d2c;
-                                    margin-top: 20px;
+                                    margin-top: 40px;
+                                    margin-bottom: 20px;
                                     border-bottom: 1px solid rgba(128, 93, 44, 0.3);
                                     padding-bottom: 5px;
                                 }
