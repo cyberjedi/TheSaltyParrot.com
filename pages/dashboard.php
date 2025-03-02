@@ -788,6 +788,38 @@ $current_page = 'dashboard';
                 }
             };
         });
+  
+        // Check for URL parameters to run generators on page load
+        const urlParams = new URLSearchParams(window.location.search);
+        const generator = urlParams.get('generator');
+        
+        if (generator) {
+            // Wait a moment for the page to fully load
+            setTimeout(() => {
+                // Run the appropriate generator based on the URL parameter
+                switch(generator) {
+                    case 'ship':
+                        window.Generators.generateShip();
+                        break;
+                    case 'loot':
+                        window.Generators.generateLoot();
+                        break;
+                    case 'dice':
+                        window.Generators.diceRoller();
+                        break;
+                    case 'npc':
+                        window.Generators.npcGenerator();
+                        break;
+                    case 'treasure':
+                        window.Generators.treasureGenerator();
+                        break;
+                }
+                
+                // Clear the URL parameter to prevent re-running on refresh
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }, 500);
+        }
+    
     </script>
 </body>
 </html>
