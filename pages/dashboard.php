@@ -14,10 +14,10 @@ $current_page = 'dashboard';
         /* Dashboard-specific styles */
         .dashboard-container {
             display: grid;
-            grid-template-columns: 1fr 300px;
+            grid-template-columns: 1fr 600px; 
             grid-template-rows: auto 1fr;
             gap: 20px;
-            height: calc(100vh - 180px); /* Adjust height to account for header and footer */
+            height: calc(100vh - 180px);
         }
         
         .character-box {
