@@ -10,6 +10,54 @@ $current_page = 'ship_generator';
     <title>Ship Generator - The Salty Parrot</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        /* Additional styling to fix bullet points */
+        #cargo-list {
+            list-style-type: none;
+            padding-left: 0;
+            margin-left: 0;
+        }
+
+        #cargo-list li {
+            margin-bottom: 10px;
+            position: relative;
+            padding-left: 25px;
+            display: block;
+        }
+
+        #cargo-list li:before {
+            content: '•';
+            color: var(--secondary);
+            position: absolute;
+            left: 5px;
+            top: 0;
+            font-size: 1.2em;
+        }
+        
+        @media print {
+            .sidebar, .dashboard-header, .generator-card, footer, 
+            #generate-ship-btn, .source-reference, .print-buttons {
+                display: none !important;
+            }
+            
+            body, .app-container, .main-content, .ship-generator-content {
+                background: white;
+                color: black;
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            #ship-result {
+                display: block !important;
+                border: none;
+                box-shadow: none;
+                margin: 0;
+                padding: 1cm;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -26,16 +74,23 @@ $current_page = 'ship_generator';
             </div>
             
             <div class="ship-generator-content">
-                <div class="source-reference">
-                    <i class="fas fa-book"></i> This generator is based on the "Pirate Borg Core Book" page 114-115 "Sails! Ships at sea and their cargo".
-                </div>
-                
                 <div class="generator-card dashboard-card">
                     <h2>Generate a Random Ship</h2>
                     <p>Click the button below to create a random pirate ship for your game.</p>
-                    <button id="generate-ship-btn" class="btn btn-primary">
-                        <i class="fas fa-ship"></i> Generate Ship
-                    </button>
+                    <p class="source-reference">
+                        <i class="fas fa-book"></i> This generator is based on the "Pirate Borg Core Book" page 114-115 "Sails! Ships at sea and their cargo".
+                    </p>
+                    <div class="print-buttons">
+                        <button id="generate-ship-btn" class="btn btn-primary">
+                            <i class="fas fa-ship"></i> Generate Ship
+                        </button>
+                        <button id="print-ship-btn" class="btn btn-outline" style="margin-left: 10px;">
+                            <i class="fas fa-print"></i> Print Ship
+                        </button>
+                        <button id="home-btn" class="btn btn-secondary" style="margin-left: 10px;">
+                            <i class="fas fa-home"></i> Back to Home
+                        </button>
+                    </div>
                 </div>
                 
                 <div id="ship-result" class="dashboard-card" style="display: none; margin-top: 20px;">
@@ -163,6 +218,8 @@ $current_page = 'ship_generator';
             
             // Ship Generator code
             const generateButton = document.getElementById('generate-ship-btn');
+            const printButton = document.getElementById('print-ship-btn');
+            const homeButton = document.getElementById('home-btn');
             const shipResult = document.getElementById('ship-result');
             const shipName = document.getElementById('ship-name');
             const vesselClass = document.getElementById('vessel-class');
@@ -191,6 +248,94 @@ $current_page = 'ship_generator';
             // Add event listener to the generate button
             if (generateButton) {
                 generateButton.addEventListener('click', generateShip);
+            }
+            
+            // Add event listener to the print button
+            if (printButton) {
+                printButton.addEventListener('click', function() {
+                    // Check if ship has been generated
+                    if (shipResult.style.display === 'none') {
+                        alert('Please generate a ship first before printing.');
+                        return;
+                    }
+                    
+                    // Create a new window for printing just the ship result
+                    const printWindow = window.open('', '_blank');
+                    
+                    // Create the content for the print window
+                    const shipResultClone = shipResult.cloneNode(true);
+                    
+                    // Set up the HTML content for printing
+                    printWindow.document.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>${shipName.textContent} - Ship Details</title>
+                            <style>
+                                body {
+                                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                                    color: #333;
+                                    line-height: 1.6;
+                                    padding: 20px;
+                                }
+                                h2 {
+                                    color: #805d2c;
+                                    border-bottom: 1px solid #805d2c;
+                                    padding-bottom: 10px;
+                                }
+                                h3 {
+                                    color: #805d2c;
+                                    margin-top: 20px;
+                                    border-bottom: 1px solid rgba(128, 93, 44, 0.3);
+                                    padding-bottom: 5px;
+                                }
+                                ul {
+                                    list-style-type: none;
+                                    padding-left: 0;
+                                }
+                                li {
+                                    margin-bottom: 10px;
+                                    position: relative;
+                                    padding-left: 20px;
+                                }
+                                li:before {
+                                    content: '•';
+                                    color: #805d2c;
+                                    position: absolute;
+                                    left: 0;
+                                    top: 0;
+                                }
+                                .ship-details {
+                                    margin-top: 20px;
+                                }
+                                .ship-details p {
+                                    margin-bottom: 15px;
+                                }
+                                strong {
+                                    color: #555;
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            ${shipResultClone.outerHTML}
+                        </body>
+                        </html>
+                    `);
+                    
+                    // Wait for content to load and then print
+                    printWindow.document.close();
+                    printWindow.addEventListener('load', function() {
+                        printWindow.print();
+                        printWindow.close();
+                    });
+                });
+            }
+            
+            // Add event listener to the home button
+            if (homeButton) {
+                homeButton.addEventListener('click', function() {
+                    window.location.href = '../index.php';
+                });
             }
             
             // Function to generate a ship
@@ -274,28 +419,6 @@ $current_page = 'ship_generator';
                         generateButton.innerHTML = '<i class="fas fa-ship"></i> Generate Ship';
                     });
             }
-            
-            // Add a print button function
-            const printButton = document.createElement('button');
-            printButton.className = 'btn btn-outline';
-            printButton.innerHTML = '<i class="fas fa-print"></i> Print Ship';
-            printButton.style.marginTop = '20px';
-            printButton.style.marginLeft = '10px';
-            printButton.onclick = function() { window.print(); };
-            
-            // Insert print button after the generate button
-            generateButton.parentNode.insertBefore(printButton, generateButton.nextSibling);
-            
-            // Home button
-            const homeButton = document.createElement('button');
-            homeButton.className = 'btn btn-secondary';
-            homeButton.innerHTML = '<i class="fas fa-home"></i> Back to Home';
-            homeButton.style.marginTop = '20px';
-            homeButton.style.marginLeft = '10px';
-            homeButton.onclick = function() { window.location.href = '../index.php'; };
-            
-            // Insert home button after the print button
-            printButton.parentNode.insertBefore(homeButton, printButton.nextSibling);
         });
     </script>
 </body>
