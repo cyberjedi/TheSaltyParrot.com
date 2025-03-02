@@ -226,9 +226,9 @@ $current_page = 'dashboard';
             padding: 0 15px;
             z-index: 1;
         }
-        
+   
         /* For small screens, stack the grid */
-        @media (max-width: 768px) {
+        @media (max-width: 1200px) { /* Changed from 768px to 1200px */
             .dashboard-container {
                 grid-template-columns: 1fr;
                 grid-template-rows: auto auto auto;
@@ -251,6 +251,7 @@ $current_page = 'dashboard';
                 height: 300px;
             }
         }
+    
     </style>
 </head>
 <body>
