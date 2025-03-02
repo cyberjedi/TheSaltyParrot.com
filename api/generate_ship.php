@@ -53,7 +53,7 @@ try {
             if ($cargo_item == "special cargo") {
                 $stmt = $conn->prepare("SELECT description FROM special_cargo ORDER BY RAND() LIMIT 1");
                 $stmt->execute();
-                $cargo_item = $stmt->fetch(PDO::FETCH_ASSOC)['description'];
+                $cargo_item = "Special: " . $stmt->fetch(PDO::FETCH_ASSOC)['description'];
                 
                 // Handle special cases for dynamic cargo content
                 if (strpos($cargo_item, 'd10 locked chests') !== false) {
@@ -62,15 +62,15 @@ try {
                     for ($j = 0; $j < $num_chests; $j++) {
                         $total_value += rand(2, 16) * 100;
                     }
-                    $cargo_item = "$num_chests locked chests, {$total_value}s (total)";
+                    $cargo_item = "Special: $num_chests locked chests, {$total_value}s (total)";
                 }
                 else if (strpos($cargo_item, 'd20 crates of ASH') !== false) {
                     $num_crates = rand(1, 20);
-                    $cargo_item = "$num_crates crates of ASH";
+                    $cargo_item = "Special: $num_crates crates of ASH";
                 }
                 else if (strpos($cargo_item, 'd4 Arcane Rituals') !== false) {
                     $num_rituals = rand(1, 4);
-                    $cargo_item = "a sorcerer with a tome of $num_rituals Arcane Rituals";
+                    $cargo_item = "Special: a sorcerer with a tome of $num_rituals Arcane Rituals";
                 }
             }
             
