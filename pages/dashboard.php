@@ -10,6 +10,46 @@ $current_page = 'dashboard';
     <title>Dashboard - The Salty Parrot</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        .tool-button {
+            padding: 25px 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .tool-button i {
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+        
+        .tool-button span {
+            display: block;
+            font-size: 16px;
+        }
+        
+        .tool-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .tools-grid {
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        
+        .welcome-message {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: rgba(191, 157, 97, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid var(--secondary);
+        }
+        
+        .welcome-message h3 {
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -25,35 +65,57 @@ $current_page = 'dashboard';
                 </div>
                 <div class="user-controls">
                     <span id="user-email" class="user-email">Loading...</span>
+                    <button id="logout-btn-top" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
                 </div>
             </div>
             
             <div class="dashboard-content">
-                <h2>Welcome, Pirate!</h2>
+                <div class="welcome-message">
+                    <h3>Welcome, Captain!</h3>
+                    <p>Your pirate adventure awaits. Use the tools below to create characters, generate NPCs, ships, and more for your Pirate Borg campaign.</p>
+                </div>
                 
-                <div class="dashboard-grid">
-                    <div class="dashboard-card">
-                        <h3>Quick Tools</h3>
-                        <div class="tools-grid">
-                            <button class="tool-button" id="quick-dice">
-                                <i class="fas fa-dice-d20"></i>
-                                <span>Roll Dice</span>
-                            </button>
-                            <button class="tool-button" id="quick-character">
-                                <i class="fas fa-user"></i>
-                                <span>Characters</span>
-                            </button>
-                            <button class="tool-button" id="quick-loot">
-                                <i class="fas fa-coins"></i>
-                                <span>Loot Generator</span>
-                            </button>
-                            <button class="tool-button" id="quick-ship">
-                                <i class="fas fa-ship"></i>
-                                <span>Ship Generator</span>
-                            </button>
-                        </div>
+                <div class="dashboard-card">
+                    <h3>Game Tools</h3>
+                    <div class="tools-grid">
+                        <a href="ship_generator.php" class="tool-button">
+                            <i class="fas fa-ship"></i>
+                            <span>Ship Generator</span>
+                        </a>
+                        <a href="loot_generator.php" class="tool-button">
+                            <i class="fas fa-coins"></i>
+                            <span>Loot Generator</span>
+                        </a>
+                        <a href="#" class="tool-button" id="dice-roller-btn">
+                            <i class="fas fa-dice-d20"></i>
+                            <span>Dice Roller</span>
+                        </a>
+                        <a href="#" class="tool-button" id="char-creator-btn">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Character Creator</span>
+                        </a>
+                        <a href="#" class="tool-button" id="npc-generator-btn">
+                            <i class="fas fa-user-friends"></i>
+                            <span>NPC Generator</span>
+                        </a>
+                        <a href="#" class="tool-button" id="combat-tracker-btn">
+                            <i class="fas fa-fist-raised"></i>
+                            <span>Combat Tracker</span>
+                        </a>
+                        <a href="#" class="tool-button" id="treasure-generator-btn">
+                            <i class="fas fa-gem"></i>
+                            <span>Treasure Generator</span>
+                        </a>
+                        <a href="#" class="tool-button" id="rules-reference-btn">
+                            <i class="fas fa-book"></i>
+                            <span>Rules Reference</span>
+                        </a>
                     </div>
-                    
+                </div>
+                
+                <div class="dashboard-grid" style="margin-top: 20px;">
                     <div class="dashboard-card">
                         <h3>Your Characters</h3>
                         <div id="characters-list">
@@ -63,36 +125,12 @@ $current_page = 'dashboard';
                             </button>
                         </div>
                     </div>
-                </div>
-                
-                <div class="dashboard-grid" style="margin-top: 20px;">
+                    
                     <div class="dashboard-card">
                         <h3>Recent Activity</h3>
                         <div id="recent-activity">
                             <p>No recent activity to display.</p>
                         </div>
-                    </div>
-                    
-                    <div class="dashboard-card">
-                        <h3>Pirate Resources</h3>
-                        <ul style="list-style: none; padding-left: 10px;">
-                            <li style="margin-bottom: 10px;">
-                                <i class="fas fa-book" style="color: var(--secondary); margin-right: 8px;"></i>
-                                <a href="#" style="color: var(--light); text-decoration: none;">Pirate Borg Rules Reference</a>
-                            </li>
-                            <li style="margin-bottom: 10px;">
-                                <i class="fas fa-compass" style="color: var(--secondary); margin-right: 8px;"></i>
-                                <a href="#" style="color: var(--light); text-decoration: none;">Navigation Guide</a>
-                            </li>
-                            <li style="margin-bottom: 10px;">
-                                <i class="fas fa-map" style="color: var(--secondary); margin-right: 8px;"></i>
-                                <a href="#" style="color: var(--light); text-decoration: none;">Caribbean Maps</a>
-                            </li>
-                            <li style="margin-bottom: 10px;">
-                                <i class="fas fa-users" style="color: var(--secondary); margin-right: 8px;"></i>
-                                <a href="#" style="color: var(--light); text-decoration: none;">Crew Management</a>
-                            </li>
-                        </ul>
                     </div>
                 </div>
             </div>
@@ -104,7 +142,7 @@ $current_page = 'dashboard';
         <p>&copy; 2025 The Salty Parrot</p>
     </footer>
 
-    <!-- Firebase with v9 SDK (using modules) -->
+    <!-- Firebase scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     
@@ -150,78 +188,81 @@ $current_page = 'dashboard';
                         // Add event listener to the logout button
                         const logoutBtn = document.getElementById('logout-btn');
                         if (logoutBtn) {
-                            logoutBtn.addEventListener('click', function() {
-                                firebase.auth().signOut().then(() => {
-                                    console.log('User signed out');
-                                    window.location.href = '../index.php';
-                                }).catch((error) => {
-                                    console.error('Logout Error:', error);
-                                });
-                            });
+                            logoutBtn.addEventListener('click', logoutUser);
                         }
                     }
                     
-                    // Enable navigation buttons
-                    const disabledButtons = document.querySelectorAll('.sidebar-btn.disabled');
-                    disabledButtons.forEach(button => {
-                        button.classList.remove('disabled');
-                    });
+                    // Add event listener to top logout button
+                    const logoutBtnTop = document.getElementById('logout-btn-top');
+                    if (logoutBtnTop) {
+                        logoutBtnTop.addEventListener('click', logoutUser);
+                    }
                     
-                    // Here you would load the user's characters, recent activity, etc.
+                    // Load user data
                     loadUserData(user.uid);
                 } else {
                     // User is signed out, redirect to login
                     console.log("Dashboard: User is not signed in, redirecting to login");
-                    window.location.href = 'login.php';
+                    window.location.href = '../index.php';
                 }
             });
             
-            // Function to load user data (placeholder for now)
+            function logoutUser() {
+                firebase.auth().signOut().then(() => {
+                    console.log('User signed out');
+                    window.location.href = '../index.php';
+                }).catch((error) => {
+                    console.error('Logout Error:', error);
+                });
+            }
+            
+            // Function to load user data
             function loadUserData(userId) {
                 console.log("Loading data for user:", userId);
-                // This would be where you fetch data from your database
+                // This is where you'd fetch the user's characters and recent activity
+                // from your database and update the UI
             }
             
             // Event listeners for buttons
-            const quickDice = document.getElementById('quick-dice');
-            if (quickDice) {
-                quickDice.addEventListener('click', function() {
-                    console.log("Dice roller clicked");
-                    // Implement dice roller functionality
-                });
-            }
-            
-            const quickCharacter = document.getElementById('quick-character');
-            if (quickCharacter) {
-                quickCharacter.addEventListener('click', function() {
-                    console.log("Character manager clicked");
-                    // Navigate to character management page
-                });
-            }
-            
-            const quickLoot = document.getElementById('quick-loot');
-            if (quickLoot) {
-                quickLoot.addEventListener('click', function() {
-                    console.log("Loot generator clicked");
-                    window.location.href = 'loot_generator.php';
-                });
-            }
-            
-            const quickShip = document.getElementById('quick-ship');
-            if (quickShip) {
-                quickShip.addEventListener('click', function() {
-                    console.log("Ship generator clicked");
-                    window.location.href = 'ship_generator.php';
-                });
-            }
-            
             const createCharacterBtn = document.getElementById('create-character-btn');
             if (createCharacterBtn) {
                 createCharacterBtn.addEventListener('click', function() {
                     console.log("Create character clicked");
-                    // Navigate to character creation page
+                    // Navigate to character creation page (not yet implemented)
+                    alert("Character creation is coming soon!");
                 });
             }
+            
+            // Set up event listeners for tool buttons
+            document.getElementById('dice-roller-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                alert("Dice roller coming soon!");
+            });
+            
+            document.getElementById('char-creator-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                alert("Character creator coming soon!");
+            });
+            
+            document.getElementById('npc-generator-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                alert("NPC generator coming soon!");
+            });
+            
+            document.getElementById('combat-tracker-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                alert("Combat tracker coming soon!");
+            });
+            
+            document.getElementById('treasure-generator-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                alert("Treasure generator coming soon!");
+            });
+            
+            document.getElementById('rules-reference-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                alert("Rules reference coming soon!");
+            });
         });
     </script>
 </body>
