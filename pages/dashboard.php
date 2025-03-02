@@ -43,13 +43,13 @@ $current_page = 'dashboard';
                                 <i class="fas fa-user"></i>
                                 <span>Characters</span>
                             </button>
-                            <button class="tool-button" id="quick-npc">
-                                <i class="fas fa-user-friends"></i>
-                                <span>Generate NPC</span>
+                            <button class="tool-button" id="quick-loot">
+                                <i class="fas fa-coins"></i>
+                                <span>Loot Generator</span>
                             </button>
                             <button class="tool-button" id="quick-ship">
                                 <i class="fas fa-ship"></i>
-                                <span>Generate Ship</span>
+                                <span>Ship Generator</span>
                             </button>
                         </div>
                     </div>
@@ -199,11 +199,11 @@ $current_page = 'dashboard';
                 });
             }
             
-            const quickNpc = document.getElementById('quick-npc');
-            if (quickNpc) {
-                quickNpc.addEventListener('click', function() {
-                    console.log("NPC generator clicked");
-                    // Implement NPC generator functionality
+            const quickLoot = document.getElementById('quick-loot');
+            if (quickLoot) {
+                quickLoot.addEventListener('click', function() {
+                    console.log("Loot generator clicked");
+                    window.location.href = 'loot_generator.php';
                 });
             }
             
