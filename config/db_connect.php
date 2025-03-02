@@ -1,51 +1,72 @@
 <?php
-// Enable error reporting for debugging
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Get configuration from private file outside web root
-try {
-    $config_path = $_SERVER['DOCUMENT_ROOT'] . '/../../private/db_config.php';
-    
-    if (!file_exists($config_path)) {
-        throw new Exception("Database config file not found at: $config_path");
+// Possible config file locations with priority
+$possible_config_paths = [
+    $_SERVER['DOCUMENT_ROOT'] . '/../../private/secure_variables.php',
+    $_SERVER['DOCUMENT_ROOT'] . '/../private/secure_variables.php',
+    $_SERVER['DOCUMENT_ROOT'] . '/private/secure_variables.php',
+    dirname(__FILE__) . '/../../private/secure_variables.php'
+];
+
+// Find and load the config file
+$config = null;
+foreach ($possible_config_paths as $path) {
+    if (file_exists($path)) {
+        $config = require_once($path);
+        break;
     }
-    
-    $config = require_once($config_path);
-    
-    if (!isset($config['host']) || !isset($config['dbname']) || !isset($config['username']) || !isset($config['password'])) {
-        throw new Exception("Database config file is missing required parameters.");
-    }
-    
-    try {
-        $conn = new PDO("mysql:host={$config['host']};dbname={$config['dbname']}", 
-                    $config['username'], $config['password']);
-        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    } catch(PDOException $e) {
-        // Format error as JSON
-        header('Content-Type: application/json');
-        echo json_encode([
-            "status" => "error",
-            "message" => "Database Connection Error: " . $e->getMessage(),
-            "details" => [
-                "host" => $config['host'],
-                "dbname" => $config['dbname'],
-                "username_length" => strlen($config['username']),
-                "password_set" => !empty($config['password']),
-                "server_root" => $_SERVER['DOCUMENT_ROOT']
-            ]
-        ]);
-        die();
-    }
-} catch(Exception $e) {
-    // Format error as JSON
+}
+
+// If no config file found, throw an error
+if ($config === null) {
     header('Content-Type: application/json');
     echo json_encode([
-        "status" => "error",
-        "message" => "Config Error: " . $e->getMessage(),
-        "server_root" => $_SERVER['DOCUMENT_ROOT'],
-        "config_path" => $config_path ?? 'Not set',
-        "php_version" => PHP_VERSION
+        'status' => 'error',
+        'message' => 'Database configuration file not found',
+        'paths_checked' => $possible_config_paths
+    ]);
+    die();
+}
+
+try {
+    $conn = new PDO("mysql:host={$config['host']};dbname={$config['dbname']}", 
+                    $config['username'], $config['password']);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    // Verify required tables exist
+    $required_tables = ['ship_names', 'vessel_classes', 'armaments', 
+                        'crew_quantities', 'crew_qualities', 
+                        'mundane_cargo', 'special_cargo', 'plot_twists'];
+    
+    $missing_tables = [];
+    foreach ($required_tables as $table) {
+        $stmt = $conn->prepare("SHOW TABLES LIKE :table");
+        $stmt->execute(['table' => $table]);
+        if ($stmt->rowCount() == 0) {
+            $missing_tables[] = $table;
+        }
+    }
+    
+    if (!empty($missing_tables)) {
+        throw new Exception("Missing tables: " . implode(', ', $missing_tables));
+    }
+    
+} catch(PDOException $e) {
+    // Detailed error handling
+    $error_details = [
+        'message' => $e->getMessage(),
+        'config_paths_tried' => $possible_config_paths,
+        'config' => array_merge($config, ['password' => '***REDACTED***'])
+    ];
+    
+    // JSON encode to ensure no sensitive info is exposed
+    header('Content-Type: application/json');
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Database connection failed',
+        'details' => $error_details
     ]);
     die();
 }
