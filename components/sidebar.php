@@ -62,5 +62,19 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
+    
+    // Debug info for troubleshooting
+    console.log("Current page:", "<?php echo $current_page; ?>");
+    console.log("Path info - pathname:", window.location.pathname);
+    console.log("Base path function returns:", getBasePath());
+    
+    // Additional check for login button functionality
+    const loginBtn = document.getElementById('login-btn');
+    if (loginBtn) {
+        loginBtn.addEventListener('click', function() {
+            console.log("Login button clicked in sidebar");
+            window.location.href = getBasePath() + 'pages/login.php';
+        });
+    }
 });
 </script>
