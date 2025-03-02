@@ -36,12 +36,12 @@ $base_path = getBasePath();
     </div>
     
     <div class="sidebar-section">
-        <h3>Reference</h3>
+        <h3>Generators</h3>
         <a href="<?php echo $base_path; ?>pages/ship_generator.php" class="sidebar-btn <?php echo ($current_page == 'ship_generator') ? 'active' : ''; ?>">
-            <i class="fas fa-ship"></i> Ship Generator
+            <i class="fas fa-ship"></i> Ships & Cargo
         </a>
-        <button class="sidebar-btn disabled" data-page="loot_generator">
-            <i class="fas fa-coins"></i> Loot Generator (Coming Soon)
-        </button>
+        <a href="<?php echo $base_path; ?>pages/loot_generator.php" class="sidebar-btn <?php echo ($current_page == 'loot_generator') ? 'active' : ''; ?>">
+            <i class="fas fa-coins"></i> Loot The Body
+        </a>
     </div>
 </aside>
