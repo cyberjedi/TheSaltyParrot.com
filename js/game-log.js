@@ -2,6 +2,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Game Log module loaded");
     
+    // Make sure Firebase is initialized before using it
+    if (typeof firebase === 'undefined') {
+        console.error("Firebase is not defined. Make sure the Firebase script is loaded before game-log.js");
+        return;
+    }
+    
     // Game session elements
     const noSessionSection = document.getElementById('no-session');
     const activeSessionSection = document.getElementById('active-session');
