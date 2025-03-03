@@ -318,7 +318,6 @@ $current_page = 'dashboard';
                 height: 300px;
             }
         }
-    
     </style>
 </head>
 <body>
@@ -378,28 +377,6 @@ $current_page = 'dashboard';
                         </div>
                     </div>
                 </div>
-
-<!-- Game Session Controls -->
-<div class="game-session-controls" style="margin-bottom: 20px;">
-    <div id="no-session" style="display: block;">
-        <button id="create-session-btn" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Create Game Session
-        </button>
-        <button id="join-session-btn" class="btn btn-secondary">
-            <i class="fas fa-sign-in-alt"></i> Join Game Session
-        </button>
-    </div>
-    
-    <div id="active-session" style="display: none;">
-        <div class="session-info">
-            <h4 id="session-name">Session Name</h4>
-            <div id="session-code">Join Code: <span id="join-code">ABC123</span></div>
-        </div>
-        <button id="leave-session-btn" class="btn btn-outline btn-sm">
-            <i class="fas fa-sign-out-alt"></i> Leave Session
-        </button>
-    </div>
-</div>
                 
                 <!-- Game Log Box -->
                 <div class="game-log">
@@ -410,28 +387,47 @@ $current_page = 'dashboard';
                             <button id="clear-log-btn" title="Clear Log"><i class="fas fa-trash"></i></button>
                         </div>
                     </h3>
-            <button id="add-log-btn" class="btn btn-outline btn-sm">
-                            <i class="fas fa-plus"></i> Add
-                        </button>
+                    
+                    <!-- Game Session Controls -->
+                    <div class="game-session-controls">
+                        <div id="no-session" style="display: block;">
+                            <button id="create-session-btn" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Create Game Session
+                            </button>
+                            <button id="join-session-btn" class="btn btn-secondary">
+                                <i class="fas fa-sign-in-alt"></i> Join Game Session
+                            </button>
+                        </div>
+                        
+                        <div id="active-session" style="display: none;">
+                            <div class="session-info">
+                                <h4 id="session-name">Session Name</h4>
+                                <div id="session-code">Join Code: <span id="join-code">ABC123</span></div>
+                            </div>
+                            <button id="leave-session-btn" class="btn btn-outline btn-sm">
+                                <i class="fas fa-sign-out-alt"></i> Leave Session
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Log entries container -->
+                    <div id="log-display" style="max-height: calc(100% - 150px); overflow-y: auto;">
+                        <p style="text-align: center; padding: 30px 0;">
+                            <i class="fas fa-scroll" style="font-size: 2rem; color: var(--secondary); opacity: 0.4; display: block; margin-bottom: 15px;"></i>
+                            Game logging coming soon!
+                        </p>
+                    </div>
+                    
+                    <!-- Custom log entry input -->
+                    <div id="log-controls" style="display: none; margin-top: 15px;">
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="custom-log-input" placeholder="Add to the ship's log...">
+                            <button id="add-log-btn" class="btn btn-outline btn-sm">
+                                <i class="fas fa-plus"></i> Add
+                            </button>
+                        </div>
                     </div>
                 </div>
-                
-                <!-- Log entries will appear here -->
-                <div id="log-display" style="max-height: 100%; overflow-y: auto;">
-                    <p style="text-align: center; padding: 30px 0;">
-                        <i class="fas fa-scroll" style="font-size: 2rem; color: var(--secondary); opacity: 0.4; display: block; margin-bottom: 15px;"></i>
-                        Game logging coming soon!
-                    </p>
-                </div>
-            </div>
-                    
-    <!-- Custom log entry input -->
-    <div id="log-controls" style="display: none; margin-bottom: 15px;">
-        <div style="display: flex; gap: 10px;">
-            <input type="text" id="custom-log-input" placeholder="Add to the ship's log..." 
-                   style="flex: 1; padding: 8px; background-color: rgba(0,0,0,0.2); border: 1px solid rgba(191, 157, 97, 0.3); color: var(--light); border-radius: 4px;">
-
-                
             </div>
         </main>
     </div>
@@ -467,7 +463,7 @@ $current_page = 'dashboard';
             const printOutputBtn = document.getElementById('print-output-btn');
             const createCharacterBtn = document.getElementById('create-character-btn');
             
-           // Update user information in the dashboard
+            // Update user information in the dashboard
             firebase.auth().onAuthStateChanged((user) => {
                 if (user) {
                     // User is signed in
@@ -498,28 +494,17 @@ $current_page = 'dashboard';
                     
                     // Load user data
                     loadUserData(user.uid);
-                } else {
-                    // User is signed out, redirect to login
-                    console.log("Dashboard: User is not signed in, redirecting to login");
-                    window.location.href = '../index.php';
-                }
-            });
-                        
-                        // Add event listener to the logout button
-                        const logoutBtn = document.getElementById('logout-btn');
-                        if (logoutBtn) {
-                            logoutBtn.addEventListener('click', logoutUser);
-                        }
+                    
+                    // Add event listener to logout buttons
+                    const logoutBtn = document.getElementById('logout-btn');
+                    if (logoutBtn) {
+                        logoutBtn.addEventListener('click', logoutUser);
                     }
                     
-                    // Add event listener to top logout button
                     const logoutBtnTop = document.getElementById('logout-btn-top');
                     if (logoutBtnTop) {
                         logoutBtnTop.addEventListener('click', logoutUser);
                     }
-                    
-                    // Load user data
-                    loadUserData(user.uid);
                 } else {
                     // User is signed out, redirect to login
                     console.log("Dashboard: User is not signed in, redirecting to login");
@@ -908,43 +893,41 @@ $current_page = 'dashboard';
                     alert("Treasure generator coming soon!");
                 }
             };
+            
+            // Check for URL parameters to run generators on page load
+            const urlParams = new URLSearchParams(window.location.search);
+            const generator = urlParams.get('generator');
+            
+            if (generator) {
+                // Wait a moment for the page to fully load
+                setTimeout(() => {
+                    // Run the appropriate generator based on the URL parameter
+                    switch(generator) {
+                        case 'ship':
+                            window.Generators.generateShip();
+                            break;
+                        case 'loot':
+                            window.Generators.generateLoot();
+                            break;
+                        case 'dice':
+                            window.Generators.diceRoller();
+                            break;
+                        case 'npc':
+                            window.Generators.npcGenerator();
+                            break;
+                        case 'treasure':
+                            window.Generators.treasureGenerator();
+                            break;
+                    }
+                    
+                    // Clear the URL parameter to prevent re-running on refresh
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }, 500);
+            }
         });
-  
-        // Check for URL parameters to run generators on page load
-        const urlParams = new URLSearchParams(window.location.search);
-        const generator = urlParams.get('generator');
-        
-        if (generator) {
-            // Wait a moment for the page to fully load
-            setTimeout(() => {
-                // Run the appropriate generator based on the URL parameter
-                switch(generator) {
-                    case 'ship':
-                        window.Generators.generateShip();
-                        break;
-                    case 'loot':
-                        window.Generators.generateLoot();
-                        break;
-                    case 'dice':
-                        window.Generators.diceRoller();
-                        break;
-                    case 'npc':
-                        window.Generators.npcGenerator();
-                        break;
-                    case 'treasure':
-                        window.Generators.treasureGenerator();
-                        break;
-                }
-                
-                // Clear the URL parameter to prevent re-running on refresh
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }, 500);
-        }
-    
     </script>
 
-<!-- Game Log Script -->
-<script src="../js/game-log.js"></script>
-    
+    <!-- Game Log Script -->
+    <script src="../js/game-log.js"></script>
 </body>
 </html>
