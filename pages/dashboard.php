@@ -467,7 +467,7 @@ $current_page = 'dashboard';
             const printOutputBtn = document.getElementById('print-output-btn');
             const createCharacterBtn = document.getElementById('create-character-btn');
             
-            // Update user information in the dashboard
+           // Update user information in the dashboard
             firebase.auth().onAuthStateChanged((user) => {
                 if (user) {
                     // User is signed in
@@ -477,17 +477,33 @@ $current_page = 'dashboard';
                         userEmail.textContent = user.email;
                     }
                     
-                    // Update sidebar auth section
-                    const authSection = document.getElementById('auth-section');
-                    if (authSection) {
-                        authSection.innerHTML = `
-                            <div class="user-info">
-                                <div class="username">${user.email}</div>
-                            </div>
-                            <button id="logout-btn" class="sidebar-btn logout-btn">
-                                <i class="fas fa-sign-out-alt"></i> Logout
-                            </button>
-                        `;
+                    // Register user in database
+                    const formData = new FormData();
+                    formData.append('user_id', user.uid);
+                    formData.append('user_email', user.email);
+                    
+                    fetch('../api/register_user.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status !== 'success') {
+                            console.error("Error registering user:", data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error registering user:", error);
+                    });
+                    
+                    // Load user data
+                    loadUserData(user.uid);
+                } else {
+                    // User is signed out, redirect to login
+                    console.log("Dashboard: User is not signed in, redirecting to login");
+                    window.location.href = '../index.php';
+                }
+            });
                         
                         // Add event listener to the logout button
                         const logoutBtn = document.getElementById('logout-btn');
