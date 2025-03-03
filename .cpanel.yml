@@ -1,5 +1,5 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/theshfmb/public_html/
+    - export DEPLOYPATH=/home/theshfmb/dev.thesaltyparrot.com/
     - /bin/cp -R * $DEPLOYPATH
