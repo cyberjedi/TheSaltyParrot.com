@@ -926,5 +926,9 @@ $current_page = 'dashboard';
         }
     
     </script>
+
+<!-- Game Log Script -->
+<script src="../js/game-log.js"></script>
+    
 </body>
 </html>
