@@ -2,35 +2,36 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Possible config file locations with priority
-$possible_config_paths = [
-    $_SERVER['DOCUMENT_ROOT'] . '/../../private/secure_variables.php',
-    $_SERVER['DOCUMENT_ROOT'] . '/../private/secure_variables.php',
-    $_SERVER['DOCUMENT_ROOT'] . '/private/secure_variables.php',
-    dirname(__FILE__) . '/../../private/secure_variables.php'
-];
+// Define a single consistent path for the config file
+$config_path = $_SERVER['DOCUMENT_ROOT'] . '/../../private/secure_variables.php';
 
-// Find and load the config file
-$config = null;
-foreach ($possible_config_paths as $path) {
-    if (file_exists($path)) {
-        $config = require_once($path);
-        break;
+// Check if the config file exists
+if (!file_exists($config_path)) {
+    // If not, try one level up
+    $config_path = $_SERVER['DOCUMENT_ROOT'] . '/../private/secure_variables.php';
+    
+    // If that doesn't exist either, check in the current directory structure
+    if (!file_exists($config_path)) {
+        $config_path = dirname(__FILE__) . '/../../private/secure_variables.php';
+        
+        // If that still doesn't exist, we have a problem
+        if (!file_exists($config_path)) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Database configuration file not found',
+                'path_checked' => $config_path
+            ]);
+            die();
+        }
     }
 }
 
-// If no config file found, throw an error
-if ($config === null) {
-    header('Content-Type: application/json');
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Database configuration file not found',
-        'paths_checked' => $possible_config_paths
-    ]);
-    die();
-}
+// Load the configuration
+$config = require_once($config_path);
 
 try {
+    // Establish database connection
     $conn = new PDO("mysql:host={$config['host']};dbname={$config['dbname']}", 
                     $config['username'], $config['password']);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -57,7 +58,7 @@ try {
     // Detailed error handling
     $error_details = [
         'message' => $e->getMessage(),
-        'config_paths_tried' => $possible_config_paths,
+        'config_path' => $config_path,
         'config' => array_merge($config, ['password' => '***REDACTED***'])
     ];
     
