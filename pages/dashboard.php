@@ -226,7 +226,74 @@ $current_page = 'dashboard';
             padding: 0 15px;
             z-index: 1;
         }
-   
+
+        /* Game Log Styles */
+        .game-session-controls {
+            background-color: var(--dark);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(191, 157, 97, 0.3);
+        }
+        
+        .session-info {
+            margin-bottom: 10px;
+        }
+        
+        .session-info h4 {
+            color: var(--secondary);
+            margin: 0 0 5px 0;
+        }
+        
+        #session-code {
+            font-family: monospace;
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        
+        .log-entry {
+            margin-bottom: 15px;
+            padding: 10px 12px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            border-left: 3px solid var(--secondary);
+        }
+        
+        .log-entry .user {
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 2px;
+        }
+        
+        .log-entry .timestamp {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 5px;
+        }
+        
+        .log-entry .content {
+            word-break: break-word;
+        }
+        
+        .log-entry.system-entry {
+            background-color: rgba(191, 157, 97, 0.1);
+            border-left-color: rgba(191, 157, 97, 0.6);
+            font-style: italic;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        #custom-log-input {
+            width: 100%;
+            padding: 8px 12px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(191, 157, 97, 0.3);
+            color: var(--light);
+            border-radius: 4px;
+        }
+        
         /* For small screens, stack the grid */
         @media (max-width: 1200px) { /* Changed from 768px to 1200px */
             .dashboard-container {
@@ -343,13 +410,28 @@ $current_page = 'dashboard';
                             <button id="clear-log-btn" title="Clear Log"><i class="fas fa-trash"></i></button>
                         </div>
                     </h3>
-                    <div id="log-display">
-                        <p style="text-align: center; padding: 30px 0;">
-                            <i class="fas fa-scroll" style="font-size: 2rem; color: var(--secondary); opacity: 0.4; display: block; margin-bottom: 15px;"></i>
-                            Game logging coming soon!
-                        </p>
+            <button id="add-log-btn" class="btn btn-outline btn-sm">
+                            <i class="fas fa-plus"></i> Add
+                        </button>
                     </div>
                 </div>
+                
+                <!-- Log entries will appear here -->
+                <div id="log-display" style="max-height: 100%; overflow-y: auto;">
+                    <p style="text-align: center; padding: 30px 0;">
+                        <i class="fas fa-scroll" style="font-size: 2rem; color: var(--secondary); opacity: 0.4; display: block; margin-bottom: 15px;"></i>
+                        Game logging coming soon!
+                    </p>
+                </div>
+            </div>
+                    
+    <!-- Custom log entry input -->
+    <div id="log-controls" style="display: none; margin-bottom: 15px;">
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="custom-log-input" placeholder="Add to the ship's log..." 
+                   style="flex: 1; padding: 8px; background-color: rgba(0,0,0,0.2); border: 1px solid rgba(191, 157, 97, 0.3); color: var(--light); border-radius: 4px;">
+
+                
             </div>
         </main>
     </div>
