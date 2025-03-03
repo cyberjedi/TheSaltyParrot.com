@@ -311,6 +311,28 @@ $current_page = 'dashboard';
                         </div>
                     </div>
                 </div>
+
+<!-- Game Session Controls -->
+<div class="game-session-controls" style="margin-bottom: 20px;">
+    <div id="no-session" style="display: block;">
+        <button id="create-session-btn" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create Game Session
+        </button>
+        <button id="join-session-btn" class="btn btn-secondary">
+            <i class="fas fa-sign-in-alt"></i> Join Game Session
+        </button>
+    </div>
+    
+    <div id="active-session" style="display: none;">
+        <div class="session-info">
+            <h4 id="session-name">Session Name</h4>
+            <div id="session-code">Join Code: <span id="join-code">ABC123</span></div>
+        </div>
+        <button id="leave-session-btn" class="btn btn-outline btn-sm">
+            <i class="fas fa-sign-out-alt"></i> Leave Session
+        </button>
+    </div>
+</div>
                 
                 <!-- Game Log Box -->
                 <div class="game-log">
