@@ -69,6 +69,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             console.error("modal-content element not found");
                         }
                         
+                        // Also update the ship display section if this is selected as the active ship
+                        const updateShipDisplay = document.getElementById('ship-display');
+                        if (updateShipDisplay) {
+                            updateShipDisplay.innerHTML = shipHtml;
+                        }
+                        
                         // Log to console
                         console.log("Generated ship:", ship);
                     } else {
@@ -171,109 +177,3 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <div class="loot-roll">Roll: ${item.roll}</div>
                                         <div class="loot-name">${item.name}</div>
                                 `;
-                                
-                                // Add badges if applicable
-                                if (item.is_ancient_relic) {
-                                    lootHtml += `<span class="ancient-relic-badge">Ancient Relic</span>`;
-                                }
-                                
-                                if (item.is_thing_of_importance) {
-                                    lootHtml += `<span class="thing-of-importance-badge">Thing of Importance</span>`;
-                                }
-                                
-                                // Add description and category
-                                lootHtml += `
-                                        <div class="loot-description">${item.description}</div>
-                                        <div class="loot-category">Category: ${item.category}</div>
-                                    </div>
-                                `;
-                            });
-                        }
-                        
-                        // Update modal content
-                        const modalContent = document.getElementById('modal-content');
-                        if (modalContent) {
-                            modalContent.innerHTML = lootHtml;
-                        } else {
-                            console.error("modal-content element not found");
-                        }
-                        
-                        // Log to console
-                        console.log("Generated loot:", data);
-                    } else {
-                        // Handle error
-                        const modalContent = document.getElementById('modal-content');
-                        if (modalContent) {
-                            modalContent.innerHTML = `
-                                <div style="color: #dc3545; padding: 20px; text-align: center;">
-                                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 15px;"></i>
-                                    <p>Error generating loot: ${data.message}</p>
-                                </div>
-                            `;
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    
-                    // Show error in modal
-                    const modalContent = document.getElementById('modal-content');
-                    if (modalContent) {
-                        modalContent.innerHTML = `
-                            <div style="color: #dc3545; padding: 20px; text-align: center;">
-                                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 15px;"></i>
-                                <p>Error generating loot: ${error.message}</p>
-                                <p>Check the console for more details.</p>
-                            </div>
-                        `;
-                    }
-                });
-        },
-        
-        // Placeholder for future generators
-        diceRoller: function() {
-            if (window.GeneratorModal) {
-                window.GeneratorModal.open(
-                    "Dice Roller", 
-                    `<div style="text-align: center; padding: 30px;">
-                        <i class="fas fa-dice" style="font-size: 3rem; color: var(--secondary); margin-bottom: 15px;"></i>
-                        <p>Dice roller coming soon!</p>
-                    </div>`,
-                    null
-                );
-            } else {
-                alert("Dice roller coming soon!");
-            }
-        },
-        
-        npcGenerator: function() {
-            if (window.GeneratorModal) {
-                window.GeneratorModal.open(
-                    "NPC Generator", 
-                    `<div style="text-align: center; padding: 30px;">
-                        <i class="fas fa-user-friends" style="font-size: 3rem; color: var(--secondary); margin-bottom: 15px;"></i>
-                        <p>NPC generator coming soon!</p>
-                    </div>`,
-                    null
-                );
-            } else {
-                alert("NPC generator coming soon!");
-            }
-        },
-        
-        treasureGenerator: function() {
-            if (window.GeneratorModal) {
-                window.GeneratorModal.open(
-                    "Treasure Generator", 
-                    `<div style="text-align: center; padding: 30px;">
-                        <i class="fas fa-gem" style="font-size: 3rem; color: var(--secondary); margin-bottom: 15px;"></i>
-                        <p>Treasure generator coming soon!</p>
-                    </div>`,
-                    null
-                );
-            } else {
-                alert("Treasure generator coming soon!");
-            }
-        }
-    };
-});
