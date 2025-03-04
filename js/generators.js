@@ -4,6 +4,12 @@ document.addEventListener('DOMContentLoaded', function() {
     window.Generators = {
         // Ship Generator
         generateShip: function() {
+            // Check if modal exists before attempting to open it
+            if (!window.GeneratorModal) {
+                console.error("GeneratorModal is not defined. Make sure generator-modal.js is loaded.");
+                return;
+            }
+            
             // Show loading animation in modal
             window.GeneratorModal.open(
                 "Ship Generator", 
@@ -56,36 +62,53 @@ document.addEventListener('DOMContentLoaded', function() {
                         `;
                         
                         // Update modal content
-                        document.getElementById('modal-content').innerHTML = shipHtml;
+                        const modalContent = document.getElementById('modal-content');
+                        if (modalContent) {
+                            modalContent.innerHTML = shipHtml;
+                        } else {
+                            console.error("modal-content element not found");
+                        }
                         
                         // Log to console
                         console.log("Generated ship:", ship);
                     } else {
                         // Handle error
-                        document.getElementById('modal-content').innerHTML = `
-                            <div style="color: #dc3545; padding: 20px; text-align: center;">
-                                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 15px;"></i>
-                                <p>Error generating ship: ${data.message}</p>
-                            </div>
-                        `;
+                        const modalContent = document.getElementById('modal-content');
+                        if (modalContent) {
+                            modalContent.innerHTML = `
+                                <div style="color: #dc3545; padding: 20px; text-align: center;">
+                                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 15px;"></i>
+                                    <p>Error generating ship: ${data.message}</p>
+                                </div>
+                            `;
+                        }
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     
                     // Show error in modal
-                    document.getElementById('modal-content').innerHTML = `
-                        <div style="color: #dc3545; padding: 20px; text-align: center;">
-                            <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 15px;"></i>
-                            <p>Error generating ship: ${error.message}</p>
-                            <p>Check the console for more details.</p>
-                        </div>
-                    `;
+                    const modalContent = document.getElementById('modal-content');
+                    if (modalContent) {
+                        modalContent.innerHTML = `
+                            <div style="color: #dc3545; padding: 20px; text-align: center;">
+                                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 15px;"></i>
+                                <p>Error generating ship: ${error.message}</p>
+                                <p>Check the console for more details.</p>
+                            </div>
+                        `;
+                    }
                 });
         },
         
         // Loot Generator
         generateLoot: function() {
+            // Check if modal exists before attempting to open it
+            if (!window.GeneratorModal) {
+                console.error("GeneratorModal is not defined. Make sure generator-modal.js is loaded.");
+                return;
+            }
+            
             // Show loading animation in modal
             window.GeneratorModal.open(
                 "Loot Generator", 
@@ -168,66 +191,89 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         
                         // Update modal content
-                        document.getElementById('modal-content').innerHTML = lootHtml;
+                        const modalContent = document.getElementById('modal-content');
+                        if (modalContent) {
+                            modalContent.innerHTML = lootHtml;
+                        } else {
+                            console.error("modal-content element not found");
+                        }
                         
                         // Log to console
                         console.log("Generated loot:", data);
                     } else {
                         // Handle error
-                        document.getElementById('modal-content').innerHTML = `
-                            <div style="color: #dc3545; padding: 20px; text-align: center;">
-                                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 15px;"></i>
-                                <p>Error generating loot: ${data.message}</p>
-                            </div>
-                        `;
+                        const modalContent = document.getElementById('modal-content');
+                        if (modalContent) {
+                            modalContent.innerHTML = `
+                                <div style="color: #dc3545; padding: 20px; text-align: center;">
+                                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 15px;"></i>
+                                    <p>Error generating loot: ${data.message}</p>
+                                </div>
+                            `;
+                        }
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     
                     // Show error in modal
-                    document.getElementById('modal-content').innerHTML = `
-                        <div style="color: #dc3545; padding: 20px; text-align: center;">
-                            <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 15px;"></i>
-                            <p>Error generating loot: ${error.message}</p>
-                            <p>Check the console for more details.</p>
-                        </div>
-                    `;
+                    const modalContent = document.getElementById('modal-content');
+                    if (modalContent) {
+                        modalContent.innerHTML = `
+                            <div style="color: #dc3545; padding: 20px; text-align: center;">
+                                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 15px;"></i>
+                                <p>Error generating loot: ${error.message}</p>
+                                <p>Check the console for more details.</p>
+                            </div>
+                        `;
+                    }
                 });
         },
         
         // Placeholder for future generators
         diceRoller: function() {
-            window.GeneratorModal.open(
-                "Dice Roller", 
-                `<div style="text-align: center; padding: 30px;">
-                    <i class="fas fa-dice" style="font-size: 3rem; color: var(--secondary); margin-bottom: 15px;"></i>
-                    <p>Dice roller coming soon!</p>
-                </div>`,
-                null
-            );
+            if (window.GeneratorModal) {
+                window.GeneratorModal.open(
+                    "Dice Roller", 
+                    `<div style="text-align: center; padding: 30px;">
+                        <i class="fas fa-dice" style="font-size: 3rem; color: var(--secondary); margin-bottom: 15px;"></i>
+                        <p>Dice roller coming soon!</p>
+                    </div>`,
+                    null
+                );
+            } else {
+                alert("Dice roller coming soon!");
+            }
         },
         
         npcGenerator: function() {
-            window.GeneratorModal.open(
-                "NPC Generator", 
-                `<div style="text-align: center; padding: 30px;">
-                    <i class="fas fa-user-friends" style="font-size: 3rem; color: var(--secondary); margin-bottom: 15px;"></i>
-                    <p>NPC generator coming soon!</p>
-                </div>`,
-                null
-            );
+            if (window.GeneratorModal) {
+                window.GeneratorModal.open(
+                    "NPC Generator", 
+                    `<div style="text-align: center; padding: 30px;">
+                        <i class="fas fa-user-friends" style="font-size: 3rem; color: var(--secondary); margin-bottom: 15px;"></i>
+                        <p>NPC generator coming soon!</p>
+                    </div>`,
+                    null
+                );
+            } else {
+                alert("NPC generator coming soon!");
+            }
         },
         
         treasureGenerator: function() {
-            window.GeneratorModal.open(
-                "Treasure Generator", 
-                `<div style="text-align: center; padding: 30px;">
-                    <i class="fas fa-gem" style="font-size: 3rem; color: var(--secondary); margin-bottom: 15px;"></i>
-                    <p>Treasure generator coming soon!</p>
-                </div>`,
-                null
-            );
+            if (window.GeneratorModal) {
+                window.GeneratorModal.open(
+                    "Treasure Generator", 
+                    `<div style="text-align: center; padding: 30px;">
+                        <i class="fas fa-gem" style="font-size: 3rem; color: var(--secondary); margin-bottom: 15px;"></i>
+                        <p>Treasure generator coming soon!</p>
+                    </div>`,
+                    null
+                );
+            } else {
+                alert("Treasure generator coming soon!");
+            }
         }
     };
 });
