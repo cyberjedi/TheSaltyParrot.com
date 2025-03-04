@@ -30,6 +30,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let lastLogTimestamp = 0; // For polling
     let pollingInterval = null;
     
+    // Track displayed entries to prevent duplicates
+    let displayedEntryIds = new Set();
+    
     // Set userId and userEmail when user is authenticated
     firebase.auth().onAuthStateChanged((user) => {
         if (user) {
@@ -191,6 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function joinExistingSession(gameId, sessionName, joinCode) {
         currentGameId = gameId;
         lastLogTimestamp = 0;
+        displayedEntryIds = new Set(); // Reset the entry tracking set
         
         // Store in local storage
         localStorage.setItem('saltySessions_gameId', gameId);
@@ -229,6 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Clear session data
         currentGameId = null;
+        displayedEntryIds = new Set(); // Clear entry tracking
         
         // Reset log display
         logDisplay.innerHTML = `
@@ -286,38 +291,28 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
     
-    // Update log display - with fix for duplicate system messages
+    // Update log display with more robust deduplication
     function updateLogDisplay(entries) {
         // If this is the first update, clear the placeholder
         if (logDisplay.innerHTML.includes('fa-spinner') || logDisplay.innerHTML.includes('fa-scroll')) {
             logDisplay.innerHTML = '';
         }
         
-        // Track system messages to prevent duplicates
-        const systemMessages = new Set();
-        
-        // First get existing system messages to avoid duplicates
-        const existingEntries = logDisplay.querySelectorAll('.system-entry');
-        existingEntries.forEach(entry => {
-            const contentElement = entry.querySelector('.content');
-            if (contentElement) {
-                const timestampElement = entry.querySelector('.timestamp');
-                const timestamp = timestampElement ? timestampElement.textContent : '';
-                systemMessages.add(contentElement.textContent + '_' + timestamp);
-            }
-        });
-        
-        // Add each new entry, avoiding duplicates for system messages
+        // Add each new entry, avoiding duplicates by checking entry ID
         entries.forEach(entry => {
-            // For system entries, check if we've already displayed this exact message
-            if (entry.entry_type === 'system') {
-                const messageKey = entry.content.message + '_' + formatTimestamp(entry.timestamp);
-                if (systemMessages.has(messageKey)) {
-                    return; // Skip duplicate system message
-                }
-                systemMessages.add(messageKey);
+            // Skip if this entry ID has already been displayed
+            if (displayedEntryIds.has(entry.id)) {
+                return;
             }
             
+            // If no ID exists, create a unique identifier from the entry properties
+            const entryId = entry.id || 
+                            `${entry.entry_type}_${entry.user_id}_${entry.timestamp}_${JSON.stringify(entry.content)}`;
+            
+            // Add the entry ID to our tracking set
+            displayedEntryIds.add(entryId);
+            
+            // Create and append the entry HTML
             const entryHtml = createLogEntryHtml(entry);
             logDisplay.innerHTML += entryHtml;
         });
@@ -414,6 +409,10 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
+                // Add the new entry ID to our tracking set to prevent duplication
+                if (data.entry && data.entry.id) {
+                    displayedEntryIds.add(data.entry.id);
+                }
                 // The entry will be picked up by the polling
             } else {
                 console.error("Error adding log entry:", data.message);
@@ -462,6 +461,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             fetch('../api/add_log_entry.php', {
                                 method: 'POST',
                                 body: formData
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.status === 'success' && data.entry && data.entry.id) {
+                                    displayedEntryIds.add(data.entry.id);
+                                }
                             });
                         }
                     }
@@ -498,6 +503,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             fetch('../api/add_log_entry.php', {
                                 method: 'POST',
                                 body: formData
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.status === 'success' && data.entry && data.entry.id) {
+                                    displayedEntryIds.add(data.entry.id);
+                                }
                             });
                         }
                     }
