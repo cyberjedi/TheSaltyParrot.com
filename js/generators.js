@@ -61,18 +61,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         `;
                         
-                        // Update modal content
+                        // Update modal content only
                         const modalContent = document.getElementById('modal-content');
                         if (modalContent) {
                             modalContent.innerHTML = shipHtml;
                         } else {
                             console.error("modal-content element not found");
-                        }
-                        
-                        // Also update the ship display section if this is selected as the active ship
-                        const updateShipDisplay = document.getElementById('ship-display');
-                        if (updateShipDisplay) {
-                            updateShipDisplay.innerHTML = shipHtml;
                         }
                         
                         // Log to console
@@ -177,7 +171,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <div class="loot-roll">Roll: ${item.roll}</div>
                                         <div class="loot-name">${item.name}</div>
                                 `;
-                        // Add badges if applicable
+                                
+                                // Add badges if applicable
                                 if (item.is_ancient_relic) {
                                     lootHtml += `<span class="ancient-relic-badge">Ancient Relic</span>`;
                                 }
