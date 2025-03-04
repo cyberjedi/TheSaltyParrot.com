@@ -270,16 +270,20 @@ document.addEventListener('DOMContentLoaded', function() {
     function fetchGameLog() {
         if (!currentGameId) return;
         
+        console.log("Fetching game log entries after timestamp:", lastLogTimestamp);
+        
         fetch(`../api/get_game_log.php?game_id=${currentGameId}&after=${lastLogTimestamp}`)
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
+                    console.log("Received log entries:", data.entries);
                     if (data.entries && data.entries.length > 0) {
                         // Update the log display with new entries
                         updateLogDisplay(data.entries);
                         
                         // Update last timestamp
                         const lastEntry = data.entries[data.entries.length - 1];
+                        console.log("Setting last timestamp to:", lastEntry.timestamp);
                         lastLogTimestamp = lastEntry.timestamp;
                     }
                 } else {
@@ -291,30 +295,51 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
     
-    // Update log display with more robust deduplication
+    // Update log display with improved error handling
     function updateLogDisplay(entries) {
         // If this is the first update, clear the placeholder
         if (logDisplay.innerHTML.includes('fa-spinner') || logDisplay.innerHTML.includes('fa-scroll')) {
             logDisplay.innerHTML = '';
         }
         
-        // Add each new entry, avoiding duplicates by checking entry ID
+        console.log("Updating log display with", entries.length, "entries");
+        console.log("Currently tracked entry IDs:", [...displayedEntryIds]);
+        
+        // Add each new entry, with better handling for entries without IDs
         entries.forEach(entry => {
+            // Generate a consistent ID for entries that don't have one
+            const entryId = entry.id || 
+                          `${entry.entry_type}_${entry.user_id}_${entry.timestamp}_${typeof entry.content === 'string' ? entry.content : JSON.stringify(entry.content)}`;
+            
+            console.log("Processing entry:", entryId, entry);
+            
             // Skip if this entry ID has already been displayed
-            if (displayedEntryIds.has(entry.id)) {
+            if (displayedEntryIds.has(entryId)) {
+                console.log("Skipping duplicate entry:", entryId);
                 return;
             }
-            
-            // If no ID exists, create a unique identifier from the entry properties
-            const entryId = entry.id || 
-                            `${entry.entry_type}_${entry.user_id}_${entry.timestamp}_${JSON.stringify(entry.content)}`;
             
             // Add the entry ID to our tracking set
             displayedEntryIds.add(entryId);
             
+            // Handle cases where content might be a string instead of an object
+            if (typeof entry.content === 'string') {
+                try {
+                    entry.content = JSON.parse(entry.content);
+                    console.log("Parsed content string to object:", entry.content);
+                } catch (e) {
+                    console.log("Content is not JSON, using as is");
+                }
+            }
+            
             // Create and append the entry HTML
-            const entryHtml = createLogEntryHtml(entry);
-            logDisplay.innerHTML += entryHtml;
+            try {
+                const entryHtml = createLogEntryHtml(entry);
+                logDisplay.innerHTML += entryHtml;
+                console.log("Added entry to log display");
+            } catch (error) {
+                console.error("Error creating log entry HTML:", error, entry);
+            }
         });
         
         // Scroll to bottom
@@ -326,14 +351,28 @@ document.addEventListener('DOMContentLoaded', function() {
         let entryHtml = '';
         const timestamp = formatTimestamp(entry.timestamp);
         const userEmail = entry.user_email || 'Anonymous Pirate';
-        const content = entry.content;
+        
+        // Handle different content formats
+        let content;
+        try {
+            if (typeof entry.content === 'string') {
+                content = JSON.parse(entry.content);
+            } else {
+                content = entry.content;
+            }
+        } catch (e) {
+            console.error("Error parsing content:", e);
+            content = { message: "Error displaying content" };
+        }
+        
+        console.log("Creating HTML for entry type:", entry.entry_type, "with content:", content);
         
         switch(entry.entry_type) {
             case 'system':
                 entryHtml = `
                     <div class="log-entry system-entry">
                         <div class="timestamp">${timestamp}</div>
-                        <div class="content">${content.message}</div>
+                        <div class="content">${content.message || "System message"}</div>
                     </div>
                 `;
                 break;
@@ -343,7 +382,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="log-entry">
                         <div class="user">${userEmail}</div>
                         <div class="timestamp">${timestamp}</div>
-                        <div class="content">Generated a new ship: <strong>${content.ship_name}</strong></div>
+                        <div class="content">Generated a new ship: <strong>${content.ship_name || "Unknown ship"}</strong></div>
                     </div>
                 `;
                 break;
@@ -353,7 +392,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="log-entry">
                         <div class="user">${userEmail}</div>
                         <div class="timestamp">${timestamp}</div>
-                        <div class="content">Found treasure: <strong>${content.name}</strong></div>
+                        <div class="content">Found treasure: <strong>${content.name || "Unknown treasure"}</strong></div>
                     </div>
                 `;
                 break;
@@ -363,17 +402,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="log-entry">
                         <div class="user">${userEmail}</div>
                         <div class="timestamp">${timestamp}</div>
-                        <div class="content">${content.message}</div>
+                        <div class="content">${content.message || "Custom message"}</div>
                     </div>
                 `;
                 break;
                 
             default:
+                const contentText = typeof content === 'object' ? JSON.stringify(content) : content;
                 entryHtml = `
                     <div class="log-entry">
                         <div class="user">${userEmail}</div>
                         <div class="timestamp">${timestamp}</div>
-                        <div class="content">${JSON.stringify(content)}</div>
+                        <div class="content">${contentText}</div>
                     </div>
                 `;
         }
@@ -412,8 +452,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Add the new entry ID to our tracking set to prevent duplication
                 if (data.entry && data.entry.id) {
                     displayedEntryIds.add(data.entry.id);
+                    
+                    // Immediately add the entry to the log
+                    const entry = data.entry;
+                    
+                    // Handle content format conversion
+                    if (typeof entry.content === 'string') {
+                        try {
+                            entry.content = JSON.parse(entry.content);
+                        } catch (e) {
+                            console.error("Error parsing content:", e);
+                        }
+                    }
+                    
+                    const entryHtml = createLogEntryHtml(entry);
+                    logDisplay.innerHTML += entryHtml;
+                    logDisplay.scrollTop = logDisplay.scrollHeight;
                 }
-                // The entry will be picked up by the polling
             } else {
                 console.error("Error adding log entry:", data.message);
                 alert("Failed to add log entry: " + data.message);
