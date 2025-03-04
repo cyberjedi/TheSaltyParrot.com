@@ -11,6 +11,16 @@ $current_page = 'dashboard';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/dashboard.css">
+    <style>
+        /* Additional specific styles to ensure ship-box matches other boxes */
+        .ship-box {
+            background-color: var(--dark);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid rgba(191, 157, 97, 0.3);
+            overflow: auto;
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
