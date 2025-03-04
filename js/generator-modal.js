@@ -1,5 +1,7 @@
 // generator-modal.js
 document.addEventListener('DOMContentLoaded', function() {
+    console.log("Generator modal script loaded");
+    
     // Modal elements
     const modal = document.getElementById('generator-modal');
     const closeModalBtn = document.querySelector('.close-modal');
@@ -9,6 +11,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const copyBtn = document.getElementById('copy-to-clipboard-btn');
     const printBtn = document.getElementById('print-result-btn');
     const sendToLogBtn = document.getElementById('send-to-log-btn');
+    
+    // Check if modal elements exist
+    if (!modal) {
+        console.error("Modal element not found!");
+        return;
+    }
     
     // Current generator function
     let currentGenerator = null;
@@ -174,6 +182,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            // Get user credentials from global variables
+            if (typeof currentUserId === 'undefined' || typeof currentUserEmail === 'undefined') {
+                console.error("User credentials not available");
+                alert("You need to be logged in to send content to the log!");
+                return;
+            }
+            
             // Determine what type of content we're sending
             let entryType = 'custom';
             let contentData = {};
@@ -241,17 +256,31 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to open modal with content
     function openGeneratorModal(title, content, generatorFunction) {
+        console.log("Opening modal with title:", title);
+        
+        if (!modalTitle || !modalContent) {
+            console.error("Modal elements not found");
+            return;
+        }
+        
         modalTitle.textContent = title;
         modalContent.innerHTML = content;
         currentGenerator = generatorFunction;
-        modal.style.display = 'block';
-        document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
+        
+        if (modal) {
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
+        } else {
+            console.error("Modal element not found");
+        }
     }
     
     // Function to close modal
     function closeModal() {
-        modal.style.display = 'none';
-        document.body.style.overflow = ''; // Restore scrolling
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = ''; // Restore scrolling
+        }
     }
     
     // Make functions available globally
@@ -259,4 +288,6 @@ document.addEventListener('DOMContentLoaded', function() {
         open: openGeneratorModal,
         close: closeModal
     };
+    
+    console.log("Generator modal system initialized");
 });
