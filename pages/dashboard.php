@@ -190,6 +190,6 @@ $current_page = 'dashboard';
     <script src="../js/firebase-config.js"></script>
     <script src="../js/dashboard.js"></script>
     <script src="../js/game-session.js"></script>
+    <script src="../js/generator-modal.js"></script>
     <script src="../js/generators.js"></script>
-</body>
-</html>
+</div>
