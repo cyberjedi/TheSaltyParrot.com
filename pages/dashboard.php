@@ -192,17 +192,5 @@ $current_page = 'dashboard';
     <script src="../js/generators.js"></script>
     <script src="../js/dashboard.js"></script>
     <script src="../js/game-session.js"></script>
-    
-    <!-- Custom script to handle the select ship button -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const selectShipBtn = document.getElementById('select-ship-btn');
-            if (selectShipBtn) {
-                selectShipBtn.addEventListener('click', function() {
-                    alert("Ship selection coming soon!");
-                });
-            }
-        });
-    </script>
 </body>
 </html>
