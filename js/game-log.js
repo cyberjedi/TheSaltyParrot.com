@@ -261,30 +261,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Fetch game log entries
-    function fetchGameLog() {
-        if (!currentGameId) return;
-        
-        fetch(`../api/get_game_log.php?game_id=${currentGameId}&after=${lastLogTimestamp}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    if (data.entries && data.entries.length > 0) {
-                        // Update the log display with new entries
-                        updateLogDisplay(data.entries);
-                        
-                        // Update last timestamp
-                        const lastEntry = data.entries[data.entries.length - 1];
-                        lastLogTimestamp = lastEntry.timestamp;
-                    }
-                } else {
-                    console.error("Error fetching game log:", data.message);
+// Fetch game log entries
+function fetchGameLog() {
+    if (!currentGameId) return;
+    
+    fetch(`../api/get_game_log.php?game_id=${currentGameId}&after=${lastLogTimestamp}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                if (data.entries && data.entries.length > 0) {
+                    // Update the log display with new entries
+                    updateLogDisplay(data.entries);
+                    
+                    // Update last timestamp
+                    const lastEntry = data.entries[data.entries.length - 1];
+                    lastLogTimestamp = lastEntry.timestamp;
                 }
-            })
-            .catch(error => {
-                console.error("Error fetching game log:", error);
-            });
-    }
+            } else {
+                console.error("Error fetching game log:", data.message);
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching game log:", error);
+        });
+}
     
     // Update the log display with new entries
     function updateLogDisplay(entries) {
