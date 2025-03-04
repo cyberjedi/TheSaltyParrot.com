@@ -561,96 +561,94 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Connect game generators to the game log
+    // UPDATED: Connect game generators to the game log with the new modal system
     function connectGeneratorsToGameLog() {
-        if (!window.Generators || !currentGameId) return;
+        // With the new modal system, we don't need to override the generator functions
+        // The "Send to Log" button in the modal handles sending the content to the game log
         
-        // Store original functions
-        const originalGenerateShip = window.Generators.generateShip;
-        const originalGenerateLoot = window.Generators.generateLoot;
+        // Instead, we'll just make sure the send-to-log button is properly connected
+        const sendToLogBtn = document.getElementById('send-to-log-btn');
+        if (sendToLogBtn) {
+            // The button event is handled in generator-modal.js
+            console.log("Generator to game log connection ready");
+        }
         
-        // Override ship generator to add log entries
-        window.Generators.generateShip = function() {
-            // Call original function
-            originalGenerateShip.apply(this, arguments);
-            
-            // Wait for ship data
-            const checkForShipInterval = setInterval(() => {
-                const shipNameElement = document.getElementById('ship-name');
-                if (shipNameElement) {
-                    clearInterval(checkForShipInterval);
-                    
-                    // Ship was generated, add log entry
-                    if (currentGameId) {
-                        const shipName = shipNameElement.textContent;
-                        
-                        // Create form data
-                        const formData = new FormData();
-                        formData.append('game_id', currentGameId);
-                        formData.append('user_id', currentUserId);
-                        formData.append('user_email', currentUserEmail);
-                        formData.append('entry_type', 'ship_generation');
-                        formData.append('content', JSON.stringify({
-                            ship_name: shipName,
-                            timestamp: Math.floor(Date.now() / 1000)
-                        }));
-                        
-                        // Make API request
-                        fetch('../api/add_log_entry.php', {
-                            method: 'POST',
-                            body: formData
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.status === 'success' && data.entry && data.entry.id) {
-                                displayedEntryIds.add(data.entry.id);
-                            }
-                        });
-                    }
+        // If we need to do any special connection for new generators, we'd add it here
+        
+        // We'll leave this function in place for backward compatibility and future enhancements
+    }
+
+    // Clear log button
+    const clearLogBtn = document.getElementById('clear-log-btn');
+    
+    if (clearLogBtn) {
+        clearLogBtn.addEventListener('click', function() {
+            const logDisplay = document.getElementById('log-display');
+            if (logDisplay) {
+                // Confirm before clearing
+                if (confirm("Are you sure you want to clear the game log? This will affect everyone in the crew.")) {
+                    logDisplay.innerHTML = `
+                        <p style="text-align: center; padding: 30px 0;">
+                            <i class="fas fa-scroll" style="font-size: 2rem; color: var(--secondary); opacity: 0.4; display: block; margin-bottom: 15px;"></i>
+                            Game log cleared
+                        </p>
+                    `;
+                    // Reset entry tracking
+                    displayedEntryIds = new Set();
                 }
-            }, 500);
-        };
-        
-        // Override loot generator to add log entries
-        window.Generators.generateLoot = function() {
-            // Call original function
-            originalGenerateLoot.apply(this, arguments);
-            
-            // Wait for loot data
-            const checkForLootInterval = setInterval(() => {
-                const lootCards = document.querySelectorAll('.loot-name');
-                if (lootCards.length > 0) {
-                    clearInterval(checkForLootInterval);
-                    
-                    // Loot was generated, add log entry
-                    if (currentGameId) {
-                        const lootName = lootCards[0].textContent;
-                        
-                        // Create form data
-                        const formData = new FormData();
-                        formData.append('game_id', currentGameId);
-                        formData.append('user_id', currentUserId);
-                        formData.append('user_email', currentUserEmail);
-                        formData.append('entry_type', 'loot_generation');
-                        formData.append('content', JSON.stringify({
-                            name: lootName,
-                            timestamp: Math.floor(Date.now() / 1000)
-                        }));
-                        
-                        // Make API request
-                        fetch('../api/add_log_entry.php', {
-                            method: 'POST',
-                            body: formData
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.status === 'success' && data.entry && data.entry.id) {
-                                displayedEntryIds.add(data.entry.id);
-                            }
-                        });
-                    }
-                }
-            }, 500);
-        };
+            }
+        });
+    }
+    
+    // Save log button
+    const saveLogBtn = document.getElementById('save-log-btn');
+    
+    if (saveLogBtn) {
+        saveLogBtn.addEventListener('click', function() {
+            const logDisplay = document.getElementById('log-display');
+            if (logDisplay) {
+                // Create a download link
+                const logContent = logDisplay.innerHTML;
+                const blob = new Blob([logContent], {type: 'text/html'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                
+                // Generate a filename with date
+                const now = new Date();
+                const filename = `salty-parrot-log-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.html`;
+                
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                
+                // Clean up
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 0);
+            }
+        });
+    }
+
+    // NEW: Initialize the ship box features
+    const selectShipBtn = document.getElementById('select-ship-btn');
+    
+    if (selectShipBtn) {
+        selectShipBtn.addEventListener('click', function() {
+            // For now, just run the ship generator
+            if (window.Generators && window.Generators.generateShip) {
+                window.Generators.generateShip();
+            }
+        });
+    }
+    
+    // Hook into the edit-ship-btn if present 
+    const editShipBtn = document.getElementById('edit-ship-btn');
+    
+    if (editShipBtn) {
+        editShipBtn.addEventListener('click', function() {
+            alert("Ship editor coming soon!");
+        });
     }
 });
