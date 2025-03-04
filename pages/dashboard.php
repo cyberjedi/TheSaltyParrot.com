@@ -98,19 +98,22 @@ $current_page = 'dashboard';
                     </div>
                 </div>
                 
-                <!-- Output Box for Generated Content -->
-                <div class="output-box">
+                <!-- My Ship Box - replacing Output Box -->
+                <div class="ship-box">
                     <h3 class="box-title">
-                        Generator Output
+                        My Ship
                         <div class="actions">
-                            <button id="print-output-btn" title="Print Output"><i class="fas fa-print"></i></button>
-                            <button id="clear-output-btn" title="Clear Output"><i class="fas fa-trash"></i></button>
+                            <button id="edit-ship-btn" title="Edit Ship"><i class="fas fa-edit"></i></button>
+                            <button id="ship-menu-btn" title="Ship Menu"><i class="fas fa-ellipsis-v"></i></button>
                         </div>
                     </h3>
-                    <div id="output-display">
-                        <div class="output-placeholder">
-                            <i class="fas fa-dice"></i>
-                            <p>Use the sidebar tools to generate content<br>Results will appear here</p>
+                    <div id="ship-display">
+                        <div class="no-ship">
+                            <i class="fas fa-ship"></i>
+                            <p>No active ship selected</p>
+                            <button class="btn btn-outline" id="select-ship-btn">
+                                <i class="fas fa-plus"></i> Select Ship
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -145,6 +148,33 @@ $current_page = 'dashboard';
                 </div>
             </div>
         </main>
+    </div>
+    
+    <!-- Generator Modal - New Popup for generators -->
+    <div id="generator-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Generator Results</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body" id="modal-content">
+                <!-- Generated content will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button id="regenerate-btn" class="btn btn-primary">
+                    <i class="fas fa-redo"></i> Regenerate
+                </button>
+                <button id="copy-to-clipboard-btn" class="btn btn-secondary">
+                    <i class="fas fa-copy"></i> Copy
+                </button>
+                <button id="print-result-btn" class="btn btn-secondary">
+                    <i class="fas fa-print"></i> Print
+                </button>
+                <button id="send-to-log-btn" class="btn btn-secondary">
+                    <i class="fas fa-comment"></i> Send to Log
+                </button>
+            </div>
+        </div>
     </div>
     
     <footer>
