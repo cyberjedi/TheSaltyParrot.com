@@ -261,46 +261,70 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-// Fetch game log entries
-function fetchGameLog() {
-    if (!currentGameId) return;
-    
-    fetch(`../api/get_game_log.php?game_id=${currentGameId}&after=${lastLogTimestamp}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                if (data.entries && data.entries.length > 0) {
-                    // Update the log display with new entries
-                    updateLogDisplay(data.entries);
-                    
-                    // Update last timestamp
-                    const lastEntry = data.entries[data.entries.length - 1];
-                    lastLogTimestamp = lastEntry.timestamp;
+    // Fetch game log entries
+    function fetchGameLog() {
+        if (!currentGameId) return;
+        
+        fetch(`../api/get_game_log.php?game_id=${currentGameId}&after=${lastLogTimestamp}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (data.entries && data.entries.length > 0) {
+                        // Update the log display with new entries
+                        updateLogDisplay(data.entries);
+                        
+                        // Update last timestamp
+                        const lastEntry = data.entries[data.entries.length - 1];
+                        lastLogTimestamp = lastEntry.timestamp;
+                    }
+                } else {
+                    console.error("Error fetching game log:", data.message);
                 }
-            } else {
-                console.error("Error fetching game log:", data.message);
-            }
-        })
-        .catch(error => {
-            console.error("Error fetching game log:", error);
-        });
-}
-    
-    function updateLogDisplay(entries) {
-    // If this is the first update, clear the placeholder
-    if (logDisplay.innerHTML.includes('fa-spinner') || logDisplay.innerHTML.includes('fa-scroll')) {
-        logDisplay.innerHTML = '';
+            })
+            .catch(error => {
+                console.error("Error fetching game log:", error);
+            });
     }
     
-    // Add each new entry
-    entries.forEach(entry => {
-        const entryHtml = createLogEntryHtml(entry);
-        logDisplay.innerHTML += entryHtml;
-    });
-    
-    // Scroll to bottom
-    logDisplay.scrollTop = logDisplay.scrollHeight;
-}
+    // Update log display - with fix for duplicate system messages
+    function updateLogDisplay(entries) {
+        // If this is the first update, clear the placeholder
+        if (logDisplay.innerHTML.includes('fa-spinner') || logDisplay.innerHTML.includes('fa-scroll')) {
+            logDisplay.innerHTML = '';
+        }
+        
+        // Track system messages to prevent duplicates
+        const systemMessages = new Set();
+        
+        // First get existing system messages to avoid duplicates
+        const existingEntries = logDisplay.querySelectorAll('.system-entry');
+        existingEntries.forEach(entry => {
+            const contentElement = entry.querySelector('.content');
+            if (contentElement) {
+                const timestampElement = entry.querySelector('.timestamp');
+                const timestamp = timestampElement ? timestampElement.textContent : '';
+                systemMessages.add(contentElement.textContent + '_' + timestamp);
+            }
+        });
+        
+        // Add each new entry, avoiding duplicates for system messages
+        entries.forEach(entry => {
+            // For system entries, check if we've already displayed this exact message
+            if (entry.entry_type === 'system') {
+                const messageKey = entry.content.message + '_' + formatTimestamp(entry.timestamp);
+                if (systemMessages.has(messageKey)) {
+                    return; // Skip duplicate system message
+                }
+                systemMessages.add(messageKey);
+            }
+            
+            const entryHtml = createLogEntryHtml(entry);
+            logDisplay.innerHTML += entryHtml;
+        });
+        
+        // Scroll to bottom
+        logDisplay.scrollTop = logDisplay.scrollHeight;
+    }
     
     // Create HTML for a log entry
     function createLogEntryHtml(entry) {
