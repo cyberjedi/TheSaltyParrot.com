@@ -192,6 +192,5 @@ $current_page = 'dashboard';
     <script src="../js/generators.js"></script>
     <script src="../js/dashboard.js"></script>
     <script src="../js/game-session.js"></script>
-</div>
 </body>
 </html>
