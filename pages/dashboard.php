@@ -192,5 +192,17 @@ $current_page = 'dashboard';
     <script src="../js/generators.js"></script>
     <script src="../js/dashboard.js"></script>
     <script src="../js/game-session.js"></script>
+    
+    <script>
+        // Add event listener for the select-ship-btn directly in this file
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectShipBtn = document.getElementById('select-ship-btn');
+            if (selectShipBtn) {
+                selectShipBtn.addEventListener('click', function() {
+                    alert("Ship selection coming soon!");
+                });
+            }
+        });
+    </script>
 </body>
 </html>
