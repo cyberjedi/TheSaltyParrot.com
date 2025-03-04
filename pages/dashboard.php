@@ -186,10 +186,12 @@ $current_page = 'dashboard';
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     
-    <!-- Core JS -->
+    <!-- Core JS - Note the specific order! -->
     <script src="../js/firebase-config.js"></script>
-    <script src="../js/dashboard.js"></script>
-    <script src="../js/game-session.js"></script>
     <script src="../js/generator-modal.js"></script>
     <script src="../js/generators.js"></script>
+    <script src="../js/dashboard.js"></script>
+    <script src="../js/game-session.js"></script>
 </div>
+</body>
+</html>
