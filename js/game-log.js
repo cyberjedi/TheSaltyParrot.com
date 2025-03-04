@@ -286,25 +286,21 @@ function fetchGameLog() {
         });
 }
     
-    // Update the log display with new entries
     function updateLogDisplay(entries) {
-        let isFirstUpdate = false;
-        
-        // If this is the first update, clear placeholder
-        if (logDisplay.querySelector('.fas-scroll') || logDisplay.querySelector('.fa-spinner')) {
-            logDisplay.innerHTML = '';
-            isFirstUpdate = true;
-        }
-        
-        // Add each new entry
-        entries.forEach(entry => {
-            const entryHtml = createLogEntryHtml(entry);
-            logDisplay.innerHTML += entryHtml;
-        });
-        
-        // Scroll to bottom
-        logDisplay.scrollTop = logDisplay.scrollHeight;
+    // If this is the first update, clear the placeholder
+    if (logDisplay.innerHTML.includes('fa-spinner') || logDisplay.innerHTML.includes('fa-scroll')) {
+        logDisplay.innerHTML = '';
     }
+    
+    // Add each new entry
+    entries.forEach(entry => {
+        const entryHtml = createLogEntryHtml(entry);
+        logDisplay.innerHTML += entryHtml;
+    });
+    
+    // Scroll to bottom
+    logDisplay.scrollTop = logDisplay.scrollHeight;
+}
     
     // Create HTML for a log entry
     function createLogEntryHtml(entry) {
