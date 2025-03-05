@@ -11,7 +11,7 @@ $base_path = getBasePath();
 
 <aside class="sidebar">
     <div class="sidebar-header">
-        <i class="fas fa-skull-crossbones"></i>
+        <img src="<?php echo $base_path; ?>assets/TSP_Logo_3inch.svg" alt="The Salty Parrot" height="40">
         <h2>The Salty Parrot</h2>
     </div>
     
