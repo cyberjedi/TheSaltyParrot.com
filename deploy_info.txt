@@ -1,0 +1,15 @@
+# PRODUCTION ENVIRONMENT CONFIG  
+# Copy this into .cpanel.yml for main branch
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/theshfmb/public_html/
+    - /bin/cp -R * $DEPLOYPATH
+
+# DEV ENVIRONMENT CONFIG
+# Copy this into .cpanel.yml for dev branch
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/theshfmb/dev.thesaltyparrot.com/
+    - /bin/cp -R * $DEPLOYPATH
