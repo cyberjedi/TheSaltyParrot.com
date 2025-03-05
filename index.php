@@ -21,7 +21,7 @@ $current_page = 'dashboard';
         <main class="main-content">
             <div class="dashboard-header">
                 <div class="logo">
-                    <img src="assets/TSP_Logo_3inch.svg" alt="The Salty Parrot Logo" height="50">
+                    <i class="fas fa-skull-crossbones"></i>
                     <h1>The Salty Parrot</h1>
                 </div>
                 <div class="tagline">
@@ -39,18 +39,17 @@ $current_page = 'dashboard';
                             <button id="character-menu-btn" title="Character Menu"><i class="fas fa-ellipsis-v"></i></button>
                         </div>
                     </h3>
-                    <div id="character-display">
-                        <div class="no-character">
-                            <i class="fas fa-user-slash"></i>
-                            <p>No active character selected</p>
-                            <button class="btn btn-outline" id="create-character-btn">
-                                <i class="fas fa-plus"></i> Create Character
-                            </button>
-                        </div>
+                    
+                    <div id="character-display" style="text-align: center; padding: 30px 0;">
+                        <i class="fas fa-user-slash" style="font-size: 3rem; color: #bf9d61; opacity: 0.4; display: block; margin-bottom: 15px;"></i>
+                        <p>No active character selected</p>
+                        <button class="btn btn-outline" id="create-character-btn" style="margin-top: 15px; background-color: transparent; color: #bf9d61; border: 1px solid #bf9d61; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                            <i class="fas fa-plus"></i> Create Character
+                        </button>
                     </div>
                 </div>
                 
-                <!-- Output Box for Generated Content -->
+                <!-- Ship Display Box (Bottom Left) -->
                 <div class="output-box">
                     <h3 class="box-title">
                         Generator Output
@@ -59,15 +58,14 @@ $current_page = 'dashboard';
                             <button id="clear-output-btn" title="Clear Output"><i class="fas fa-trash"></i></button>
                         </div>
                     </h3>
-                    <div id="output-display">
-                        <div class="output-placeholder">
-                            <i class="fas fa-dice"></i>
-                            <p>Use the sidebar tools to generate content<br>Results will appear here</p>
-                        </div>
+                    
+                    <div id="output-display" style="text-align: center; padding: 30px 0;">
+                        <i class="fas fa-dice" style="font-size: 3rem; color: #bf9d61; opacity: 0.4; display: block; margin-bottom: 15px;"></i>
+                        <p>Use the sidebar tools to generate content<br>Results will appear here</p>
                     </div>
                 </div>
                 
-                <!-- Game Log Box -->
+                <!-- Game Log Box (Right Side) -->
                 <div class="game-log">
                     <h3 class="box-title">
                         Game Log
@@ -76,11 +74,10 @@ $current_page = 'dashboard';
                             <button id="clear-log-btn" title="Clear Log"><i class="fas fa-trash"></i></button>
                         </div>
                     </h3>
-                    <div id="log-display">
-                        <p style="text-align: center; padding: 30px 0;">
-                            <i class="fas fa-scroll" style="font-size: 2rem; color: var(--secondary); opacity: 0.4; display: block; margin-bottom: 15px;"></i>
-                            Game logging coming soon!
-                        </p>
+                    
+                    <div id="log-display" style="text-align: center; padding: 30px 0;">
+                        <i class="fas fa-scroll" style="font-size: 3rem; color: #bf9d61; opacity: 0.4; display: block; margin-bottom: 15px;"></i>
+                        <p>Game events will appear here once you join a crew</p>
                     </div>
                 </div>
             </div>
@@ -105,8 +102,8 @@ $current_page = 'dashboard';
             if (clearOutputBtn) {
                 clearOutputBtn.addEventListener('click', function() {
                     outputDisplay.innerHTML = `
-                        <div class="output-placeholder">
-                            <i class="fas fa-dice"></i>
+                        <div style="text-align: center; padding: 30px 0;">
+                            <i class="fas fa-dice" style="font-size: 3rem; color: #bf9d61; opacity: 0.4; display: block; margin-bottom: 15px;"></i>
                             <p>Use the sidebar tools to generate content<br>Results will appear here</p>
                         </div>
                     `;
@@ -225,10 +222,6 @@ $current_page = 'dashboard';
                                     background-color: white;
                                     padding: 0 15px;
                                     z-index: 1;
-                                }
-                                
-                                .output-placeholder {
-                                    display: none;
                                 }
                             </style>
                         </head>
