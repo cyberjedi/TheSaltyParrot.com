@@ -12,18 +12,39 @@ $current_page = 'dashboard';
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <style>
-        /* Additional styles to ensure boxes appear correctly */
+        /* Updated styles for the new layout */
         .dashboard-container {
             display: grid;
             grid-template-columns: 1fr 600px; 
-            grid-template-rows: auto 1fr;
+            grid-template-rows: auto auto 1fr;
             gap: 20px;
             height: calc(100vh - 180px);
         }
 
+        .discord-box {
+            grid-column: 1 / span 2;
+            grid-row: 1;
+            background-color: var(--dark);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid rgba(191, 157, 97, 0.3);
+            overflow: auto;
+        }
+
         .character-box {
             grid-column: 1;
-            grid-row: 1;
+            grid-row: 2;
+            background-color: var(--dark);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid rgba(191, 157, 97, 0.3);
+            overflow: auto;
+            min-height: 250px;
+        }
+
+        .ship-box {
+            grid-column: 1;
+            grid-row: 3;
             background-color: var(--dark);
             border-radius: 8px;
             padding: 20px;
@@ -33,19 +54,8 @@ $current_page = 'dashboard';
         }
 
         .output-box {
-            grid-column: 1;
-            grid-row: 2;
-            background-color: var(--dark);
-            border-radius: 8px;
-            padding: 20px;
-            border: 1px solid rgba(191, 157, 97, 0.3);
-            overflow: auto;
-            max-height: 100%;
-        }
-
-        .game-log {
             grid-column: 2;
-            grid-row: 1 / span 2;
+            grid-row: 2 / span 2;
             background-color: var(--dark);
             border-radius: 8px;
             padding: 20px;
@@ -84,6 +94,86 @@ $current_page = 'dashboard';
         .box-title .actions button:hover {
             opacity: 1;
         }
+
+        /* Improved styling for output content */
+        #output-display h2 {
+            margin-top: 0;
+            color: var(--secondary);
+            text-align: left;
+        }
+
+        .ship-details p, .loot-description {
+            text-align: left;
+            margin-bottom: 10px;
+        }
+
+        .ship-details h3 {
+            text-align: left;
+            color: var(--secondary);
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        #cargo-list {
+            text-align: left;
+            list-style-type: none;
+            padding-left: 0;
+            margin-left: 0;
+        }
+
+        #cargo-list li {
+            margin-bottom: 10px;
+            position: relative;
+            padding-left: 25px;
+            display: block;
+        }
+
+        #cargo-list li:before {
+            content: '•';
+            color: var(--secondary);
+            position: absolute;
+            left: 5px;
+            top: 0;
+            font-size: 1.2em;
+        }
+
+        .loot-card {
+            text-align: left;
+        }
+
+        .loot-roll, .loot-name {
+            text-align: left;
+        }
+
+        /* Small screens adjustment */
+        @media (max-width: 1200px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto auto;
+                height: auto;
+            }
+            
+            .discord-box {
+                grid-column: 1;
+                grid-row: 1;
+            }
+            
+            .character-box {
+                grid-column: 1;
+                grid-row: 2;
+            }
+            
+            .ship-box {
+                grid-column: 1;
+                grid-row: 3;
+            }
+            
+            .output-box {
+                grid-column: 1;
+                grid-row: 4;
+                height: 500px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -93,17 +183,17 @@ $current_page = 'dashboard';
         
         <!-- Main Content Area -->
         <main class="main-content">
-            <div class="dashboard-header">
-                <div class="logo">
-                    <i class="fas fa-skull-crossbones"></i>
-                    <h1>The Salty Parrot</h1>
-                </div>
-                <div class="tagline">
-                    <p>A Pirate Borg Toolbox</p>
-                </div>
-            </div>
-            
             <div class="dashboard-container">
+                <!-- Discord Connection Box -->
+                <div class="discord-box">
+                    <h3 class="box-title">Discord Connection</h3>
+                    
+                    <div id="discord-status" style="text-align: center; padding: 15px 0;">
+                        <i class="fab fa-discord" style="font-size: 2rem; color: #bf9d61; opacity: 0.4; display: block; margin-bottom: 15px;"></i>
+                        <p>Discord integration coming soon</p>
+                    </div>
+                </div>
+                
                 <!-- Character Display Box -->
                 <div class="character-box">
                     <h3 class="box-title">
@@ -123,35 +213,40 @@ $current_page = 'dashboard';
                     </div>
                 </div>
                 
-                <!-- Output Box (Below Character Box) -->
+                <!-- Ship Display Box -->
+                <div class="ship-box">
+                    <h3 class="box-title">
+                        Current Ship
+                        <div class="actions">
+                            <button id="edit-ship-btn" title="Edit Ship"><i class="fas fa-edit"></i></button>
+                            <button id="ship-menu-btn" title="Ship Menu"><i class="fas fa-ellipsis-v"></i></button>
+                        </div>
+                    </h3>
+                    
+                    <div id="ship-display" style="text-align: center; padding: 30px 0;">
+                        <i class="fas fa-ship" style="font-size: 3rem; color: #bf9d61; opacity: 0.4; display: block; margin-bottom: 15px;"></i>
+                        <p>No active ship selected</p>
+                        <button class="btn btn-outline" id="create-ship-btn" style="margin-top: 15px; background-color: transparent; color: #bf9d61; border: 1px solid #bf9d61; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                            <i class="fas fa-plus"></i> Create Ship
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Output Box (Right Side) -->
                 <div class="output-box">
                     <h3 class="box-title">
-                        Generator Output
+                        Output
                         <div class="actions">
                             <button id="print-output-btn" title="Print Output"><i class="fas fa-print"></i></button>
                             <button id="clear-output-btn" title="Clear Output"><i class="fas fa-trash"></i></button>
                         </div>
                     </h3>
                     
-                    <div id="output-display" style="text-align: center; padding: 30px 0;">
-                        <i class="fas fa-dice" style="font-size: 3rem; color: #bf9d61; opacity: 0.4; display: block; margin-bottom: 15px;"></i>
-                        <p>Use the sidebar tools to generate content<br>Results will appear here</p>
-                    </div>
-                </div>
-                
-                <!-- Game Log Box (Right Side) -->
-                <div class="game-log">
-                    <h3 class="box-title">
-                        Game Log
-                        <div class="actions">
-                            <button id="save-log-btn" title="Save Log"><i class="fas fa-save"></i></button>
-                            <button id="clear-log-btn" title="Clear Log"><i class="fas fa-trash"></i></button>
+                    <div id="output-display" style="text-align: left; padding: 10px;">
+                        <div style="text-align: center; padding: 30px 0;">
+                            <i class="fas fa-dice" style="font-size: 3rem; color: #bf9d61; opacity: 0.4; display: block; margin-bottom: 15px;"></i>
+                            <p>Use the sidebar tools to generate content<br>Results will appear here</p>
                         </div>
-                    </h3>
-                    
-                    <div id="log-display" style="text-align: center; padding: 30px 0;">
-                        <i class="fas fa-scroll" style="font-size: 3rem; color: #bf9d61; opacity: 0.4; display: block; margin-bottom: 15px;"></i>
-                        <p>Game events will appear here once you join a crew</p>
                     </div>
                 </div>
             </div>
@@ -174,6 +269,7 @@ $current_page = 'dashboard';
             const clearOutputBtn = document.getElementById('clear-output-btn');
             const printOutputBtn = document.getElementById('print-output-btn');
             const createCharacterBtn = document.getElementById('create-character-btn');
+            const createShipBtn = document.getElementById('create-ship-btn');
             
             // Clear output button
             if (clearOutputBtn) {
@@ -208,6 +304,13 @@ $current_page = 'dashboard';
             if (createCharacterBtn) {
                 createCharacterBtn.addEventListener('click', function() {
                     alert("Character creation is coming soon!");
+                });
+            }
+            
+            // Create Ship button
+            if (createShipBtn) {
+                createShipBtn.addEventListener('click', function() {
+                    alert("Ship creation is coming soon!");
                 });
             }
             
