@@ -10,6 +10,7 @@ $current_page = 'dashboard';
     <title>The Salty Parrot - A Pirate Borg Toolbox</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
 <body>
     <div class="app-container">
@@ -20,7 +21,7 @@ $current_page = 'dashboard';
         <main class="main-content">
             <div class="dashboard-header">
                 <div class="logo">
-                    <i class="fas fa-skull-crossbones"></i>
+                    <img src="assets/TSP_Logo_3inch.svg" alt="The Salty Parrot Logo" height="50">
                     <h1>The Salty Parrot</h1>
                 </div>
                 <div class="tagline">
