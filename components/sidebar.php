@@ -1,4 +1,3 @@
-<!-- components/sidebar.php -->
 <?php
 // Determine the active page
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
@@ -16,16 +15,11 @@ $base_path = getBasePath();
         <h2>The Salty Parrot</h2>
     </div>
     
-    <!-- Auth Section -->
-    <div id="auth-section" class="sidebar-section">
-        <!-- Login/user info will be dynamically inserted here by the auth script -->
-    </div>
-    
     <!-- Navigation Links -->
     <div class="sidebar-section">
         <h3>Main Menu</h3>
-        <a href="<?php echo $base_path; ?>pages/dashboard.php" class="sidebar-btn <?php echo ($current_page == 'dashboard') ? 'active' : ''; ?>">
-            <i class="fas fa-tachometer-alt"></i> Dashboard
+        <a href="<?php echo $base_path; ?>index.php" class="sidebar-btn <?php echo ($current_page == 'index' || $current_page == 'dashboard') ? 'active' : ''; ?>">
+            <i class="fas fa-home"></i> Home
         </a>
     </div>
     
@@ -34,7 +28,7 @@ $base_path = getBasePath();
         <button id="ship-generator-btn" class="sidebar-btn">
             <i class="fas fa-ship"></i> Ship Generator
         </button>
-<button id="loot-generator-btn" class="sidebar-btn">
+        <button id="loot-generator-btn" class="sidebar-btn">
             <i class="fas fa-coins"></i> Loot Generator
         </button>
         <button id="dice-roller-btn" class="sidebar-btn">
@@ -72,17 +66,19 @@ $base_path = getBasePath();
 <script>
     // Add event listeners for sidebar generator buttons
     document.addEventListener('DOMContentLoaded', function() {
-        // Check if we're on the dashboard page where the window.Generators object exists
-        const isDashboard = window.location.pathname.includes('dashboard');
+        // Check if we're on the index/dashboard page where the window.Generators object exists
+        const isMainPage = window.location.pathname.endsWith('index.php') || 
+                         window.location.pathname.endsWith('/') || 
+                         window.location.pathname.endsWith('dashboard.php');
         
         // Ship Generator
         const shipGeneratorBtn = document.getElementById('ship-generator-btn');
         if (shipGeneratorBtn) {
             shipGeneratorBtn.addEventListener('click', function() {
-                if (isDashboard && window.Generators) {
+                if (isMainPage && window.Generators) {
                     window.Generators.generateShip();
                 } else {
-                    window.location.href = '<?php echo $base_path; ?>pages/dashboard.php?generator=ship';
+                    window.location.href = '<?php echo $base_path; ?>index.php?generator=ship';
                 }
             });
         }
@@ -91,10 +87,10 @@ $base_path = getBasePath();
         const lootGeneratorBtn = document.getElementById('loot-generator-btn');
         if (lootGeneratorBtn) {
             lootGeneratorBtn.addEventListener('click', function() {
-                if (isDashboard && window.Generators) {
+                if (isMainPage && window.Generators) {
                     window.Generators.generateLoot();
                 } else {
-                    window.location.href = '<?php echo $base_path; ?>pages/dashboard.php?generator=loot';
+                    window.location.href = '<?php echo $base_path; ?>index.php?generator=loot';
                 }
             });
         }
@@ -103,10 +99,10 @@ $base_path = getBasePath();
         const diceRollerBtn = document.getElementById('dice-roller-btn');
         if (diceRollerBtn) {
             diceRollerBtn.addEventListener('click', function() {
-                if (isDashboard && window.Generators) {
+                if (isMainPage && window.Generators) {
                     window.Generators.diceRoller();
                 } else {
-                    window.location.href = '<?php echo $base_path; ?>pages/dashboard.php?generator=dice';
+                    window.location.href = '<?php echo $base_path; ?>index.php?generator=dice';
                 }
             });
         }
@@ -115,10 +111,10 @@ $base_path = getBasePath();
         const npcGeneratorBtn = document.getElementById('npc-generator-btn');
         if (npcGeneratorBtn) {
             npcGeneratorBtn.addEventListener('click', function() {
-                if (isDashboard && window.Generators) {
+                if (isMainPage && window.Generators) {
                     window.Generators.npcGenerator();
                 } else {
-                    window.location.href = '<?php echo $base_path; ?>pages/dashboard.php?generator=npc';
+                    window.location.href = '<?php echo $base_path; ?>index.php?generator=npc';
                 }
             });
         }
@@ -127,10 +123,10 @@ $base_path = getBasePath();
         const treasureGeneratorBtn = document.getElementById('treasure-generator-btn');
         if (treasureGeneratorBtn) {
             treasureGeneratorBtn.addEventListener('click', function() {
-                if (isDashboard && window.Generators) {
+                if (isMainPage && window.Generators) {
                     window.Generators.treasureGenerator();
                 } else {
-                    window.location.href = '<?php echo $base_path; ?>pages/dashboard.php?generator=treasure';
+                    window.location.href = '<?php echo $base_path; ?>index.php?generator=treasure';
                 }
             });
         }
