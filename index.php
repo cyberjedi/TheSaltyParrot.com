@@ -11,6 +11,80 @@ $current_page = 'dashboard';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        /* Additional styles to ensure boxes appear correctly */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 1fr 600px; 
+            grid-template-rows: auto 1fr;
+            gap: 20px;
+            height: calc(100vh - 180px);
+        }
+
+        .character-box {
+            grid-column: 1;
+            grid-row: 1;
+            background-color: var(--dark);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid rgba(191, 157, 97, 0.3);
+            overflow: auto;
+            min-height: 250px;
+        }
+
+        .output-box {
+            grid-column: 1;
+            grid-row: 2;
+            background-color: var(--dark);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid rgba(191, 157, 97, 0.3);
+            overflow: auto;
+            max-height: 100%;
+        }
+
+        .game-log {
+            grid-column: 2;
+            grid-row: 1 / span 2;
+            background-color: var(--dark);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid rgba(191, 157, 97, 0.3);
+            overflow: auto;
+            height: 100%;
+        }
+
+        .box-title {
+            color: var(--secondary);
+            margin-top: 0;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(191, 157, 97, 0.3);
+            font-size: 1.3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .box-title .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .box-title .actions button {
+            background: none;
+            border: none;
+            color: var(--secondary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .box-title .actions button:hover {
+            opacity: 1;
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -49,7 +123,7 @@ $current_page = 'dashboard';
                     </div>
                 </div>
                 
-                <!-- Ship Display Box (Bottom Left) -->
+                <!-- Output Box (Below Character Box) -->
                 <div class="output-box">
                     <h3 class="box-title">
                         Generator Output
@@ -89,6 +163,9 @@ $current_page = 'dashboard';
         <p>&copy; 2025 The Salty Parrot</p>
     </footer>
 
+    <!-- Include the print helper component -->
+    <?php include 'components/print_helper.php'; ?>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             console.log("Dashboard loaded");
@@ -119,131 +196,11 @@ $current_page = 'dashboard';
                         return;
                     }
                     
-                    // Create print window
-                    const printWindow = window.open('', '_blank');
-                    
                     // Get content from output box
                     const content = outputDisplay.innerHTML;
                     
-                    // Create print-friendly HTML
-                    printWindow.document.write(`
-                        <!DOCTYPE html>
-                        <html>
-                        <head>
-                            <title>The Salty Parrot - Generated Content</title>
-                            <style>
-                                body {
-                                    font-family: Arial, sans-serif;
-                                    line-height: 1.6;
-                                    color: #333;
-                                    padding: 20px;
-                                }
-                                
-                                h2, h3 {
-                                    color: #805d2c;
-                                }
-                                
-                                .loot-card, .ship-details {
-                                    border: 1px solid #ddd;
-                                    padding: 15px;
-                                    margin: 15px 0;
-                                    border-radius: 8px;
-                                }
-                                
-                                .loot-roll, .loot-name {
-                                    color: #805d2c;
-                                }
-                                
-                                .loot-category {
-                                    font-style: italic;
-                                    color: #666;
-                                }
-                                
-                                .ancient-relic-badge {
-                                    display: inline-block;
-                                    padding: 3px 8px;
-                                    background-color: #f0e6ff;
-                                    color: #4b0082;
-                                    border: 1px solid #9d4edd;
-                                    border-radius: 12px;
-                                    font-size: 0.8rem;
-                                    margin-right: 5px;
-                                }
-                                
-                                .thing-of-importance-badge {
-                                    display: inline-block;
-                                    padding: 3px 8px;
-                                    background-color: #e6ffe6;
-                                    color: #006400;
-                                    border: 1px solid #2ea44f;
-                                    border-radius: 12px;
-                                    font-size: 0.8rem;
-                                    margin-right: 5px;
-                                }
-                                
-                                ul {
-                                    list-style-type: none;
-                                    padding-left: 0;
-                                }
-                                
-                                li {
-                                    margin-bottom: 10px;
-                                    position: relative;
-                                    padding-left: 20px;
-                                }
-                                
-                                li:before {
-                                    content: '•';
-                                    color: #805d2c;
-                                    position: absolute;
-                                    left: 0;
-                                    top: 0;
-                                }
-                                
-                                .extra-roll-divider {
-                                    text-align: center;
-                                    margin: 20px 0;
-                                    position: relative;
-                                }
-                                
-                                .extra-roll-divider::before {
-                                    content: "";
-                                    position: absolute;
-                                    top: 50%;
-                                    left: 0;
-                                    right: 0;
-                                    height: 1px;
-                                    background-color: #ddd;
-                                    z-index: 0;
-                                }
-                                
-                                .extra-roll-divider span {
-                                    position: relative;
-                                    background-color: white;
-                                    padding: 0 15px;
-                                    z-index: 1;
-                                }
-                            </style>
-                        </head>
-                        <body>
-                            <h2>The Salty Parrot - Generated Content</h2>
-                            ${content}
-                            <div style="margin-top: 30px; font-size: 0.8rem; text-align: center; color: #666;">
-                                <p>Generated by The Salty Parrot - A Pirate Borg Toolbox</p>
-                                <p>The Salty Parrot is an independent production by Stuart Greenwell. It is not affiliated with Limithron LLC.<br>
-                                It is published under the PIRATE BORG Third Party License. PIRATE BORG is ©2022 Limithron LLC.</p>
-                            </div>
-                        </body>
-                        </html>
-                    `);
-                    
-                    // Close document for printing
-                    printWindow.document.close();
-                    
-                    // Wait for content to load and then print
-                    printWindow.addEventListener('load', function() {
-                        printWindow.print();
-                    });
+                    // Call the print helper function
+                    <?php echo "generatePrintableContent(content);"; ?>
                 });
             }
             
