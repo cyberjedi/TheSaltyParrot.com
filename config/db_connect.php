@@ -36,9 +36,10 @@ try {
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
     // Verify required tables exist
-    $required_tables = ['ship_names', 'vessel_classes', 'armaments', 
-                        'crew_quantities', 'crew_qualities', 
-                        'mundane_cargo', 'special_cargo', 'plot_twists'];
+    $required_tables = ['ship_generator_names', 'ship_generator_vessel_classes', 'ship_generator_armaments', 
+                    'ship_generator_crew_quantities', 'ship_generator_crew_qualities', 
+                    'ship_generator_mundane_cargo', 'ship_generator_special_cargo', 'ship_generator_plot_twists',
+                    'loot_generator_items'];
     
     $missing_tables = [];
     foreach ($required_tables as $table) {
