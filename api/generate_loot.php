@@ -36,7 +36,7 @@ try {
         // Generate two more rolls
         for ($i = 0; $i < 2; $i++) {
             $extra_roll = rand(1, 99); // Avoid another 100
-            $stmt = $conn->prepare("SELECT * FROM loot_table WHERE roll_value = :roll");
+            $stmt = $conn->prepare("SELECT * FROM loot_generator_items WHERE roll_value = :roll");
             $stmt->execute(array(':roll' => $extra_roll));
             $extra_item = $stmt->fetch(PDO::FETCH_ASSOC);
             
@@ -53,7 +53,7 @@ try {
         }
     } else {
         // Query the database for the rolled item
-        $stmt = $conn->prepare("SELECT * FROM loot_table WHERE roll_value = :roll");
+        $stmt = $conn->prepare("SELECT * FROM loot_generator_items WHERE roll_value = :roll");
         $stmt->execute(array(':roll' => $roll));
         $loot_item = $stmt->fetch(PDO::FETCH_ASSOC);
         
@@ -61,7 +61,7 @@ try {
             // Special handling for random weapon (d10)
             if (strpos($loot_item['loot_description'], 'weapon (d10') !== false) {
                 $weapon_roll = rand(1, 10);
-                $weapon_stmt = $conn->prepare("SELECT loot_name FROM loot_table WHERE category = 'weapon' AND roll_value = :roll");
+                $weapon_stmt = $conn->prepare("SELECT loot_name FROM loot_generator_items WHERE category = 'weapon' AND roll_value = :roll");
                 $weapon_stmt->execute(array(':roll' => $weapon_roll));
                 $weapon = $weapon_stmt->fetch(PDO::FETCH_ASSOC);
                 
