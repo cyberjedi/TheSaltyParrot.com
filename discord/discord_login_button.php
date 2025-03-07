@@ -25,7 +25,7 @@ function renderDiscordLoginButton($size = 'medium', $color = 'dark', $text = 'Lo
     
     $colorClass = $color === 'light' ? 'discord-btn-light' : 'discord-btn-dark';
     
-    echo '<a href="auth/discord-login.php" class="discord-btn ' . $sizeClass . ' ' . $colorClass . '">';
+    echo '<a href="discord/discord-login.php" class="discord-btn ' . $sizeClass . ' ' . $colorClass . '">';
     echo '<i class="fab fa-discord"></i> ' . htmlspecialchars($text);
     echo '</a>';
 }
@@ -119,7 +119,7 @@ function renderDiscordConnectionStatus() {
         echo '</div>'; // End discord-status-info
         echo '</div>'; // End discord-status-content
         echo '<div class="discord-status-actions">';
-        echo '<a href="auth/discord-login.php" class="btn btn-primary btn-sm"><i class="fab fa-discord"></i> Connect with Discord</a>';
+        echo '<a href="discord/discord-login.php" class="btn btn-primary btn-sm"><i class="fab fa-discord"></i> Connect with Discord</a>';
         echo '</div>'; // End discord-status-actions
         echo '</div>'; // End discord-connection-status
     }
