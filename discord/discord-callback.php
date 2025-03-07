@@ -1,4 +1,69 @@
 <?php
+// At the very top
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Start tracking the process
+echo "Step 1: Starting Discord callback process<br>";
+
+// Let's check where files are being included from
+echo "Current file: " . __FILE__ . "<br>";
+echo "Current directory: " . __DIR__ . "<br>";
+echo "Document root: " . $_SERVER['DOCUMENT_ROOT'] . "<br>";
+
+// Try to include discord-config.php
+echo "Step 2: Trying to include discord-config.php<br>";
+try {
+    require_once 'discord-config.php';
+    echo "discord-config.php included successfully<br>";
+} catch (Exception $e) {
+    echo "Error including discord-config.php: " . $e->getMessage() . "<br>";
+    exit;
+}
+
+// Try to include db_connect.php
+echo "Step 3: Trying to include db_connect.php<br>";
+try {
+    // Use the original include path but check it explicitly
+    echo "About to include: " . __DIR__ . '/../config/db_connect.php' . "<br>";
+    if (!file_exists(__DIR__ . '/../config/db_connect.php')) {
+        echo "File doesn't exist at that path!<br>";
+    }
+    
+    require_once '../config/db_connect.php';
+    echo "db_connect.php included successfully<br>";
+} catch (Exception $e) {
+    echo "Error including db_connect.php: " . $e->getMessage() . "<br>";
+    exit;
+}
+
+// Check for connection
+echo "Step 4: Checking if connection is established<br>";
+if (isset($conn) && $conn instanceof PDO) {
+    echo "Database connection is good<br>";
+} else {
+    echo "Database connection not established<br>";
+    exit;
+}
+
+// Now continue with the rest of your original code:
+
+// Check for errors or authorization denial
+if (isset($_GET['error'])) {
+    $_SESSION['discord_error'] = 'Authorization denied: ' . $_GET['error_description'];
+    header('Location: ../index.php');
+    exit;
+}
+
+// Verify state parameter to prevent CSRF attacks
+if (!isset($_GET['state']) || !isset($_SESSION['discord_oauth_state']) || $_GET['state'] !== $_SESSION['discord_oauth_state']) {
+    $_SESSION['discord_error'] = 'Invalid state parameter. Please try again.';
+    header('Location: ../index.php');
+    exit;
+}
+
+// Rest of your original discord-callback.php code goes here...
+// Make sure you keep all the original functionality!
 // File: discord/discord-callback.php
 // This file handles the callback from Discord OAuth
 
