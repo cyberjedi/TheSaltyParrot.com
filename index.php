@@ -63,14 +63,14 @@ if (file_exists('discord/discord-config.php')) {
             <div class="dashboard-container">
                 <!-- Discord Connection Box -->
                 <div class="discord-box">
-                    <h3 class="box-title">Discord Connection</h3>
+                    <h3 class="box-title">Discord Status</h3>
                     
                     <?php if ($discord_enabled && function_exists('renderDiscordConnectionStatus')): ?>
                         <?php renderDiscordConnectionStatus(); ?>
                     <?php else: ?>
                         <div id="discord-status" class="placeholder-display">
                             <i class="fab fa-discord"></i>
-                            <p>Discord integration coming soon! Connect your Discord account to enhance your Pirate Borg experience with notifications, shared campaigns, and more.</p>
+                            <p>Discord integration coming soon! Use the sidebar button to connect when available.</p>
                         </div>
                     <?php endif; ?>
                 </div>
