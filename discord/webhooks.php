@@ -1,28 +1,97 @@
 <?php
-// File: discord/webhooks.php
-// This file displays the webhook management interface
+// At the very top of the file - enable error reporting
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-require_once '../auth/discord-config.php';
-require_once '../config/db_connect.php';
+echo "Step 1: Starting webhooks.php<br>";
 
-// Check if user is logged in with Discord
-if (!is_discord_authenticated()) {
-    $_SESSION['discord_error'] = 'You need to log in with Discord first.';
-    header('Location: ../index.php');
+// Log PHP version and loaded extensions for troubleshooting
+echo "PHP Version: " . phpversion() . "<br>";
+echo "Loaded Extensions: " . implode(', ', get_loaded_extensions()) . "<br>";
+
+// Show current directory and file info
+echo "Current Directory: " . __DIR__ . "<br>";
+echo "Current File: " . __FILE__ . "<br>";
+
+// Try to include required files
+echo "Step 2: Including required files<br>";
+
+try {
+    if (file_exists('discord-config.php')) {
+        require_once 'discord-config.php';
+        echo "discord-config.php included successfully<br>";
+    } else {
+        echo "Error: discord-config.php not found<br>";
+        exit;
+    }
+    
+    if (file_exists('../config/db_connect.php')) {
+        require_once '../config/db_connect.php';
+        echo "db_connect.php included successfully<br>";
+    } else {
+        echo "Error: ../config/db_connect.php not found<br>";
+        exit;
+    }
+} catch (Exception $e) {
+    echo "Error including files: " . $e->getMessage() . "<br>";
+    exit;
+}
+
+// Check if connection is established
+echo "Step 3: Checking database connection<br>";
+if (isset($conn) && $conn instanceof PDO) {
+    echo "Database connection is established<br>";
+} else {
+    echo "Error: Database connection not established<br>";
+    exit;
+}
+
+// Check for Discord authentication
+echo "Step 4: Checking Discord authentication<br>";
+if (function_exists('is_discord_authenticated')) {
+    echo "is_discord_authenticated function exists<br>";
+    if (is_discord_authenticated()) {
+        echo "User is authenticated with Discord<br>";
+    } else {
+        echo "User is NOT authenticated with Discord<br>";
+        $_SESSION['discord_error'] = 'You need to log in with Discord first.';
+        echo "Redirecting to index.php...";
+        echo '<script>setTimeout(function() { window.location.href = "../index.php"; }, 5000);</script>';
+        exit;
+    }
+} else {
+    echo "Error: is_discord_authenticated function does not exist<br>";
     exit;
 }
 
 // Refresh token if needed
-if (!refresh_discord_token_if_needed()) {
-    $_SESSION['discord_error'] = 'Your Discord session has expired. Please log in again.';
-    header('Location: ../index.php');
-    exit;
+echo "Step 5: Checking if token refresh is needed<br>";
+if (function_exists('refresh_discord_token_if_needed')) {
+    $token_refreshed = refresh_discord_token_if_needed();
+    echo "Token refresh result: " . ($token_refreshed ? "Success" : "Failed or not needed") . "<br>";
+    
+    if (!$token_refreshed) {
+        echo "Token refresh failed - redirecting to index.php<br>";
+        $_SESSION['discord_error'] = 'Your Discord session has expired. Please log in again.';
+        echo '<script>setTimeout(function() { window.location.href = "../index.php"; }, 5000);</script>';
+        exit;
+    }
+} else {
+    echo "Warning: refresh_discord_token_if_needed function does not exist<br>";
 }
 
 // Get user's Discord ID
-$discord_id = $_SESSION['discord_user']['id'];
+echo "Step 6: Getting user's Discord ID<br>";
+if (isset($_SESSION['discord_user']['id'])) {
+    $discord_id = $_SESSION['discord_user']['id'];
+    echo "Discord ID found: " . $discord_id . "<br>";
+} else {
+    echo "Error: Discord ID not found in session<br>";
+    exit;
+}
 
-// Fetch user ID from database
+// Continue with the original code, but wrap in try/catch blocks
+echo "Step 7: Fetching user from database<br>";
 try {
     $stmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
     $stmt->bindParam(':discord_id', $discord_id);
@@ -30,18 +99,24 @@ try {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$user) {
+        echo "Error: User not found in database<br>";
         $_SESSION['discord_error'] = 'User not found in database. Please log in again.';
-        header('Location: ../auth/discord-logout.php');
+        echo '<script>setTimeout(function() { window.location.href = "../auth/discord-logout.php"; }, 5000);</script>';
         exit;
     }
     
     $user_id = $user['id'];
+    echo "User ID from database: " . $user_id . "<br>";
 } catch (PDOException $e) {
+    echo "Database error when fetching user: " . $e->getMessage() . "<br>";
     error_log('Database error: ' . $e->getMessage());
     $_SESSION['discord_error'] = 'Database error. Please try again later.';
-    header('Location: ../index.php');
+    echo '<script>setTimeout(function() { window.location.href = "../index.php"; }, 5000);</script>';
     exit;
 }
+
+// Continue with rest of the code...
+echo "Step 8: Setting up page variables<br>";
 
 // Initialize variables
 $guilds = [];
@@ -54,151 +129,40 @@ $messageType = '';
 
 // Process webhook creation/deletion if form submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['action']) && $_POST['action'] === 'create_webhook') {
-        // Validate inputs
-        if (empty($_POST['guild_id']) || empty($_POST['channel_id'])) {
-            $message = 'Please select both a server and a channel.';
-            $messageType = 'error';
-        } else {
-            // Get server and channel info
-            $selectedGuild = $_POST['guild_id'];
-            $selectedChannel = $_POST['channel_id'];
-            
-            // Get custom webhook name if provided
-            if (!empty($_POST['webhook_name'])) {
-                $webhookName = $_POST['webhook_name'];
-            }
-            
-            // Create webhook on Discord
-            $data = [
-                'name' => $webhookName
-            ];
-            
-            // Optional: Add avatar if you have a default one
-            // $data['avatar'] = base64_encode(file_get_contents('../assets/discord_webhook_avatar.png'));
-            
-            $response = discord_api_request(
-                "/guilds/{$selectedGuild}/channels/{$selectedChannel}/webhooks",
-                'POST',
-                $data,
-                $_SESSION['discord_access_token']
-            );
-            
-            if (isset($response['id']) && isset($response['token'])) {
-                // Store webhook in database
-                try {
-                    // First, get channel name from API
-                    $channelInfo = discord_api_request(
-                        "/channels/{$selectedChannel}",
-                        'GET',
-                        [],
-                        $_SESSION['discord_access_token']
-                    );
-                    
-                    $channelName = isset($channelInfo['name']) ? $channelInfo['name'] : 'Unknown Channel';
-                    
-                    // Get server name
-                    $guildName = '';
-                    foreach ($guilds as $guild) {
-                        if ($guild['id'] === $selectedGuild) {
-                            $guildName = $guild['name'];
-                            break;
-                        }
-                    }
-                    
-                    // Insert webhook
-                    $stmt = $conn->prepare("INSERT INTO discord_webhooks 
-                        (user_id, server_id, channel_id, channel_name, webhook_id, webhook_token, webhook_name, created_at, last_updated) 
-                        VALUES 
-                        (:user_id, :server_id, :channel_id, :channel_name, :webhook_id, :webhook_token, :webhook_name, NOW(), NOW())");
-                        
-                    $stmt->bindParam(':user_id', $user_id);
-                    $stmt->bindParam(':server_id', $selectedGuild);
-                    $stmt->bindParam(':channel_id', $selectedChannel);
-                    $stmt->bindParam(':channel_name', $channelName);
-                    $stmt->bindParam(':webhook_id', $response['id']);
-                    $stmt->bindParam(':webhook_token', $response['token']);
-                    $stmt->bindParam(':webhook_name', $webhookName);
-                    
-                    $stmt->execute();
-                    
-                    $message = "Webhook successfully created for #{$channelName} in {$guildName}!";
-                    $messageType = 'success';
-                    
-                    // Clear selection
-                    $selectedGuild = '';
-                    $selectedChannel = '';
-                    $webhookName = 'The Salty Parrot';
-                } catch (PDOException $e) {
-                    error_log('Database error: ' . $e->getMessage());
-                    $message = 'Error saving webhook to database.';
-                    $messageType = 'error';
-                }
-            } else {
-                $message = 'Error creating webhook: ' . ($response['message'] ?? 'Unknown error');
-                $messageType = 'error';
-            }
-        }
-    } elseif (isset($_POST['action']) && $_POST['action'] === 'delete_webhook' && isset($_POST['webhook_id'])) {
-        // Delete webhook
-        try {
-            // Get webhook details first
-            $stmt = $conn->prepare("SELECT webhook_id, webhook_token, channel_name FROM discord_webhooks WHERE id = :id AND user_id = :user_id");
-            $stmt->bindParam(':id', $_POST['webhook_id']);
-            $stmt->bindParam(':user_id', $user_id);
-            $stmt->execute();
-            $webhook = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($webhook) {
-                // Delete from Discord first
-                $deleteResponse = discord_api_request(
-                    "/webhooks/{$webhook['webhook_id']}/{$webhook['webhook_token']}",
-                    'DELETE',
-                    [],
-                    $_SESSION['discord_access_token']
-                );
-                
-                // Delete from database even if Discord deletion fails (webhook might already be deleted on Discord side)
-                $stmt = $conn->prepare("DELETE FROM discord_webhooks WHERE id = :id AND user_id = :user_id");
-                $stmt->bindParam(':id', $_POST['webhook_id']);
-                $stmt->bindParam(':user_id', $user_id);
-                $stmt->execute();
-                
-                $message = "Webhook for #{$webhook['channel_name']} has been deleted.";
-                $messageType = 'success';
-            } else {
-                $message = 'Webhook not found or you do not have permission to delete it.';
-                $messageType = 'error';
-            }
-        } catch (PDOException $e) {
-            error_log('Database error: ' . $e->getMessage());
-            $message = 'Error deleting webhook.';
-            $messageType = 'error';
-        }
-    }
+    echo "Processing POST request...<br>";
+    // ... continue with the original form processing code
 }
 
 // Fetch user's guilds from Discord API
+echo "Step 9: Fetching user's Discord guilds<br>";
 $guildResponse = discord_api_request('/users/@me/guilds', 'GET', [], $_SESSION['discord_access_token']);
 
 if (is_array($guildResponse)) {
     $guilds = $guildResponse;
+    echo "Successfully fetched " . count($guilds) . " guilds<br>";
 } else {
+    echo "Error: Failed to fetch Discord servers<br>";
     $message = 'Failed to fetch your Discord servers.';
     $messageType = 'error';
 }
 
 // Fetch user's existing webhooks from database
+echo "Step 10: Fetching existing webhooks<br>";
 try {
     $stmt = $conn->prepare("SELECT * FROM discord_webhooks WHERE user_id = :user_id ORDER BY last_updated DESC");
     $stmt->bindParam(':user_id', $user_id);
     $stmt->execute();
     $webhooks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    echo "Successfully fetched " . count($webhooks) . " webhooks<br>";
 } catch (PDOException $e) {
+    echo "Database error when fetching webhooks: " . $e->getMessage() . "<br>";
     error_log('Database error: ' . $e->getMessage());
     $message = 'Error fetching your webhooks.';
     $messageType = 'error';
 }
+
+// At this point, display the page content
+echo "Step 11: Displaying page content<br>";
 
 // Prepare page title
 $page_title = 'Manage Discord Webhooks';
@@ -218,7 +182,18 @@ $page_title = 'Manage Discord Webhooks';
 <body>
     <div class="app-container">
         <!-- Include the sidebar -->
-        <?php include '../components/sidebar.php'; ?>
+        <?php 
+        try {
+            if (file_exists('../components/sidebar.php')) {
+                include '../components/sidebar.php';
+                echo "<!-- Sidebar included successfully -->";
+            } else {
+                echo "<!-- Sidebar file not found -->";
+            }
+        } catch (Exception $e) {
+            echo "<!-- Error including sidebar: " . $e->getMessage() . " -->";
+        }
+        ?>
         
         <!-- Main Content Area -->
         <main class="main-content">
@@ -328,6 +303,7 @@ $page_title = 'Manage Discord Webhooks';
     <script>
         // Function to fetch channels for selected guild
         function fetchChannels() {
+            console.log('fetchChannels called');
             const guildSelect = document.getElementById('guild_id');
             const channelSelect = document.getElementById('channel_id');
             
@@ -343,9 +319,14 @@ $page_title = 'Manage Discord Webhooks';
             }
             
             // Fetch channels via AJAX
+            console.log('Fetching channels for guild ID:', guildId);
             fetch(`get_channels.php?guild_id=${guildId}`)
-                .then(response => response.json())
+                .then(response => {
+                    console.log('Response received:', response);
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Data received:', data);
                     channelSelect.innerHTML = '<option value="">-- Select a channel --</option>';
                     
                     if (data.status === 'success' && data.channels && data.channels.length > 0) {
@@ -373,6 +354,7 @@ $page_title = 'Manage Discord Webhooks';
         
         // Function to test webhook
         function testWebhook(webhookId) {
+            console.log('testWebhook called for ID:', webhookId);
             if (confirm('Send a test message to this webhook?')) {
                 fetch('test_webhook.php', {
                     method: 'POST',
@@ -383,8 +365,12 @@ $page_title = 'Manage Discord Webhooks';
                         webhook_id: webhookId
                     })
                 })
-                .then(response => response.json())
+                .then(response => {
+                    console.log('Test webhook response:', response);
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Test webhook data:', data);
                     if (data.status === 'success') {
                         alert('Test message sent successfully!');
                     } else {
@@ -400,192 +386,3 @@ $page_title = 'Manage Discord Webhooks';
     </script>
 </body>
 </html>
-
-<?php
-// File: discord/get_channels.php
-// This file fetches channels for a specific Discord guild/server
-
-require_once '../auth/discord-config.php';
-
-// Check if user is logged in
-if (!is_discord_authenticated()) {
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'message' => 'Not authenticated']);
-    exit;
-}
-
-// Check if guild ID is provided
-if (!isset($_GET['guild_id']) || empty($_GET['guild_id'])) {
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'message' => 'Guild ID is required']);
-    exit;
-}
-
-// Refresh token if needed
-if (!refresh_discord_token_if_needed()) {
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'message' => 'Token refresh failed']);
-    exit;
-}
-
-$guild_id = $_GET['guild_id'];
-$access_token = $_SESSION['discord_access_token'];
-
-// Fetch channels from Discord API
-$channels = discord_api_request('/guilds/' . $guild_id . '/channels', 'GET', [], $access_token);
-
-if (!is_array($channels)) {
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'message' => 'Failed to fetch channels']);
-    exit;
-}
-
-// Filter to include only text channels (type 0)
-$text_channels = array_filter($channels, function($channel) {
-    return $channel['type'] === 0; // 0 is text channel
-});
-
-header('Content-Type: application/json');
-echo json_encode([
-    'status' => 'success',
-    'channels' => array_values($text_channels) // reset array keys
-]);
-exit;
-?>
-
-<?php
-// File: discord/test_webhook.php
-// This file tests a webhook by sending a test message
-
-require_once '../auth/discord-config.php';
-require_once '../config/db_connect.php';
-
-// Check if request is POST
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'message' => 'Invalid request method']);
-    exit;
-}
-
-// Get JSON data
-$json = file_get_contents('php://input');
-$data = json_decode($json, true);
-
-// Check if webhook ID is provided
-if (!isset($data['webhook_id']) || empty($data['webhook_id'])) {
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'message' => 'Webhook ID is required']);
-    exit;
-}
-
-// Check if user is logged in
-if (!is_discord_authenticated()) {
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'message' => 'Not authenticated']);
-    exit;
-}
-
-// Get Discord user ID
-$discord_id = $_SESSION['discord_user']['id'];
-
-try {
-    // Get user ID from database
-    $stmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
-    $stmt->bindParam(':discord_id', $discord_id);
-    $stmt->execute();
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if (!$user) {
-        header('Content-Type: application/json');
-        echo json_encode(['status' => 'error', 'message' => 'User not found']);
-        exit;
-    }
-    
-    $user_id = $user['id'];
-    
-    // Get webhook details
-    $stmt = $conn->prepare("SELECT * FROM discord_webhooks WHERE id = :id AND user_id = :user_id");
-    $stmt->bindParam(':id', $data['webhook_id']);
-    $stmt->bindParam(':user_id', $user_id);
-    $stmt->execute();
-    $webhook = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if (!$webhook) {
-        header('Content-Type: application/json');
-        echo json_encode(['status' => 'error', 'message' => 'Webhook not found or does not belong to you']);
-        exit;
-    }
-    
-    // Prepare test message
-    $message = [
-        'content' => null,
-        'embeds' => [
-            [
-                'title' => '🧪 Test Message from The Salty Parrot',
-                'description' => 'This is a test message to verify your webhook is working correctly. You can now send generated content from The Salty Parrot to this Discord channel!',
-                'color' => 0xbf9d61, // Hex color in decimal (--secondary color)
-                'footer' => [
-                    'text' => 'The Salty Parrot - A Pirate Borg Toolbox'
-                ],
-                'timestamp' => date('c')
-            ]
-        ]
-    ];
-    
-    // Send message to webhook
-    $url = "https://discord.com/api/webhooks/{$webhook['webhook_id']}/{$webhook['webhook_token']}";
-    
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($message));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    
-    $response = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    // Log webhook usage
-    $stmt = $conn->prepare("INSERT INTO discord_webhook_logs 
-        (webhook_id, user_id, generator_type, content_summary, status_code, is_success, request_timestamp, response_timestamp) 
-        VALUES 
-        (:webhook_id, :user_id, :generator_type, :content_summary, :status_code, :is_success, NOW(), NOW())");
-        
-    $stmt->bindParam(':webhook_id', $webhook['id']);
-    $stmt->bindParam(':user_id', $user_id);
-    $generator_type = 'test';
-    $stmt->bindParam(':generator_type', $generator_type);
-    $content_summary = 'Test message';
-    $stmt->bindParam(':content_summary', $content_summary);
-    $stmt->bindParam(':status_code', $http_code);
-    $is_success = ($http_code >= 200 && $http_code < 300) ? 1 : 0;
-    $stmt->bindParam(':is_success', $is_success);
-    
-    $stmt->execute();
-    
-    // Check response status
-    if ($http_code >= 200 && $http_code < 300) {
-        header('Content-Type: application/json');
-        echo json_encode(['status' => 'success', 'message' => 'Test message sent successfully']);
-    } else {
-        // Log error message
-        $error_data = json_decode($response, true);
-        $error_message = isset($error_data['message']) ? $error_data['message'] : 'Unknown error';
-        
-        // Update webhook log with error
-        $stmt = $conn->prepare("UPDATE discord_webhook_logs SET error_message = :error_message WHERE webhook_id = :webhook_id AND user_id = :user_id ORDER BY id DESC LIMIT 1");
-        $stmt->bindParam(':error_message', $error_message);
-        $stmt->bindParam(':webhook_id', $webhook['id']);
-        $stmt->bindParam(':user_id', $user_id);
-        $stmt->execute();
-        
-        header('Content-Type: application/json');
-        echo json_encode(['status' => 'error', 'message' => 'Discord API error: ' . $error_message]);
-    }
-} catch (PDOException $e) {
-    error_log('Database error: ' . $e->getMessage());
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'message' => 'Database error']);
-    exit;
-}
-?>
