@@ -1,4 +1,31 @@
 <?php
+// Temporary debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Try loading each part separately to identify the issue
+try {
+    // Test session
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    echo "<!-- Session OK -->";
+    
+    // Test Discord config inclusion - comment out your actual inclusion
+    /*
+    if (file_exists('discord/discord-config.php')) {
+        require_once 'discord/discord-config.php';
+    }
+    */
+    // Instead try a basic test
+    if (file_exists('discord/discord-config.php')) {
+        echo "<!-- Discord config file exists -->";
+    } else {
+        echo "<!-- Discord config file NOT FOUND -->";
+    }
+    
+    // Continue with the rest of your code...
+    
 // Set the current page
 $current_page = 'dashboard';
 
