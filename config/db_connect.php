@@ -2,72 +2,37 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Use a single, hardcoded path that we know works
-$possible_config_paths = [
-    '/home/theshfmb/private/secure_variables.php'
-];
+// Use a single, hardcoded path to the configuration
+$config_file = '/home/theshfmb/private/secure_variables.php';
 
-// Find and load the config file
-$config = null;
-foreach ($possible_config_paths as $path) {
-    if (file_exists($path)) {
-        $config = require_once($path);
-        break;
-    }
+// Check if file exists
+if (!file_exists($config_file)) {
+    die('Configuration file not found: ' . $config_file);
 }
 
-// If no config file found, throw an error
-if ($config === null) {
-    header('Content-Type: application/json');
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Database configuration file not found',
-        'paths_checked' => $possible_config_paths
-    ]);
-    die();
+// Load the configuration file directly
+$config = require $config_file;
+
+// Simple check if it's an array
+if (!is_array($config)) {
+    die('Configuration file did not return an array');
 }
 
 try {
-    $conn = new PDO("mysql:host={$config['host']};dbname={$config['dbname']}", 
-                    $config['username'], $config['password']);
+    // Create database connection
+    $conn = new PDO(
+        "mysql:host={$config['host']};dbname={$config['dbname']}",
+        $config['username'],
+        $config['password']
+    );
+    
+    // Set error mode
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
-    // Verify required tables exist
-    $required_tables = ['ship_generator_names', 'ship_generator_vessel_classes', 'ship_generator_armaments', 
-                    'ship_generator_crew_quantities', 'ship_generator_crew_qualities', 
-                    'ship_generator_mundane_cargo', 'ship_generator_special_cargo', 'ship_generator_plot_twists',
-                    'loot_generator_items'];
-    
-    $missing_tables = [];
-    foreach ($required_tables as $table) {
-        $stmt = $conn->prepare("SHOW TABLES LIKE :table");
-        $stmt->execute(['table' => $table]);
-        if ($stmt->rowCount() == 0) {
-            $missing_tables[] = $table;
-        }
-    }
-    
-    if (!empty($missing_tables)) {
-        throw new Exception("Missing tables: " . implode(', ', $missing_tables));
-    }
-    
 } catch(PDOException $e) {
-    // Detailed error handling
-    $error_details = [
-        'message' => $e->getMessage(),
-        'config_paths_tried' => $possible_config_paths,
-        'config' => array_merge(array_filter($config, function($key) { 
-            return $key !== 'password'; 
-        }, ARRAY_FILTER_USE_KEY), ['password' => '***REDACTED***'])
-    ];
-    
-    // JSON encode to ensure no sensitive info is exposed
-    header('Content-Type: application/json');
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Database connection failed',
-        'details' => $error_details
-    ]);
-    die();
+    // Simple error handling
+    die('Database connection failed: ' . $e->getMessage());
 }
+
+// No fancy error handling, no table checks, just the basics
 ?>
