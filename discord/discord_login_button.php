@@ -63,7 +63,7 @@ function renderDiscordUserProfile($user) {
     echo '<div class="discord-username">' . $usernameDisplay . '</div>';
     echo '<div class="discord-buttons">';
     echo '<a href="discord/webhooks.php" class="discord-btn-sm discord-btn-light">Manage Webhooks</a>';
-    echo '<a href="auth/discord-logout.php" class="discord-btn-sm discord-btn-light">Logout</a>';
+    echo '<a href="discord/discord-logout.php" class="discord-btn-sm discord-btn-light">Logout</a>';
     echo '</div>'; // End discord-buttons
     echo '</div>'; // End discord-info
     echo '</div>'; // End discord-profile
@@ -105,7 +105,7 @@ function renderDiscordConnectionStatus() {
         echo '</div>'; // End discord-status-content
         echo '<div class="discord-status-actions">';
         echo '<a href="discord/webhooks.php" class="btn btn-secondary btn-sm">Manage Webhooks</a>';
-        echo '<a href="auth/discord-logout.php" class="btn btn-secondary btn-sm">Disconnect</a>';
+        echo '<a href="discord/discord-logout.php" class="btn btn-secondary btn-sm">Disconnect</a>';
         echo '</div>'; // End discord-status-actions
         echo '</div>'; // End discord-connection-status
     } else {
