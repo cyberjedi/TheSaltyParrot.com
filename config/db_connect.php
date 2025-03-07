@@ -2,12 +2,9 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Possible config file locations with priority
+// Use a single, hardcoded path that we know works
 $possible_config_paths = [
-    $_SERVER['DOCUMENT_ROOT'] . '/../../private/secure_variables.php',
-    $_SERVER['DOCUMENT_ROOT'] . '/../private/secure_variables.php',
-    $_SERVER['DOCUMENT_ROOT'] . '/private/secure_variables.php',
-    dirname(__FILE__) . '/../../private/secure_variables.php'
+    '/home/theshfmb/private/secure_variables.php'
 ];
 
 // Find and load the config file
@@ -59,7 +56,9 @@ try {
     $error_details = [
         'message' => $e->getMessage(),
         'config_paths_tried' => $possible_config_paths,
-        'config' => array_merge($config, ['password' => '***REDACTED***'])
+        'config' => array_merge(array_filter($config, function($key) { 
+            return $key !== 'password'; 
+        }, ARRAY_FILTER_USE_KEY), ['password' => '***REDACTED***'])
     ];
     
     // JSON encode to ensure no sensitive info is exposed
