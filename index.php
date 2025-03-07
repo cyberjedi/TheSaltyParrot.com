@@ -1,65 +1,41 @@
 <?php
-// Temporary debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-// Try loading each part separately to identify the issue
-try {
-    // Test session
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
-    echo "<!-- Session OK -->";
-    
-    // Test Discord config inclusion - comment out your actual inclusion
-    /*
-    if (file_exists('discord/discord-config.php')) {
-        require_once 'discord/discord-config.php';
-    }
-    */
-    // Instead try a basic test
-    if (file_exists('discord/discord-config.php')) {
-        echo "<!-- Discord config file exists -->";
-    } else {
-        echo "<!-- Discord config file NOT FOUND -->";
-    }
-    
-    // Continue with the rest of your code...
-    
 // Set the current page
 $current_page = 'dashboard';
 
-// Include Discord config if file exists
+// Discord integration - safely load if available
+$discord_enabled = false;
 if (file_exists('discord/discord-config.php')) {
-    require_once 'discord/discord-config.php';
-}
-
-// Include Discord service if file exists
-if (file_exists('discord/discord_service.php')) {
-    require_once 'discord/discord_service.php';
-    
-    // Get user ID and webhooks if authenticated
-    $user_webhooks = [];
-    if (function_exists('is_discord_authenticated') && is_discord_authenticated() && 
-        function_exists('get_user_webhooks') && isset($conn)) {
+    // Try to include the Discord configuration
+    try {
+        require_once 'discord/discord-config.php';
+        $discord_enabled = true;
         
-        // Get user ID
-        $discord_id = $_SESSION['discord_user']['id'];
-        
-        try {
-            // Get user ID from database
-            $stmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
-            $stmt->bindParam(':discord_id', $discord_id);
-            $stmt->execute();
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        // Get user ID and webhooks if authenticated
+        $user_webhooks = [];
+        if (function_exists('is_discord_authenticated') && is_discord_authenticated() && 
+            isset($conn)) {
             
-            if ($user) {
-                $user_id = $user['id'];
-                $user_webhooks = get_user_webhooks($conn, $user_id);
+            try {
+                // Get user ID
+                $discord_id = $_SESSION['discord_user']['id'];
+                
+                // Get user ID from database
+                $stmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
+                $stmt->bindParam(':discord_id', $discord_id);
+                $stmt->execute();
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($user && function_exists('get_user_webhooks')) {
+                    $user_id = $user['id'];
+                    $user_webhooks = get_user_webhooks($conn, $user_id);
+                }
+            } catch (Exception $e) {
+                error_log('Discord user webhooks error: ' . $e->getMessage());
             }
-        } catch (PDOException $e) {
-            error_log('Database error: ' . $e->getMessage());
         }
+    } catch (Exception $e) {
+        error_log('Discord integration error: ' . $e->getMessage());
+        $discord_enabled = false;
     }
 }
 ?>
@@ -72,7 +48,7 @@ if (file_exists('discord/discord_service.php')) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/dashboard.css">
-    <?php if (file_exists('css/discord.css')): ?>
+    <?php if ($discord_enabled && file_exists('css/discord.css')): ?>
     <link rel="stylesheet" href="css/discord.css">
     <?php endif; ?>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
@@ -89,7 +65,7 @@ if (file_exists('discord/discord_service.php')) {
                 <div class="discord-box">
                     <h3 class="box-title">Discord Connection</h3>
                     
-                    <?php if (function_exists('renderDiscordConnectionStatus')): ?>
+                    <?php if ($discord_enabled && function_exists('renderDiscordConnectionStatus')): ?>
                         <?php renderDiscordConnectionStatus(); ?>
                     <?php else: ?>
                         <div id="discord-status" class="placeholder-display">
@@ -99,6 +75,7 @@ if (file_exists('discord/discord_service.php')) {
                     <?php endif; ?>
                 </div>
                 
+                <!-- Rest of your page content -->
                 <!-- Character Display Box -->
                 <div class="character-box">
                     <h3 class="box-title">
@@ -155,11 +132,8 @@ if (file_exists('discord/discord_service.php')) {
                         </div>
                     </div>
                     
-                    <?php 
-                    // Render webhook selector if user is authenticated with Discord and has webhooks
-                    if (function_exists('is_discord_authenticated') && is_discord_authenticated() && 
-                        function_exists('render_webhook_selector') && !empty($user_webhooks)): 
-                    ?>
+                    <?php if ($discord_enabled && function_exists('is_discord_authenticated') && is_discord_authenticated() && 
+                             function_exists('render_webhook_selector') && !empty($user_webhooks)): ?>
                         <div id="webhook-selector-container" style="display: none;">
                             <?php render_webhook_selector($user_webhooks, ''); ?>
                         </div>
