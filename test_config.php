@@ -25,4 +25,31 @@ if (file_exists($path)) {
         echo "Error loading file: " . $e->getMessage();
     }
 }
+
+echo "<hr>Checking file contents:<br>";
+$contents = file_get_contents($path);
+echo "File size: " . strlen($contents) . " bytes<br>";
+echo "Contains userStyle tag: " . (strpos($contents, '<userStyle>Normal</userStyle>') !== false ? "YES" : "NO") . "<br>";
+
+// Check for common syntax issues
+echo "Last character: '" . substr($contents, -1) . "' (ASCII: " . ord(substr($contents, -1)) . ")<br>";
+echo "Ends with ?>: " . (substr(trim($contents), -2) == '?>' ? "YES" : "NO") . "<br>";
+
+// Look for other potential issues
+echo "<hr>File contents preview (first 200 chars):<br>";
+echo htmlspecialchars(substr($contents, 0, 200)) . "...<br>";
+
+echo "<hr>File contents preview (last 200 chars):<br>";
+echo htmlspecialchars(substr($contents, -200)) . "<br>";
+
+// Check if file has the correct structure
+echo "<hr>Checking file structure:<br>";
+$lines = file($path);
+$first_line = trim($lines[0]);
+$last_line = trim($lines[count($lines)-1]);
+
+echo "First line: " . htmlspecialchars($first_line) . "<br>";
+echo "Last line: " . htmlspecialchars($last_line) . "<br>";
+echo "First line is '<?php': " . ($first_line == '<?php' ? "YES" : "NO") . "<br>";
+echo "Last line is '];': " . ($last_line == '];' ? "YES" : "NO") . "<br>";
 ?>
