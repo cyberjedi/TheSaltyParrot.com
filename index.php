@@ -44,9 +44,10 @@ if (file_exists('discord/discord-config.php')) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Salty Parrot - A Pirate Borg Toolbox</title>
+    <title>The Salty Parrot</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <?php if ($discord_enabled && file_exists('css/discord.css')): ?>
     <link rel="stylesheet" href="css/discord.css">
