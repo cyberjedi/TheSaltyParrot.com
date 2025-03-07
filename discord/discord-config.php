@@ -1,13 +1,46 @@
 <?php
 // File: discord/discord-config.php
 // This file contains Discord API configuration
-// Store this file outside the web root or secure it with .htaccess
 
-// Discord API credentials
-define('DISCORD_CLIENT_ID', 'YOUR_CLIENT_ID'); // Replace with your actual client ID
-define('DISCORD_CLIENT_SECRET', 'YOUR_CLIENT_SECRET'); // Replace with your actual client secret
-define('DISCORD_REDIRECT_URI', 'https://thesaltyparrot.com/auth/discord-callback.php'); // Change for local testing if needed
-define('DISCORD_API_URL', 'https://discord.com/api/v10');
+// Possible config file locations with priority
+$possible_config_paths = [
+    $_SERVER['DOCUMENT_ROOT'] . '/../../private/secure_variables.php',
+    $_SERVER['DOCUMENT_ROOT'] . '/../private/secure_variables.php',
+    $_SERVER['DOCUMENT_ROOT'] . '/private/secure_variables.php',
+    dirname(__FILE__) . '/../../private/secure_variables.php'
+];
+
+// Find and load the config file
+$config = null;
+foreach ($possible_config_paths as $path) {
+    if (file_exists($path)) {
+        $config = require_once($path);
+        break;
+    }
+}
+
+// If no config file found, throw an error
+if ($config === null) {
+    error_log('Discord configuration file not found. Checked paths: ' . implode(', ', $possible_config_paths));
+    // Define defaults to prevent errors
+    define('DISCORD_CLIENT_ID', '');
+    define('DISCORD_CLIENT_SECRET', '');
+    define('DISCORD_REDIRECT_URI', '');
+    define('DISCORD_API_URL', 'https://discord.com/api/v10');
+} else {
+    // Define constants from loaded configuration
+    define('DISCORD_CLIENT_ID', $config['discord']['client_id']);
+    define('DISCORD_CLIENT_SECRET', $config['discord']['client_secret']);
+    
+    // Determine which redirect URI to use based on current hostname
+    if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'dev.') === 0) {
+        define('DISCORD_REDIRECT_URI', $config['discord']['dev_redirect_uri']);
+    } else {
+        define('DISCORD_REDIRECT_URI', $config['discord']['redirect_uri']);
+    }
+    
+    define('DISCORD_API_URL', $config['discord']['api_url']);
+}
 
 // Sessions configuration
 if (session_status() === PHP_SESSION_NONE) {
@@ -60,7 +93,9 @@ function discord_api_request($endpoint, $method = 'GET', $data = [], $token = nu
 
 // Function to check if a user is logged in with Discord
 function is_discord_authenticated() {
-    return isset($_SESSION['discord_user']) && isset($_SESSION['discord_access_token']) && isset($_SESSION['discord_token_expires']);
+    return isset($_SESSION['discord_user']) && 
+           isset($_SESSION['discord_access_token']) && 
+           isset($_SESSION['discord_token_expires']);
 }
 
 // Function to check if token needs refreshing
@@ -105,7 +140,10 @@ function refresh_discord_token_if_needed() {
             return true;
         } else {
             // If refresh fails, clear session and return false
-            session_unset();
+            unset($_SESSION['discord_user']);
+            unset($_SESSION['discord_access_token']);
+            unset($_SESSION['discord_refresh_token']);
+            unset($_SESSION['discord_token_expires']);
             return false;
         }
     }
@@ -113,207 +151,138 @@ function refresh_discord_token_if_needed() {
     // No refresh token or refresh failed
     return false;
 }
-?>
 
-<?php
-// File: auth/discord-login.php
-// This file handles initiating the Discord OAuth flow
-
-require_once 'discord-config.php';
-
-// Generate a state parameter to prevent CSRF attacks
-$state = bin2hex(random_bytes(16));
-$_SESSION['discord_oauth_state'] = $state;
-
-// Construct the authorization URL
-$auth_url = DISCORD_API_URL . '/oauth2/authorize' .
-    '?client_id=' . DISCORD_CLIENT_ID .
-    '&redirect_uri=' . urlencode(DISCORD_REDIRECT_URI) .
-    '&response_type=code' .
-    '&scope=' . urlencode('identify guilds webhook.incoming') .
-    '&state=' . $state;
-
-// Redirect the user to Discord's authorization page
-header('Location: ' . $auth_url);
-exit;
-?>
-
-<?php
-// File: discord/discord-callback.php
-// This file handles the callback from Discord OAuth
-
-require_once 'discord-config.php';
-require_once '../config/db_connect.php';
-
-// Check for errors or authorization denial
-if (isset($_GET['error'])) {
-    $_SESSION['discord_error'] = 'Authorization denied: ' . $_GET['error_description'];
-    header('Location: ../index.php');
-    exit;
-}
-
-// Verify state parameter to prevent CSRF attacks
-if (!isset($_GET['state']) || !isset($_SESSION['discord_oauth_state']) || $_GET['state'] !== $_SESSION['discord_oauth_state']) {
-    $_SESSION['discord_error'] = 'Invalid state parameter. Please try again.';
-    header('Location: ../index.php');
-    exit;
-}
-
-// Clear the state from session
-unset($_SESSION['discord_oauth_state']);
-
-// Check for the authorization code
-if (!isset($_GET['code'])) {
-    $_SESSION['discord_error'] = 'No authorization code received.';
-    header('Location: ../index.php');
-    exit;
-}
-
-// Exchange the code for an access token
-$token_data = [
-    'client_id' => DISCORD_CLIENT_ID,
-    'client_secret' => DISCORD_CLIENT_SECRET,
-    'grant_type' => 'authorization_code',
-    'code' => $_GET['code'],
-    'redirect_uri' => DISCORD_REDIRECT_URI
-];
-
-$ch = curl_init();
-
-curl_setopt($ch, CURLOPT_URL, DISCORD_API_URL . '/oauth2/token');
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($token_data));
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-$response = curl_exec($ch);
-$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
-
-if ($http_code < 200 || $http_code >= 300) {
-    $_SESSION['discord_error'] = 'Failed to exchange code for token.';
-    header('Location: ../index.php');
-    exit;
-}
-
-$token_response = json_decode($response, true);
-
-// Store the access token in session
-$_SESSION['discord_access_token'] = $token_response['access_token'];
-$_SESSION['discord_refresh_token'] = $token_response['refresh_token'];
-$_SESSION['discord_token_expires'] = time() + $token_response['expires_in'];
-
-// Fetch user information
-$user_response = discord_api_request('/users/@me', 'GET', [], $token_response['access_token']);
-
-if (!isset($user_response['id'])) {
-    $_SESSION['discord_error'] = 'Failed to fetch user information.';
-    header('Location: ../index.php');
-    exit;
-}
-
-// Store basic user data in session
-$_SESSION['discord_user'] = [
-    'id' => $user_response['id'],
-    'username' => $user_response['username'],
-    'discriminator' => $user_response['discriminator'] ?? '',
-    'avatar' => $user_response['avatar']
-];
-
-// Store the user in the database
-try {
-    // Check if user exists first
-    $checkStmt = $conn->prepare("SELECT * FROM discord_users WHERE discord_id = :discord_id");
-    $checkStmt->bindParam(':discord_id', $user_response['id']);
-    $checkStmt->execute();
-    
-    $user = $checkStmt->fetch(PDO::FETCH_ASSOC);
-    
-    if ($user) {
-        // Update existing user
-        $updateStmt = $conn->prepare("UPDATE discord_users SET 
-            username = :username, 
-            discriminator = :discriminator, 
-            avatar = :avatar, 
-            access_token = :access_token, 
-            refresh_token = :refresh_token, 
-            token_expires = :token_expires, 
-            last_login = NOW() 
-            WHERE discord_id = :discord_id");
-            
-        $updateStmt->bindParam(':username', $user_response['username']);
-        $updateStmt->bindParam(':discriminator', $user_response['discriminator'] ?? '');
-        $updateStmt->bindParam(':avatar', $user_response['avatar']);
-        $updateStmt->bindParam(':access_token', $token_response['access_token']);
-        $updateStmt->bindParam(':refresh_token', $token_response['refresh_token']);
-        $updateStmt->bindParam(':token_expires', $_SESSION['discord_token_expires']);
-        $updateStmt->bindParam(':discord_id', $user_response['id']);
-        
-        $updateStmt->execute();
-    } else {
-        // Create new user
-        $insertStmt = $conn->prepare("INSERT INTO discord_users 
-            (discord_id, username, discriminator, avatar, access_token, refresh_token, token_expires, created_at, last_login) 
-            VALUES 
-            (:discord_id, :username, :discriminator, :avatar, :access_token, :refresh_token, :token_expires, NOW(), NOW())");
-            
-        $insertStmt->bindParam(':discord_id', $user_response['id']);
-        $insertStmt->bindParam(':username', $user_response['username']);
-        $insertStmt->bindParam(':discriminator', $user_response['discriminator'] ?? '');
-        $insertStmt->bindParam(':avatar', $user_response['avatar']);
-        $insertStmt->bindParam(':access_token', $token_response['access_token']);
-        $insertStmt->bindParam(':refresh_token', $token_response['refresh_token']);
-        $insertStmt->bindParam(':token_expires', $_SESSION['discord_token_expires']);
-        
-        $insertStmt->execute();
+/**
+ * Renders a Discord login button
+ * 
+ * @param string $size Button size (small, medium, large)
+ * @param string $color Button color (dark, light)
+ * @param string $text Button text (defaults to "Login with Discord")
+ * @return void Outputs the HTML button
+ */
+function renderDiscordLoginButton($size = 'medium', $color = 'dark', $text = 'Login with Discord') {
+    $sizeClass = '';
+    switch ($size) {
+        case 'small':
+            $sizeClass = 'discord-btn-sm';
+            break;
+        case 'large':
+            $sizeClass = 'discord-btn-lg';
+            break;
+        default:
+            $sizeClass = 'discord-btn-md';
     }
     
-    $_SESSION['discord_success'] = 'Successfully logged in with Discord!';
-} catch (PDOException $e) {
-    // Still allow login even if DB storage fails, but log the error
-    error_log('Discord login database error: ' . $e->getMessage());
-    $_SESSION['discord_warning'] = 'Your login worked, but we had trouble saving your session. Some features may be unavailable.';
+    $colorClass = $color === 'light' ? 'discord-btn-light' : 'discord-btn-dark';
+    
+    echo '<a href="discord/discord-login.php" class="discord-btn ' . $sizeClass . ' ' . $colorClass . '">';
+    echo '<i class="fab fa-discord"></i> ' . htmlspecialchars($text);
+    echo '</a>';
 }
 
-// Redirect to dashboard or main page
-header('Location: ../index.php');
-exit;
-?>
-
-<?php
-// File: auth/discord-logout.php
-// This file handles Discord logout
-
-require_once 'discord-config.php';
-
-// Clear Discord-specific session variables
-unset($_SESSION['discord_user']);
-unset($_SESSION['discord_access_token']);
-unset($_SESSION['discord_refresh_token']);
-unset($_SESSION['discord_token_expires']);
-
-// Optional: invalidate the token on Discord's side
-// This isn't strictly necessary but is good practice
-if (isset($_SESSION['discord_access_token'])) {
-    $data = [
-        'client_id' => DISCORD_CLIENT_ID,
-        'client_secret' => DISCORD_CLIENT_SECRET,
-        'token' => $_SESSION['discord_access_token']
-    ];
+/**
+ * Renders the Discord user profile section
+ * 
+ * @param array $user Discord user data
+ * @return void Outputs the HTML component
+ */
+function renderDiscordUserProfile($user) {
+    if (empty($user)) {
+        return;
+    }
     
-    $ch = curl_init();
+    // Construct avatar URL
+    $avatarUrl = $user['avatar'] 
+        ? 'https://cdn.discordapp.com/avatars/' . $user['id'] . '/' . $user['avatar'] . '.png' 
+        : 'https://cdn.discordapp.com/embed/avatars/0.png';
     
-    curl_setopt($ch, CURLOPT_URL, DISCORD_API_URL . '/oauth2/token/revoke');
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    // Format username
+    $usernameDisplay = htmlspecialchars($user['username']);
+    if (!empty($user['discriminator']) && $user['discriminator'] !== '0') {
+        $usernameDisplay .= '#' . htmlspecialchars($user['discriminator']);
+    }
     
-    curl_exec($ch);
-    curl_close($ch);
+    echo '<div class="discord-profile">';
+    echo '<img src="' . $avatarUrl . '" alt="Discord Avatar" class="discord-avatar">';
+    echo '<div class="discord-info">';
+    echo '<div class="discord-username">' . $usernameDisplay . '</div>';
+    echo '<div class="discord-buttons">';
+    echo '<a href="discord/webhooks.php" class="discord-btn-sm discord-btn-light">Manage Webhooks</a>';
+    echo '<a href="discord/discord-logout.php" class="discord-btn-sm discord-btn-light">Logout</a>';
+    echo '</div>'; // End discord-buttons
+    echo '</div>'; // End discord-info
+    echo '</div>'; // End discord-profile
 }
 
-$_SESSION['discord_message'] = 'You have been logged out from Discord.';
-
-// Redirect to the main page
-header('Location: ../index.php');
-exit;
+/**
+ * Renders the Discord connection status in dashboard
+ * 
+ * @return void Outputs the HTML component
+ */
+function renderDiscordConnectionStatus() {
+    // Check if user is logged in with Discord
+    if (is_discord_authenticated()) {
+        $user = $_SESSION['discord_user'];
+        
+        // Format avatar URL
+        $avatarUrl = $user['avatar'] 
+            ? 'https://cdn.discordapp.com/avatars/' . $user['id'] . '/' . $user['avatar'] . '.png' 
+            : 'https://cdn.discordapp.com/embed/avatars/0.png';
+        
+        // Format username
+        $usernameDisplay = htmlspecialchars($user['username']);
+        if (!empty($user['discriminator']) && $user['discriminator'] !== '0') {
+            $usernameDisplay .= '#' . htmlspecialchars($user['discriminator']);
+        }
+        
+        echo '<div class="discord-connection-status connected">';
+        echo '<div class="discord-status-content">';
+        echo '<img src="' . $avatarUrl . '" alt="Discord Avatar" class="discord-status-avatar">';
+        echo '<div class="discord-status-info">';
+        echo '<div class="discord-status-title">Connected to Discord as <strong>' . $usernameDisplay . '</strong></div>';
+        echo '<div class="discord-status-text">You can now send generated content to your Discord channels.</div>';
+        echo '</div>'; // End discord-status-info
+        echo '</div>'; // End discord-status-content
+        echo '<div class="discord-status-actions">';
+        echo '<a href="discord/webhooks.php" class="btn btn-secondary btn-sm">Manage Webhooks</a>';
+        echo '<a href="discord/discord-logout.php" class="btn btn-secondary btn-sm">Disconnect</a>';
+        echo '</div>'; // End discord-status-actions
+        echo '</div>'; // End discord-connection-status
+    } else {
+        // Not connected - show login button
+        echo '<div class="discord-connection-status not-connected">';
+        echo '<div class="discord-status-content">';
+        echo '<i class="fab fa-discord discord-status-icon"></i>';
+        echo '<div class="discord-status-info">';
+        echo '<div class="discord-status-title">Connect with Discord</div>';
+        echo '<div class="discord-status-text">Connect your Discord account to send generated content directly to your Discord channels.</div>';
+        echo '</div>'; // End discord-status-info
+        echo '</div>'; // End discord-status-content
+        echo '<div class="discord-status-actions">';
+        echo '<a href="discord/discord-login.php" class="btn btn-primary btn-sm"><i class="fab fa-discord"></i> Connect with Discord</a>';
+        echo '</div>'; // End discord-status-actions
+        echo '</div>'; // End discord-connection-status
+    }
+    
+    // Display any pending messages
+    if (isset($_SESSION['discord_error'])) {
+        echo '<div class="discord-message error">' . htmlspecialchars($_SESSION['discord_error']) . '</div>';
+        unset($_SESSION['discord_error']);
+    }
+    
+    if (isset($_SESSION['discord_success'])) {
+        echo '<div class="discord-message success">' . htmlspecialchars($_SESSION['discord_success']) . '</div>';
+        unset($_SESSION['discord_success']);
+    }
+    
+    if (isset($_SESSION['discord_warning'])) {
+        echo '<div class="discord-message warning">' . htmlspecialchars($_SESSION['discord_warning']) . '</div>';
+        unset($_SESSION['discord_warning']);
+    }
+    
+    if (isset($_SESSION['discord_message'])) {
+        echo '<div class="discord-message info">' . htmlspecialchars($_SESSION['discord_message']) . '</div>';
+        unset($_SESSION['discord_message']);
+    }
+}
 ?>
