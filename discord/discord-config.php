@@ -139,7 +139,7 @@ exit;
 ?>
 
 <?php
-// File: auth/discord-callback.php
+// File: discord/discord-callback.php
 // This file handles the callback from Discord OAuth
 
 require_once 'discord-config.php';
