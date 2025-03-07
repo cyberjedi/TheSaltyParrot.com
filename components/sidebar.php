@@ -65,20 +65,21 @@ if (file_exists($base_path . 'discord/discord-config.php')) {
         </button>
     </div>
     
-    <!-- Discord connection button at the bottom -->
-    <div class="sidebar-footer">
+    <!-- Discord connection section in sidebar -->
+    <div class="sidebar-section">
+        <h3>Discord</h3>
         <?php if ($discord_enabled): ?>
             <?php if ($discord_authenticated): ?>
-                <a href="<?php echo $base_path; ?>discord/webhooks.php" class="discord-sidebar-btn connected">
+                <a href="<?php echo $base_path; ?>discord/webhooks.php" class="sidebar-btn discord-sidebar-btn connected">
                     <i class="fab fa-discord"></i> Manage Discord
                 </a>
             <?php else: ?>
-                <a href="<?php echo $base_path; ?>discord/discord-login.php" class="discord-sidebar-btn">
+                <a href="<?php echo $base_path; ?>discord/discord-login.php" class="sidebar-btn discord-sidebar-btn">
                     <i class="fab fa-discord"></i> Connect Discord
                 </a>
             <?php endif; ?>
         <?php else: ?>
-            <button class="discord-sidebar-btn disabled" disabled>
+            <button class="sidebar-btn disabled">
                 <i class="fab fa-discord"></i> Discord Coming Soon
             </button>
         <?php endif; ?>
@@ -166,22 +167,6 @@ if (file_exists($base_path . 'discord/discord-config.php')) {
         if (characterListBtn) {
             characterListBtn.addEventListener('click', function() {
                 alert("Character list coming soon!");
-            });
-        }
-        
-        // Rules Reference
-        const rulesReferenceBtn = document.getElementById('rules-reference-btn');
-        if (rulesReferenceBtn) {
-            rulesReferenceBtn.addEventListener('click', function() {
-                alert("Rules reference coming soon!");
-            });
-        }
-        
-        // Treasure Maps
-        const treasureMapsBtn = document.getElementById('treasure-maps-btn');
-        if (treasureMapsBtn) {
-            treasureMapsBtn.addEventListener('click', function() {
-                alert("Treasure maps coming soon!");
             });
         }
     });
