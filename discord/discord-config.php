@@ -249,28 +249,21 @@ function renderDiscordConnectionStatus() {
         echo '<div class="discord-status-content">';
         echo '<img src="' . $avatarUrl . '" alt="Discord Avatar" class="discord-status-avatar">';
         echo '<div class="discord-status-info">';
-        echo '<div class="discord-status-title">Connected to Discord as <strong>' . $usernameDisplay . '</strong></div>';
-        echo '<div class="discord-status-text">You can now send generated content to your Discord channels.</div>';
+        echo '<div class="discord-status-title">Connected as <strong>' . $usernameDisplay . '</strong></div>';
+        echo '<div class="discord-status-text">Send generated content to your Discord channels.</div>';
         echo '</div>'; // End discord-status-info
         echo '</div>'; // End discord-status-content
-        echo '<div class="discord-status-actions">';
-        echo '<a href="discord/webhooks.php" class="btn btn-secondary btn-sm">Manage Webhooks</a>';
-        echo '<a href="discord/discord-logout.php" class="btn btn-secondary btn-sm">Disconnect</a>';
-        echo '</div>'; // End discord-status-actions
         echo '</div>'; // End discord-connection-status
     } else {
-        // Not connected - show login button
+        // Not connected - show simple status message
         echo '<div class="discord-connection-status not-connected">';
         echo '<div class="discord-status-content">';
         echo '<i class="fab fa-discord discord-status-icon"></i>';
         echo '<div class="discord-status-info">';
-        echo '<div class="discord-status-title">Connect with Discord</div>';
-        echo '<div class="discord-status-text">Connect your Discord account to send generated content directly to your Discord channels.</div>';
+        echo '<div class="discord-status-title">Discord Not Connected</div>';
+        echo '<div class="discord-status-text">Connect Discord using the button in the sidebar to share content to your channels.</div>';
         echo '</div>'; // End discord-status-info
         echo '</div>'; // End discord-status-content
-        echo '<div class="discord-status-actions">';
-        echo '<a href="discord/discord-login.php" class="btn btn-primary btn-sm"><i class="fab fa-discord"></i> Connect with Discord</a>';
-        echo '</div>'; // End discord-status-actions
         echo '</div>'; // End discord-connection-status
     }
     
