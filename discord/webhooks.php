@@ -111,13 +111,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         (user_id, server_id, channel_id, channel_name, webhook_id, webhook_token, webhook_name, created_at, last_updated) 
                         VALUES 
                         (:user_id, :server_id, :channel_id, :channel_name, :webhook_id, :webhook_token, :webhook_name, NOW(), NOW())");
+                    
+                    $webhook_id = $response['id'];
+                    $webhook_token = $response['token'];
                         
                     $stmt->bindParam(':user_id', $user_id);
                     $stmt->bindParam(':server_id', $selectedGuild);
                     $stmt->bindParam(':channel_id', $selectedChannel);
                     $stmt->bindParam(':channel_name', $channelName);
-                    $stmt->bindParam(':webhook_id', $response['id']);
-                    $stmt->bindParam(':webhook_token', $response['token']);
+                    $stmt->bindParam(':webhook_id', $webhook_id);
+                    $stmt->bindParam(':webhook_token', $webhook_token);
                     $stmt->bindParam(':webhook_name', $webhookName);
                     
                     $stmt->execute();
@@ -319,6 +322,63 @@ $page_title = 'Manage Discord Webhooks';
                     </div>
                 </form>
             </div>
+            
+            <!-- Webhook Guide Section -->
+            <div class="webhook-guide">
+                <h2>Setting Up Discord Webhooks: A User Guide</h2>
+                
+                <div class="guide-section">
+                    <h3><i class="fas fa-key"></i> Prerequisites</h3>
+                    <ul>
+                        <li>You must have the <strong>"Manage Webhooks"</strong> permission on your Discord server to create webhooks</li>
+                        <li>Only servers where you have appropriate permissions will appear in the dropdown menu</li>
+                        <li>You need to be logged in with Discord to create and manage webhooks</li>
+                    </ul>
+                </div>
+                
+                <div class="guide-section">
+                    <h3><i class="fas fa-list-ol"></i> Step-by-Step Guide</h3>
+                    <ol>
+                        <li><strong>Select a Server</strong> - Choose the Discord server where you want to send content</li>
+                        <li><strong>Choose a Channel</strong> - Select the specific text channel that will receive messages</li>
+                        <li><strong>Name Your Webhook</strong> - By default, it will be "The Salty Parrot" but you can customize this</li>
+                        <li><strong>Create the Webhook</strong> - Click the "Create Webhook" button to set it up</li>
+                        <li><strong>Test the Connection</strong> - Use the "Test" button to verify the webhook works</li>
+                    </ol>
+                </div>
+                
+                <div class="guide-section">
+                    <h3><i class="fas fa-info-circle"></i> How It Works</h3>
+                    <p>After creating a webhook, you'll be able to:</p>
+                    <ul>
+                        <li>Generate ships, loot, and other content on The Salty Parrot</li>
+                        <li>Send the generated content directly to your Discord server with a single click</li>
+                        <li>Share your creations with your gaming group without copy-pasting</li>
+                    </ul>
+                    <p>Webhooks only allow The Salty Parrot to <em>send</em> messages to your server. The app cannot read messages or access any other Discord data.</p>
+                </div>
+                
+                <div class="guide-section">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Troubleshooting</h3>
+                    <ul>
+                        <li><strong>No servers visible?</strong> You need "Manage Webhooks" permission on the server</li>
+                        <li><strong>No channels visible?</strong> Make sure there are text channels in your selected server</li>
+                        <li><strong>Test message fails?</strong> The webhook may have been deleted from Discord's side</li>
+                        <li><strong>Other issues?</strong> Try logging out and back in to refresh your Discord connection</li>
+                    </ul>
+                </div>
+                
+                <div class="guide-section">
+                    <h3><i class="fas fa-shield-alt"></i> Privacy & Security</h3>
+                    <p>The Salty Parrot only stores the minimum information needed to send messages to your Discord channels:</p>
+                    <ul>
+                        <li>We never store your Discord password</li>
+                        <li>Webhook tokens are securely stored and only used to send messages</li>
+                        <li>You can delete webhooks at any time from this page</li>
+                        <li>You can also delete webhooks directly from Discord's Integrations settings</li>
+                    </ul>
+                </div>
+            </div>
         </main>
     </div>
     
@@ -326,6 +386,51 @@ $page_title = 'Manage Discord Webhooks';
         <p>The Salty Parrot is an independent production by Stuart Greenwell. It is not affiliated with Limithron LLC. It is published under the PIRATE BORG Third Party License. PIRATE BORG is ©2022 Limithron LLC.</p>
         <p>&copy; 2025 The Salty Parrot</p>
     </footer>
+
+    <style>
+        /* Additional styles specific to the webhook guide */
+        .webhook-guide {
+            margin-top: 40px;
+            padding: 20px;
+            background-color: var(--dark);
+            border: 1px solid rgba(191, 157, 97, 0.3);
+            border-radius: 8px;
+        }
+        
+        .webhook-guide h2 {
+            color: var(--secondary);
+            border-bottom: 1px solid rgba(191, 157, 97, 0.3);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .guide-section {
+            margin-bottom: 25px;
+        }
+        
+        .guide-section h3 {
+            color: var(--secondary);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .guide-section h3 i {
+            margin-right: 8px;
+        }
+        
+        .guide-section ul, .guide-section ol {
+            padding-left: 25px;
+            margin-bottom: 15px;
+        }
+        
+        .guide-section li {
+            margin-bottom: 8px;
+        }
+        
+        .guide-section strong {
+            color: var(--secondary);
+        }
+    </style>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -350,8 +455,12 @@ $page_title = 'Manage Discord Webhooks';
             
             // Fetch channels via AJAX
             fetch(`get_channels.php?guild_id=${guildId}`)
-                .then(response => response.json())
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Data received:', data);
                     channelSelect.innerHTML = '<option value="">-- Select a channel --</option>';
                     
                     if (data.status === 'success' && data.channels && data.channels.length > 0) {
@@ -406,193 +515,3 @@ $page_title = 'Manage Discord Webhooks';
     </script>
 </body>
 </html>
-
-<?php
-// File: discord/get_channels.php
-// Create this file in the same directory
-
-require_once 'discord-config.php';
-
-// Check if user is logged in
-if (!is_discord_authenticated()) {
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'message' => 'Not authenticated']);
-    exit;
-}
-
-// Check if guild ID is provided
-if (!isset($_GET['guild_id']) || empty($_GET['guild_id'])) {
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'message' => 'Guild ID is required']);
-    exit;
-}
-
-// Refresh token if needed
-if (!refresh_discord_token_if_needed()) {
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'message' => 'Token refresh failed']);
-    exit;
-}
-
-$guild_id = $_GET['guild_id'];
-$access_token = $_SESSION['discord_access_token'];
-
-// Fetch channels from Discord API
-$channels = discord_api_request('/guilds/' . $guild_id . '/channels', 'GET', [], $access_token);
-
-if (!is_array($channels)) {
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'message' => 'Failed to fetch channels']);
-    exit;
-}
-
-// Filter to include only text channels (type 0)
-$text_channels = array_filter($channels, function($channel) {
-    return $channel['type'] === 0; // 0 is text channel
-});
-
-header('Content-Type: application/json');
-echo json_encode([
-    'status' => 'success',
-    'channels' => array_values($text_channels) // reset array keys
-]);
-exit;
-?>
-
-<?php
-// File: discord/test_webhook.php
-// Create this file in the same directory
-
-require_once 'discord-config.php';
-require_once '../config/db_connect.php';
-
-// Check if request is POST
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'message' => 'Invalid request method']);
-    exit;
-}
-
-// Get JSON data
-$json = file_get_contents('php://input');
-$data = json_decode($json, true);
-
-// Check if webhook ID is provided
-if (!isset($data['webhook_id']) || empty($data['webhook_id'])) {
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'message' => 'Webhook ID is required']);
-    exit;
-}
-
-// Check if user is logged in
-if (!is_discord_authenticated()) {
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'message' => 'Not authenticated']);
-    exit;
-}
-
-// Get Discord user ID
-$discord_id = $_SESSION['discord_user']['id'];
-
-try {
-    // Get user ID from database
-    $stmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
-    $stmt->bindParam(':discord_id', $discord_id);
-    $stmt->execute();
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if (!$user) {
-        header('Content-Type: application/json');
-        echo json_encode(['status' => 'error', 'message' => 'User not found']);
-        exit;
-    }
-    
-    $user_id = $user['id'];
-    
-    // Get webhook details
-    $webhook_id = $data['webhook_id'];
-    $stmt = $conn->prepare("SELECT * FROM discord_webhooks WHERE id = :id AND user_id = :user_id");
-    $stmt->bindParam(':id', $webhook_id);
-    $stmt->bindParam(':user_id', $user_id);
-    $stmt->execute();
-    $webhook = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if (!$webhook) {
-        header('Content-Type: application/json');
-        echo json_encode(['status' => 'error', 'message' => 'Webhook not found or does not belong to you']);
-        exit;
-    }
-    
-    // Prepare test message
-    $message = [
-        'content' => null,
-        'embeds' => [
-            [
-                'title' => '🧪 Test Message from The Salty Parrot',
-                'description' => 'This is a test message to verify your webhook is working correctly. You can now send generated content from The Salty Parrot to this Discord channel!',
-                'color' => 0xbf9d61, // Hex color in decimal (--secondary color)
-                'footer' => [
-                    'text' => 'The Salty Parrot - A Pirate Borg Toolbox'
-                ],
-                'timestamp' => date('c')
-            ]
-        ]
-    ];
-    
-    // Send message to webhook
-    $url = "https://discord.com/api/webhooks/{$webhook['webhook_id']}/{$webhook['webhook_token']}";
-    
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($message));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    
-    $response = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    // Log webhook usage
-    $content_summary = 'Test message';
-    $generator_type = 'test';
-    $stmt = $conn->prepare("INSERT INTO discord_webhook_logs 
-        (webhook_id, user_id, generator_type, content_summary, status_code, is_success, request_timestamp, response_timestamp) 
-        VALUES 
-        (:webhook_id, :user_id, :generator_type, :content_summary, :status_code, :is_success, NOW(), NOW())");
-    
-    $stmt->bindParam(':webhook_id', $webhook_id);
-    $stmt->bindParam(':user_id', $user_id);
-    $stmt->bindParam(':generator_type', $generator_type);
-    $stmt->bindParam(':content_summary', $content_summary);
-    $stmt->bindParam(':status_code', $http_code);
-    $is_success = ($http_code >= 200 && $http_code < 300) ? 1 : 0;
-    $stmt->bindParam(':is_success', $is_success);
-    
-    $stmt->execute();
-    
-    // Check response status
-    if ($http_code >= 200 && $http_code < 300) {
-        header('Content-Type: application/json');
-        echo json_encode(['status' => 'success', 'message' => 'Test message sent successfully']);
-    } else {
-        // Log error message
-        $error_data = json_decode($response, true);
-        $error_message = isset($error_data['message']) ? $error_data['message'] : 'Unknown error';
-        
-        // Update webhook log with error
-        $stmt = $conn->prepare("UPDATE discord_webhook_logs SET error_message = :error_message WHERE webhook_id = :webhook_id AND user_id = :user_id ORDER BY id DESC LIMIT 1");
-        $stmt->bindParam(':error_message', $error_message);
-        $stmt->bindParam(':webhook_id', $webhook_id);
-        $stmt->bindParam(':user_id', $user_id);
-        $stmt->execute();
-        
-        header('Content-Type: application/json');
-        echo json_encode(['status' => 'error', 'message' => 'Discord API error: ' . $error_message]);
-    }
-} catch (PDOException $e) {
-    error_log('Database error: ' . $e->getMessage());
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'message' => 'Database error']);
-    exit;
-}
-?>
