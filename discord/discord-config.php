@@ -29,17 +29,27 @@ if ($config === null) {
     define('DISCORD_API_URL', 'https://discord.com/api/v10');
 } else {
     // Define constants from loaded configuration
-    define('DISCORD_CLIENT_ID', $config['discord']['client_id']);
-    define('DISCORD_CLIENT_SECRET', $config['discord']['client_secret']);
-    
-    // Determine which redirect URI to use based on current hostname
-    if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'dev.') === 0) {
-        define('DISCORD_REDIRECT_URI', $config['discord']['dev_redirect_uri']);
+    // Check if 'discord' key exists and is an array
+    if (isset($config['discord']) && is_array($config['discord'])) {
+        define('DISCORD_CLIENT_ID', isset($config['discord']['client_id']) ? $config['discord']['client_id'] : '');
+        define('DISCORD_CLIENT_SECRET', isset($config['discord']['client_secret']) ? $config['discord']['client_secret'] : '');
+        
+        // Determine which redirect URI to use based on current hostname
+        if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'dev.') === 0) {
+            define('DISCORD_REDIRECT_URI', isset($config['discord']['dev_redirect_uri']) ? $config['discord']['dev_redirect_uri'] : '');
+        } else {
+            define('DISCORD_REDIRECT_URI', isset($config['discord']['redirect_uri']) ? $config['discord']['redirect_uri'] : '');
+        }
+        
+        define('DISCORD_API_URL', isset($config['discord']['api_url']) ? $config['discord']['api_url'] : 'https://discord.com/api/v10');
     } else {
-        define('DISCORD_REDIRECT_URI', $config['discord']['redirect_uri']);
+        // Discord section doesn't exist in config
+        error_log('Discord section not found in configuration file');
+        define('DISCORD_CLIENT_ID', '');
+        define('DISCORD_CLIENT_SECRET', '');
+        define('DISCORD_REDIRECT_URI', '');
+        define('DISCORD_API_URL', 'https://discord.com/api/v10');
     }
-    
-    define('DISCORD_API_URL', $config['discord']['api_url']);
 }
 
 // Sessions configuration
