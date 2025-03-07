@@ -1,6 +1,40 @@
 <?php
 // Set the current page
 $current_page = 'dashboard';
+
+// Include Discord config if file exists
+if (file_exists('discord/discord-config.php')) {
+    require_once 'discord/discord-config.php';
+}
+
+// Include Discord service if file exists
+if (file_exists('discord/discord_service.php')) {
+    require_once 'discord/discord_service.php';
+    
+    // Get user ID and webhooks if authenticated
+    $user_webhooks = [];
+    if (function_exists('is_discord_authenticated') && is_discord_authenticated() && 
+        function_exists('get_user_webhooks') && isset($conn)) {
+        
+        // Get user ID
+        $discord_id = $_SESSION['discord_user']['id'];
+        
+        try {
+            // Get user ID from database
+            $stmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
+            $stmt->bindParam(':discord_id', $discord_id);
+            $stmt->execute();
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($user) {
+                $user_id = $user['id'];
+                $user_webhooks = get_user_webhooks($conn, $user_id);
+            }
+        } catch (PDOException $e) {
+            error_log('Database error: ' . $e->getMessage());
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -11,6 +45,9 @@ $current_page = 'dashboard';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/dashboard.css">
+    <?php if (file_exists('css/discord.css')): ?>
+    <link rel="stylesheet" href="css/discord.css">
+    <?php endif; ?>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
 <body>
@@ -25,10 +62,14 @@ $current_page = 'dashboard';
                 <div class="discord-box">
                     <h3 class="box-title">Discord Connection</h3>
                     
-                    <div id="discord-status" class="placeholder-display">
-                        <i class="fab fa-discord"></i>
-                        <p>Discord integration coming soon! Connect your Discord account to enhance your Pirate Borg experience with notifications, shared campaigns, and more.</p>
-                    </div>
+                    <?php if (function_exists('renderDiscordConnectionStatus')): ?>
+                        <?php renderDiscordConnectionStatus(); ?>
+                    <?php else: ?>
+                        <div id="discord-status" class="placeholder-display">
+                            <i class="fab fa-discord"></i>
+                            <p>Discord integration coming soon! Connect your Discord account to enhance your Pirate Borg experience with notifications, shared campaigns, and more.</p>
+                        </div>
+                    <?php endif; ?>
                 </div>
                 
                 <!-- Character Display Box -->
@@ -86,6 +127,16 @@ $current_page = 'dashboard';
                             <p>Use the sidebar tools to generate content<br>Results will appear here</p>
                         </div>
                     </div>
+                    
+                    <?php 
+                    // Render webhook selector if user is authenticated with Discord and has webhooks
+                    if (function_exists('is_discord_authenticated') && is_discord_authenticated() && 
+                        function_exists('render_webhook_selector') && !empty($user_webhooks)): 
+                    ?>
+                        <div id="webhook-selector-container" style="display: none;">
+                            <?php render_webhook_selector($user_webhooks, ''); ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </main>
@@ -109,6 +160,7 @@ $current_page = 'dashboard';
             const saveOutputBtn = document.getElementById('save-output-btn');
             const createCharacterBtn = document.getElementById('create-character-btn');
             const createShipBtn = document.getElementById('create-ship-btn');
+            const webhookSelectorContainer = document.getElementById('webhook-selector-container');
             
             // Clear output button
             if (clearOutputBtn) {
@@ -119,6 +171,11 @@ $current_page = 'dashboard';
                             <p>Use the sidebar tools to generate content<br>Results will appear here</p>
                         </div>
                     `;
+                    
+                    // Hide webhook selector if visible
+                    if (webhookSelectorContainer) {
+                        webhookSelectorContainer.style.display = 'none';
+                    }
                 });
             }
             
@@ -222,6 +279,17 @@ $current_page = 'dashboard';
                                 
                                 // Update output display
                                 outputDisplay.innerHTML = shipHtml;
+                                
+                                // Show webhook selector if available
+                                if (webhookSelectorContainer) {
+                                    webhookSelectorContainer.style.display = 'block';
+                                    
+                                    // Update generator type for webhook send
+                                    const sendButton = document.getElementById('send-to-discord-btn');
+                                    if (sendButton) {
+                                        sendButton.setAttribute('data-generator-type', 'ship');
+                                    }
+                                }
                                 
                                 // Log to console
                                 console.log("Generated ship:", ship);
@@ -332,6 +400,17 @@ $current_page = 'dashboard';
                                 
                                 // Update output display
                                 outputDisplay.innerHTML = lootHtml;
+                                
+                                // Show webhook selector if available
+                                if (webhookSelectorContainer) {
+                                    webhookSelectorContainer.style.display = 'block';
+                                    
+                                    // Update generator type for webhook send
+                                    const sendButton = document.getElementById('send-to-discord-btn');
+                                    if (sendButton) {
+                                        sendButton.setAttribute('data-generator-type', 'loot');
+                                    }
+                                }
                                 
                                 // Log to console
                                 console.log("Generated loot:", data);
