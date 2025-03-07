@@ -65,16 +65,6 @@ if (file_exists($base_path . 'discord/discord-config.php')) {
         </button>
     </div>
     
-    <div class="sidebar-section">
-        <h3>Resources</h3>
-        <button id="rules-reference-btn" class="sidebar-btn">
-            <i class="fas fa-book"></i> Rules Reference
-        </button>
-        <button id="treasure-maps-btn" class="sidebar-btn">
-            <i class="fas fa-map"></i> Treasure Maps
-        </button>
-    </div>
-    
     <!-- Discord connection button at the bottom -->
     <div class="sidebar-footer">
         <?php if ($discord_enabled): ?>
