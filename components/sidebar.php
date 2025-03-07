@@ -7,6 +7,19 @@ function getBasePath() {
     return strpos($_SERVER['PHP_SELF'], '/pages/') !== false ? '../' : './';
 }
 $base_path = getBasePath();
+
+// Check if Discord is enabled and user is authenticated
+$discord_enabled = false;
+$discord_authenticated = false;
+if (file_exists($base_path . 'discord/discord-config.php')) {
+    try {
+        require_once $base_path . 'discord/discord-config.php';
+        $discord_enabled = true;
+        $discord_authenticated = function_exists('is_discord_authenticated') && is_discord_authenticated();
+    } catch (Exception $e) {
+        error_log('Discord integration error in sidebar: ' . $e->getMessage());
+    }
+}
 ?>
 
 <aside class="sidebar">
@@ -60,6 +73,25 @@ $base_path = getBasePath();
         <button id="treasure-maps-btn" class="sidebar-btn">
             <i class="fas fa-map"></i> Treasure Maps
         </button>
+    </div>
+    
+    <!-- Discord connection button at the bottom -->
+    <div class="sidebar-footer">
+        <?php if ($discord_enabled): ?>
+            <?php if ($discord_authenticated): ?>
+                <a href="<?php echo $base_path; ?>discord/webhooks.php" class="discord-sidebar-btn connected">
+                    <i class="fab fa-discord"></i> Manage Discord
+                </a>
+            <?php else: ?>
+                <a href="<?php echo $base_path; ?>discord/discord-login.php" class="discord-sidebar-btn">
+                    <i class="fab fa-discord"></i> Connect Discord
+                </a>
+            <?php endif; ?>
+        <?php else: ?>
+            <button class="discord-sidebar-btn disabled" disabled>
+                <i class="fab fa-discord"></i> Discord Coming Soon
+            </button>
+        <?php endif; ?>
     </div>
 </aside>
 
