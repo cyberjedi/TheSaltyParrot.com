@@ -253,9 +253,6 @@ footer p {
 .main-content {
     flex: 1;
     padding: 20px;
-    background-image: url("../assets/TSP_Background.svg");
-    background-repeat: repeat;
-    background-size: auto;
 }
 
 /* Dashboard/Home Page Styles */
@@ -654,15 +651,4 @@ body {
     min-height: 100vh;
 }
 
-/* Base background for the body */
-body {
-    background-image: url("../assets/TSP_Background.svg");
-    background-repeat: repeat;
-    background-size: auto;
-}
-
-/* Reset background for the sidebar */
-.sidebar {
-    background-image: none !important;
-    background-color: var(--dark);
-}
+/* No additional background styling needed as it's already defined */
