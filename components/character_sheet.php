@@ -61,60 +61,40 @@ $error_message = null;
 // Get user ID from Discord session if authenticated
 $user_id = 1; // Default fallback
 
-// Check if the user is authenticated via Discord
+// Set a safe default
+$user_id = 1;
+
+// First, try to fetch Discord info if authenticated
 if ($discord_authenticated && isset($_SESSION['discord_user'])) {
     try {
         require_once 'config/db_connect.php';
+        $discord_id = $_SESSION['discord_user']['id']; 
         
-        // Get the database user ID based on Discord ID
-        $userStmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
-        $discord_id = $_SESSION['discord_user']['id'];
-        $userStmt->bindParam(':discord_id', $discord_id);
-        $userStmt->execute();
-        $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
-        
-        error_log("Discord user ID: " . $discord_id);
+        // Get user ID from discord_users table
+        $stmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = ?");
+        $stmt->execute([$discord_id]);
+        $userData = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($userData) {
             $user_id = $userData['id'];
-            error_log("Found database user ID: " . $user_id);
-        } else {
-            error_log("No user found in discord_users table for Discord ID: " . $discord_id);
         }
-    } catch (PDOException $e) {
-        error_log("Error getting user ID: " . $e->getMessage());
-    }
-} else {
-    error_log("User not authenticated via Discord or session discord_user not set");
-    if ($discord_authenticated) {
-        error_log("discord_authenticated is true but $_SESSION['discord_user'] is not set");
+    } catch (Exception $e) {
+        // Fail silently
     }
 }
 
-// Debug session data
-error_log("SESSION data: " . json_encode($_SESSION));
-
-// Fetch all characters for this user
+// Fetch all characters from database to see what's available
 $user_characters = [];
 try {
     require_once 'config/db_connect.php';
     
-    // Always show ALL characters for now, since we're trying to debug
-    // This ensures we see characters regardless of user ID mapping issues
-    $allCharsStmt = $conn->prepare("SELECT id, name, image_path, user_id FROM characters ORDER BY name ASC");
-    $allCharsStmt->execute();
-    $user_characters = $allCharsStmt->fetchAll(PDO::FETCH_ASSOC);
+    // TEMPORARY: Show all characters in database for debugging
+    $stmt = $conn->prepare("SELECT id, name, image_path, user_id FROM characters");
+    $stmt->execute();
+    $user_characters = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    error_log("Showing all characters (" . count($user_characters) . ") regardless of user_id");
-    
-    // Log the discord_id and user_id mapping for future reference
-    if (isset($_SESSION['discord_user']['id'])) {
-        $discord_id = $_SESSION['discord_user']['id'];
-        error_log("Current Discord ID: $discord_id, mapped to user_id: $user_id");
-    }
-    
-} catch (PDOException $e) {
-    error_log("Error fetching user characters: " . $e->getMessage());
+} catch (Exception $e) {
+    // Fail silently
 }
 
 // If a character ID is provided, load the character from the database
