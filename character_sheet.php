@@ -9,34 +9,6 @@ if (file_exists('discord/discord-config.php')) {
     try {
         require_once 'discord/discord-config.php';
         $discord_enabled = true;
-        
-        // Get user ID and webhooks if authenticated
-        $user_webhooks = [];
-        if (function_exists('is_discord_authenticated') && is_discord_authenticated() && 
-            isset($conn)) {
-            
-            try {
-                // Get user ID
-                $discord_id = $_SESSION['discord_user']['id'];
-                
-                // Get user ID from database
-                $stmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
-                $stmt->bindParam(':discord_id', $discord_id);
-                $stmt->execute();
-                $user = $stmt->fetch(PDO::FETCH_ASSOC);
-                
-                if ($user) {
-                    $user_id = $user['id'];
-                    // Include the discord_service.php file to get the get_user_webhooks function
-                    if (file_exists('discord/discord_service.php')) {
-                        require_once 'discord/discord_service.php';
-                        $user_webhooks = get_user_webhooks($conn, $user_id);
-                    }
-                }
-            } catch (Exception $e) {
-                error_log('Discord user webhooks error: ' . $e->getMessage());
-            }
-        }
     } catch (Exception $e) {
         error_log('Discord integration error: ' . $e->getMessage());
         $discord_enabled = false;
@@ -65,21 +37,7 @@ if (file_exists('discord/discord-config.php')) {
         
         <!-- Main Content Area -->
         <main class="main-content">
-            <div class="dashboard-header">
-                <div class="logo">
-                    <i class="fas fa-scroll"></i>
-                    <h1>Character Sheet</h1>
-                </div>
-            </div>
-            
-            <div class="content-container">
-                <!-- Placeholder content for character sheet -->
-                <div class="placeholder-display" style="text-align: center; padding: 50px 20px;">
-                    <i class="fas fa-scroll" style="font-size: 4rem; color: var(--secondary); margin-bottom: 20px;"></i>
-                    <h2>Character Sheet Coming Soon</h2>
-                    <p>The character sheet functionality is currently under development.</p>
-                </div>
-            </div>
+            <?php include 'components/character_sheet.php'; ?>
         </main>
     </div>
     
