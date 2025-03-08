@@ -39,31 +39,11 @@ if ($character_id) {
         $character = $stmt->fetch(PDO::FETCH_ASSOC);
         
         // Set default image path
-        $default_image_path = 'assets/images/default_character.png';
+        $default_image_path = 'assets/TSP_default_character.jpg';
         
-        // Create directory if it doesn't exist
-        if (!file_exists('assets/images')) {
-            mkdir('assets/images', 0755, true);
-        }
-        
-        // Check if default image exists, create placeholder if not
-        if (!file_exists($default_image_path)) {
-            // Create a simple placeholder image
-            $img = imagecreatetruecolor(200, 200);
-            $bg = imagecolorallocate($img, 191, 157, 97); // Salty Parrot gold color
-            $fg = imagecolorallocate($img, 26, 38, 57);   // Dark blue color
-            
-            // Fill background
-            imagefilledrectangle($img, 0, 0, 200, 200, $bg);
-            
-            // Draw a simple pirate face silhouette
-            imagefilledellipse($img, 100, 90, 100, 100, $fg); // head
-            imagefilledrectangle($img, 70, 40, 130, 70, $fg); // hat
-            imagefilledrectangle($img, 50, 70, 150, 75, $fg); // hat brim
-            
-            // Save the image
-            imagepng($img, $default_image_path);
-            imagedestroy($img);
+        // Create parent directory if it doesn't exist
+        if (!file_exists('assets')) {
+            mkdir('assets', 0755, true);
         }
         
         if (!$character) {
@@ -200,7 +180,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             <!-- Character Sheet Header -->
             <div class="character-header">
                 <div class="character-image">
-                    <img src="<?php echo htmlspecialchars($character['image_path']); ?>" alt="Character Portrait" onerror="this.src='assets/images/default_character.png'">
+                    <img src="<?php echo htmlspecialchars($character['image_path']); ?>" alt="Character Portrait" onerror="this.src='assets/TSP_default_character.jpg'">
                 </div>
                 <div class="character-title">
                     <h2 id="character-name"><?php echo htmlspecialchars($character['name']); ?></h2>
@@ -615,7 +595,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('spirit').value = '0';
             
             // Reset image preview to default
-            imagePreview.src = 'assets/images/default_character.png';
+            imagePreview.src = 'assets/TSP_default_character.jpg';
             
             // Show the modal
             modal.style.display = 'block';
@@ -653,7 +633,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (fileSize > 2) {
                     alert('File size exceeds 2MB. Please choose a smaller image.');
                     this.value = ''; // Clear the input
-                    imagePreview.src = imagePreview.getAttribute('data-original') || 'assets/images/default_character.png';
+                    imagePreview.src = imagePreview.getAttribute('data-original') || 'assets/TSP_default_character.jpg';
                 }
             }
         });
