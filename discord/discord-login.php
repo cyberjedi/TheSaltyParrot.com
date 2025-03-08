@@ -8,9 +8,14 @@ require_once 'discord-config.php';
 $state = bin2hex(random_bytes(16));
 $_SESSION['discord_oauth_state'] = $state;
 
-// Use the pre-generated OAuth URL from Discord Developer Portal with all required scopes
-// Add the state parameter to the URL
-$auth_url = "https://discord.com/oauth2/authorize?client_id=1347420579858350110&response_type=code&redirect_uri=https%3A%2F%2Fthesaltyparrot.com%2Fdiscord%2Fdiscord-callback.php&integration_type=0&scope=identify+guilds+guilds.channels.read+webhook.incoming&state=" . $state;
+// Build the authorization URL with just the basic scopes needed for login
+// We only need identify and guilds for authentication
+$auth_url = DISCORD_API_URL . '/oauth2/authorize';
+$auth_url .= '?client_id=' . DISCORD_CLIENT_ID;
+$auth_url .= '&redirect_uri=' . urlencode(DISCORD_REDIRECT_URI);
+$auth_url .= '&response_type=code';
+$auth_url .= '&state=' . $state;
+$auth_url .= '&scope=identify%20guilds';
 
 // Redirect the user to Discord's authorization page
 header('Location: ' . $auth_url);
