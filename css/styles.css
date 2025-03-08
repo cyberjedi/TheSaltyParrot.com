@@ -643,7 +643,7 @@ footer p {
 }
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--primary);
+    background-color: var(--primary) !important;
     color: var(--light);
     line-height: 1.6;
     display: flex;
@@ -651,4 +651,7 @@ body {
     min-height: 100vh;
 }
 
-/* No additional background styling needed as it's already defined */
+/* Force no background image */
+body, .main-content, .app-container, main {
+    background-image: none !important;
+}
