@@ -18,14 +18,81 @@ $auth_url .= '&scope=identify%20guilds%20guilds.members.read%20guilds.channels.r
 <html>
 <head>
     <title>Discord Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+            background-color: #36393f;
+            color: #ffffff;
+        }
+        .auth-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #2f3136;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        h2 {
+            color: #7289da;
+        }
+        .loading {
+            margin: 20px 0;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(114,137,218,0.3);
+            border-radius: 50%;
+            border-top-color: #7289da;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .manual-link {
+            margin-top: 30px;
+        }
+        .manual-link a {
+            display: inline-block;
+            background-color: #7289da;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .manual-link a:hover {
+            background-color: #5b73c7;
+        }
+        .back-link {
+            margin-top: 20px;
+        }
+        .back-link a {
+            color: #7289da;
+            text-decoration: none;
+        }
+    </style>
     <script>
-        window.open('<?php echo $auth_url; ?>', 'discord-login', 'width=600,height=800');
-        setTimeout(function() {
-            window.location.href = '../index.php';
-        }, 500);
+        // Open the Discord authentication in the same window instead of a popup
+        window.location.href = '<?php echo $auth_url; ?>';
     </script>
 </head>
 <body>
-    <p>Opening Discord authentication... If nothing happens, <a href="<?php echo $auth_url; ?>" target="_blank">click here</a>.</p>
+    <div class="auth-container">
+        <h2>Discord Authentication</h2>
+        <p>Redirecting to Discord for authentication...</p>
+        <div class="loading">
+            <div class="loading-spinner"></div>
+        </div>
+        <div class="manual-link">
+            <p>If you're not automatically redirected:</p>
+            <a href="<?php echo $auth_url; ?>">Click here to authenticate with Discord</a>
+        </div>
+        <div class="back-link">
+            <a href="../index.php">← Return to The Salty Parrot</a>
+        </div>
+    </div>
 </body>
 </html>

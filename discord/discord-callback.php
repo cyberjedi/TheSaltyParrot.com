@@ -8,14 +8,14 @@ require_once '../config/db_connect.php';
 // Check for errors or authorization denial
 if (isset($_GET['error'])) {
     $_SESSION['discord_error'] = 'Authorization denied: ' . $_GET['error_description'];
-    echo "<script>window.opener.location.reload(); window.close();</script>";
+    header('Location: ../index.php');
     exit;
 }
 
 // Verify state parameter to prevent CSRF attacks
 if (!isset($_GET['state']) || !isset($_SESSION['discord_oauth_state']) || $_GET['state'] !== $_SESSION['discord_oauth_state']) {
     $_SESSION['discord_error'] = 'Invalid state parameter. Please try again.';
-    echo "<script>window.opener.location.reload(); window.close();</script>";
+    header('Location: ../index.php');
     exit;
 }
 
@@ -25,7 +25,7 @@ unset($_SESSION['discord_oauth_state']);
 // Check for the authorization code
 if (!isset($_GET['code'])) {
     $_SESSION['discord_error'] = 'No authorization code received.';
-    echo "<script>window.opener.location.reload(); window.close();</script>";
+    header('Location: ../index.php');
     exit;
 }
 
@@ -67,7 +67,7 @@ $token_response = json_decode($response, true);
 if ($http_code < 200 || $http_code >= 300) {
     error_log('Discord token error response: ' . $response);
     $_SESSION['discord_error'] = 'Failed to exchange code for token (HTTP ' . $http_code . ').';
-    echo "<script>window.opener.location.reload(); window.close();</script>";
+    header('Location: ../index.php');
     exit;
 }
 
@@ -76,7 +76,7 @@ if (!isset($token_response['access_token']) || !isset($token_response['refresh_t
     $error_message = 'Invalid token response from Discord: ' . substr($response, 0, 100) . '...';
     error_log($error_message);
     $_SESSION['discord_error'] = $error_message;
-    echo "<script>window.opener.location.reload(); window.close();</script>";
+    header('Location: ../index.php');
     exit;
 }
 
@@ -95,7 +95,7 @@ $user_response = discord_api_request('/users/@me', 'GET', [], $_SESSION['discord
 if (!isset($user_response['id'])) {
     error_log('Failed to fetch user information: ' . json_encode($user_response));
     $_SESSION['discord_error'] = 'Failed to fetch user information.';
-    echo "<script>window.opener.location.reload(); window.close();</script>";
+    header('Location: ../index.php');
     exit;
 }
 
@@ -180,18 +180,65 @@ try {
 <html>
 <head>
     <title>Discord Authentication</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+            background-color: #36393f;
+            color: #ffffff;
+        }
+        .success-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #2f3136;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        h2 {
+            color: #7289da;
+        }
+        .success-icon {
+            color: #43b581;
+            font-size: 48px;
+            margin: 20px 0;
+        }
+        .redirect-text {
+            margin: 20px 0;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(114,137,218,0.3);
+            border-radius: 50%;
+            border-top-color: #7289da;
+            animation: spin 1s ease-in-out infinite;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
     <script>
-        window.onload = function() {
-            if (window.opener && !window.opener.closed) {
-                window.opener.location.reload();
-                window.close();
-            } else {
-                window.location.href = "../index.php";
-            }
-        };
+        // Set a timeout before redirecting to make sure the user sees the success message
+        setTimeout(function() {
+            // Always redirect to index page since we're not using popups anymore
+            window.location.href = "../index.php";
+        }, 2000);
     </script>
 </head>
 <body>
-    <p>Authentication successful! This window should close automatically...</p>
+    <div class="success-container">
+        <h2>Authentication Successful!</h2>
+        <div class="success-icon">✓</div>
+        <p>You've successfully connected your Discord account.</p>
+        <p class="redirect-text">
+            Redirecting to The Salty Parrot
+            <span class="loading-spinner"></span>
+        </p>
+    </div>
 </body>
 </html>
