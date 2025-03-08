@@ -206,6 +206,9 @@ try {
 
 // Prepare page title
 $page_title = 'Manage Discord Webhooks';
+
+// Define a base path for assets that accounts for being in a subdirectory
+$base_path = '../';
 ?>
 
 <!DOCTYPE html>
@@ -215,15 +218,19 @@ $page_title = 'Manage Discord Webhooks';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $page_title; ?> - The Salty Parrot</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../css/styles.css">
-    <link rel="stylesheet" href="../css/sidebar.css">
-    <link rel="stylesheet" href="../css/discord.css">
-    <link rel="icon" href="../favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="<?php echo $base_path; ?>css/styles.css">
+    <link rel="stylesheet" href="<?php echo $base_path; ?>css/sidebar.css">
+    <link rel="stylesheet" href="<?php echo $base_path; ?>css/discord.css">
+    <link rel="icon" href="<?php echo $base_path; ?>favicon.ico" type="image/x-icon">
 </head>
 <body>
     <div class="app-container">
-        <!-- Include the sidebar -->
-        <?php include '../components/sidebar.php'; ?>
+        <!-- Include the sidebar with proper base path -->
+        <?php 
+        // Define base_path for the sidebar component
+        $GLOBALS['base_path'] = $base_path;
+        include '../components/sidebar.php'; 
+        ?>
         
         <!-- Main Content Area -->
         <main class="main-content">
