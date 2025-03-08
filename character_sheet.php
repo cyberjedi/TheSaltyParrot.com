@@ -1,6 +1,14 @@
 <?php
+// Start the session if not started
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Set the current page
 $current_page = 'character_sheet';
+
+// Set base path for consistent loading
+$base_path = './';
 
 // Discord integration - safely load if available
 $discord_enabled = false;
@@ -14,6 +22,10 @@ if (file_exists('discord/discord-config.php')) {
         $discord_enabled = false;
     }
 }
+
+// Initialize variables used in the character sheet component
+$user_characters = []; // Will be populated with the user's characters
+$discord_authenticated = function_exists('is_discord_authenticated') && is_discord_authenticated();
 ?>
 <!DOCTYPE html>
 <html lang="en">
