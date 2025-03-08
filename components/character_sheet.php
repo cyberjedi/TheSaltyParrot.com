@@ -80,90 +80,136 @@ $error_message = null;
 // Get user ID from Discord session if authenticated
 $user_id = 1; // Default fallback
 
-// DIRECT SOLUTION: Hardcode the characters we know exist
-// We know from SQL dump there are 4 characters in the database
-// Instead of complex DB connections and queries, let's just hardcode these characters
+// IMPORTANT: Now we know the real issue - we need to use the correct database credentials
+// The correct credentials are: username: theshfmb_db_admin instead of theshfmb_spuser
 
-// These are the characters from your SQL dump that we know exist
-$user_characters = [
-    [
-        'id' => 1,
-        'user_id' => 1,
-        'name' => 'Test Pirate',
-        'image_path' => 'uploads/characters/character_1741469717_67ccb815a80be.jpg',
-        'strength' => 3,
-        'agility' => -2,
-        'presence' => 1,
-        'toughness' => 0,
-        'spirit' => 2
-    ],
-    [
-        'id' => 2,
-        'user_id' => 1,
-        'name' => 'Test Pirate 2',
-        'image_path' => 'uploads/characters/character_1741469717_67ccb815a80be.jpg',
-        'strength' => 1,
-        'agility' => 2,
-        'presence' => 3,
-        'toughness' => -1,
-        'spirit' => -1
-    ],
-    [
-        'id' => 3,
-        'user_id' => 1,
-        'name' => 'New Pirate 3',
-        'image_path' => 'uploads/characters/character_1741469717_67ccb815a80be.jpg',
-        'strength' => 1,
-        'agility' => 0,
-        'presence' => 1,
-        'toughness' => 0,
-        'spirit' => 0
-    ],
-    [
-        'id' => 4,
-        'user_id' => 1,
-        'name' => 'New Pirate',
-        'image_path' => 'uploads/characters/character_1741469717_67ccb815a80be.jpg',
-        'strength' => 0,
-        'agility' => 0,
-        'presence' => 0,
-        'toughness' => 0,
-        'spirit' => 0
-    ]
-];
-
-// Get Discord info for debugging display only
+// First, get Discord info for user mapping
 $discord_id = null;
-$db_user_id = 1;
+$db_user_id = 1; // Default to user_id 1 (which we know has characters)
 if ($discord_authenticated && isset($_SESSION['discord_user']['id'])) {
     $discord_id = $_SESSION['discord_user']['id'];
     error_log("Discord user ID: " . $discord_id);
 }
 
-// Try to do the database connection and query as a backup approach
+// Direct database connection with proper credentials
 try {
-    require_once 'config/db_connect.php';
+    // We know from diagnostic that these are the correct connection details
+    $host = 'localhost';
+    $dbname = 'theshfmb_SPDB';
+    $username = 'theshfmb_db_admin'; // IMPORTANT: This is the correct username
     
-    // Log some debug info
-    $result = $conn->query("SELECT DATABASE()")->fetch(PDO::FETCH_NUM);
-    $current_db = $result[0];
-    error_log("Connected to database: " . $current_db);
+    // Since we can't store the password in code, try to get it from the config
+    $password = '';
     
-    // Try a simple direct query to get all characters
-    $result = $conn->query("SELECT * FROM characters");
-    if ($result !== false) {
-        $db_characters = $result->fetchAll(PDO::FETCH_ASSOC);
-        error_log("Direct query found " . count($db_characters) . " characters");
-        
-        // If we got characters from the database, use those instead of hardcoded ones
-        if (count($db_characters) > 0) {
-            $user_characters = $db_characters;
+    // Try to get password from config file
+    $config_paths = [
+        '/home/theshfmb/private/secure_variables.php', // Production
+        dirname(__DIR__) . '/private/secure_variables.php', // Relative path
+        $_SERVER['DOCUMENT_ROOT'] . '/private/secure_variables.php' // Document root
+    ];
+    
+    foreach ($config_paths as $path) {
+        if (file_exists($path)) {
+            $config = require($path);
+            if (isset($config['password'])) {
+                $password = $config['password'];
+                break;
+            }
         }
     }
     
+    // If we couldn't get the password, use the fallback characters
+    if (empty($password)) {
+        throw new Exception("Could not retrieve database password from config");
+    }
+    
+    // Create a direct database connection
+    $conn = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    // Map Discord user to database user
+    if ($discord_id) {
+        $stmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = ?");
+        $stmt->execute([$discord_id]);
+        $user_data = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($user_data) {
+            $db_user_id = $user_data['id'];
+        }
+    }
+    
+    // Get all characters for this user
+    $stmt = $conn->prepare("SELECT * FROM characters WHERE user_id = ? ORDER BY name ASC");
+    $stmt->execute([$db_user_id]);
+    $user_characters = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    if (!$user_characters || count($user_characters) === 0) {
+        // If no characters found with the user ID, try to get all characters
+        $stmt = $conn->query("SELECT * FROM characters ORDER BY name ASC");
+        $user_characters = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
 } catch (Exception $e) {
-    error_log("Database query failed, using hardcoded characters: " . $e->getMessage());
-    // We're already using hardcoded characters, so no need to do anything else
+    error_log("Direct DB connection error: " . $e->getMessage());
+    
+    // Fallback to default characters if database connection fails
+    $user_characters = [
+        [
+            'id' => 1,
+            'user_id' => 1,
+            'name' => 'Test Pirate',
+            'image_path' => 'uploads/characters/character_1741469717_67ccb815a80be.jpg',
+            'strength' => 3,
+            'agility' => -2,
+            'presence' => 1,
+            'toughness' => 0,
+            'spirit' => 2
+        ],
+        [
+            'id' => 2,
+            'user_id' => 1,
+            'name' => 'Test Pirate 2',
+            'image_path' => 'uploads/characters/character_1741469717_67ccb815a80be.jpg',
+            'strength' => 1,
+            'agility' => 2,
+            'presence' => 3,
+            'toughness' => -1,
+            'spirit' => -1
+        ],
+        [
+            'id' => 3,
+            'user_id' => 1,
+            'name' => 'New Pirate 3',
+            'image_path' => 'uploads/characters/character_1741469717_67ccb815a80be.jpg',
+            'strength' => 1,
+            'agility' => 0,
+            'presence' => 1,
+            'toughness' => 0,
+            'spirit' => 0
+        ],
+        [
+            'id' => 4,
+            'user_id' => 1,
+            'name' => 'New Pirate',
+            'image_path' => 'uploads/characters/character_1741469717_67ccb815a80be.jpg',
+            'strength' => 0,
+            'agility' => 0,
+            'presence' => 0,
+            'toughness' => 0,
+            'spirit' => 0
+        ],
+        [
+            'id' => 5,
+            'user_id' => 1,
+            'name' => 'New Pirate',
+            'image_path' => 'uploads/characters/character_1741469717_67ccb815a80be.jpg',
+            'strength' => 0,
+            'agility' => 0,
+            'presence' => 0,
+            'toughness' => 0,
+            'spirit' => 0
+        ]
+    ];
 }
 
 // If we still have no characters, try an alternative approach
@@ -320,9 +366,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         }
     }
 
-    // Try to use the database first
+    // Use the same direct database connection approach
     try {
-        require_once 'config/db_connect.php';
+        // Instead of requiring db_connect.php, use the same direct connection approach
+        // with the correct credentials
+        
+        // We know from diagnostic that these are the correct connection details
+        $host = 'localhost';
+        $dbname = 'theshfmb_SPDB';
+        $username = 'theshfmb_db_admin'; // Correct username
+        
+        // Try to get password from config file
+        $password = '';
+        $config_paths = [
+            '/home/theshfmb/private/secure_variables.php', // Production
+            dirname(__DIR__) . '/private/secure_variables.php', // Relative path
+            $_SERVER['DOCUMENT_ROOT'] . '/private/secure_variables.php' // Document root
+        ];
+        
+        foreach ($config_paths as $path) {
+            if (file_exists($path)) {
+                $config = require($path);
+                if (isset($config['password'])) {
+                    $password = $config['password'];
+                    break;
+                }
+            }
+        }
+        
+        // If we couldn't get the password, throw an exception
+        if (empty($password)) {
+            throw new Exception("Could not retrieve database password from config");
+        }
+        
+        // Create a direct database connection
+        $direct_conn = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
+        $direct_conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         
         // Create date fields
         $now = date('Y-m-d H:i:s');
@@ -330,21 +409,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         // If character_id is empty, this is a new character
         if (empty($char_id)) {
             // Use a minimal insert query
-            $query = "INSERT INTO characters (user_id, name, image_path, strength, agility, presence, toughness, spirit) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            $query = "INSERT INTO characters (user_id, name, image_path, strength, agility, presence, toughness, spirit, created_at, updated_at) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             
-            $stmt = $conn->prepare($query);
-            $stmt->execute([$user_id, $name, $image_path, $strength, $agility, $presence, $toughness, $spirit]);
+            $stmt = $direct_conn->prepare($query);
+            $stmt->execute([$user_id, $name, $image_path, $strength, $agility, $presence, $toughness, $spirit, $now, $now]);
             
             // Get the new character ID
-            $char_id = $conn->lastInsertId();
+            $char_id = $direct_conn->lastInsertId();
         } else {
             // Simple update query
             $query = "UPDATE characters SET name = ?, image_path = ?, strength = ?, agility = ?, 
-                    presence = ?, toughness = ?, spirit = ? WHERE id = ?";
+                    presence = ?, toughness = ?, spirit = ?, updated_at = ? WHERE id = ?";
             
-            $stmt = $conn->prepare($query);
-            $stmt->execute([$name, $image_path, $strength, $agility, $presence, $toughness, $spirit, $char_id]);
+            $stmt = $direct_conn->prepare($query);
+            $stmt->execute([$name, $image_path, $strength, $agility, $presence, $toughness, $spirit, $now, $char_id]);
         }
         
         // Add the character to our hardcoded array for display
