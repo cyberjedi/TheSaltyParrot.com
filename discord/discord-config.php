@@ -1,6 +1,3 @@
-Here's the full updated `discord/discord-config.php`:
-
-```php
 <?php
 // File: discord/discord-config.php
 // This file contains Discord API configuration
