@@ -17,7 +17,30 @@ $auth_url .= '&response_type=code';
 $auth_url .= '&state=' . $state;
 $auth_url .= '&scope=identify%20guilds%20guilds.members.read%20guilds.channels.read';
 
-// Redirect the user to Discord's authorization page
-header('Location: ' . $auth_url);
+// Open in a popup window instead of redirecting
+echo '<!DOCTYPE html>
+<html>
+<head>
+    <title>Discord Authentication</title>
+</head>
+<body>
+    <script>
+        var popup = window.open("' . $auth_url . '", "discord-oauth", "width=600,height=800");
+        if (!popup || popup.closed || typeof popup.closed==\'undefined\') {
+            // Popup blocked, try direct redirect
+            window.location.href = "' . $auth_url . '";
+        } else {
+            // Wait for the popup to be closed, then redirect
+            var timer = setInterval(function() {
+                if(popup.closed) {
+                    clearInterval(timer);
+                    window.location.href = "../index.php";
+                }
+            }, 1000);
+        }
+    </script>
+    <p>Authenticating with Discord... If this page doesn\'t close automatically, <a href="../index.php">click here</a> to return.</p>
+</body>
+</html>';
 exit;
 ?>
