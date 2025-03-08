@@ -20,7 +20,15 @@ if (!is_discord_authenticated()) {
 }
 
 // Force token refresh to ensure fresh permissions
-force_discord_token_refresh();
+if (!force_discord_token_refresh()) {
+    header('Content-Type: application/json');
+    echo json_encode([
+        'status' => 'error', 
+        'message' => 'Failed to refresh token',
+        'needs_reauth' => true
+    ]);
+    exit;
+}
 
 // Check if guild ID is provided
 if (!isset($_GET['guild_id']) || empty($_GET['guild_id'])) {
