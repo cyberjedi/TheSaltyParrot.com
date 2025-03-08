@@ -83,13 +83,124 @@
     border-left: 3px solid var(--secondary);
 }
 
-/* Discord Button Styling */
-.discord-sidebar-btn i {
-    color: #5865F2;
+/* Discord Status in Sidebar (New!) */
+.sidebar-discord-status {
+    margin-top: auto; /* Push to bottom */
+    padding: 15px 20px;
+    border-top: 1px solid rgba(191, 157, 97, 0.3);
+    background-color: rgba(0, 0, 0, 0.2);
 }
 
-.discord-sidebar-btn.connected i {
-    color: #3ba55c;
+.discord-connect-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 10px;
+    background-color: #5865F2;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+.discord-connect-btn i {
+    margin-right: 8px;
+    font-size: 1.1em;
+}
+
+.discord-connect-btn:hover {
+    background-color: #4752c4;
+}
+
+.discord-status-disabled {
+    color: rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    opacity: 0.7;
+}
+
+.discord-status-disabled i {
+    margin-right: 8px;
+}
+
+.discord-status-connected {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.discord-user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.discord-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-bottom: 8px;
+    border: 2px solid #5865F2;
+}
+
+.discord-username {
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: var(--light);
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.discord-connection-label {
+    font-size: 0.75rem;
+    color: #3ba55c; /* Discord green */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.discord-connection-label::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #3ba55c;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.discord-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 5px;
+}
+
+.discord-action-btn {
+    color: var(--light);
+    background-color: rgba(191, 157, 97, 0.2);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+    text-decoration: none;
+}
+
+.discord-action-btn:hover {
+    background-color: rgba(191, 157, 97, 0.4);
 }
 
 /* Media queries for responsive sidebar */
@@ -99,5 +210,10 @@
         min-height: auto;
         border-right: none;
         border-bottom: 1px solid rgba(191, 157, 97, 0.3);
+    }
+    
+    .sidebar-discord-status {
+        margin-top: 10px;
+        border-top: none;
     }
 }
