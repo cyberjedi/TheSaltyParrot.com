@@ -199,7 +199,9 @@ try {
     $_SESSION['discord_warning'] = 'Your login worked, but we had trouble saving your session. Some features may be unavailable.';
 }
 
-// Redirect to dashboard or main page
-header('Location: ../index.php');
+// Redirect to the original page or dashboard
+$return_url = isset($_SESSION['discord_return_url']) ? $_SESSION['discord_return_url'] : '../index.php';
+unset($_SESSION['discord_return_url']); // Clear the return URL
+header('Location: ' . $return_url);
 exit;
 ?>
