@@ -1,6 +1,6 @@
 <?php
 // File: discord/discord-callback.php
-// This file handles the callback from Discord OAuth
+// This file handles the callback from Discord OAuth with improved debugging
 
 require_once 'discord-config.php';
 require_once '../config/db_connect.php';
@@ -53,20 +53,26 @@ $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curl_error = curl_error($ch);
 curl_close($ch);
 
-// Log the response for debugging
+// Enhanced logging for debugging
 error_log('Discord token response code: ' . $http_code);
 if ($curl_error) {
     error_log('Discord token curl error: ' . $curl_error);
 }
 
+// Log raw response (first 100 chars to avoid massive logs)
+error_log('Discord token raw response preview: ' . substr($response, 0, 100) . '...');
+
 if ($http_code < 200 || $http_code >= 300) {
     error_log('Discord token error response: ' . $response);
-    $_SESSION['discord_error'] = 'Failed to exchange code for token.';
+    $_SESSION['discord_error'] = 'Failed to exchange code for token (HTTP ' . $http_code . ').';
     header('Location: ../index.php');
     exit;
 }
 
 $token_response = json_decode($response, true);
+
+// Extended logging for token debugging
+error_log('Discord token after decode: ' . json_encode($token_response));
 
 // Validate the token response
 if (!isset($token_response['access_token']) || !isset($token_response['refresh_token']) || !isset($token_response['expires_in'])) {
@@ -76,18 +82,23 @@ if (!isset($token_response['access_token']) || !isset($token_response['refresh_t
     exit;
 }
 
-// Store the access token in session
-$_SESSION['discord_access_token'] = $token_response['access_token'];
-$_SESSION['discord_refresh_token'] = $token_response['refresh_token'];
-$_SESSION['discord_token_expires'] = time() + $token_response['expires_in'];
-
 // Log token details for debugging
+error_log('Discord access token length: ' . strlen($token_response['access_token']));
+error_log('Discord access token first 10 chars: ' . substr($token_response['access_token'], 0, 10));
 error_log('Discord token scopes: ' . ($token_response['scope'] ?? 'none'));
 error_log('Discord token type: ' . ($token_response['token_type'] ?? 'none'));
 error_log('Discord token expires_in: ' . $token_response['expires_in']);
 
+// Store the access token in session - make sure we don't truncate it
+$_SESSION['discord_access_token'] = $token_response['access_token'];
+$_SESSION['discord_refresh_token'] = $token_response['refresh_token'];
+$_SESSION['discord_token_expires'] = time() + $token_response['expires_in'];
+
+// Double check token was stored correctly
+error_log('Session token length after storing: ' . strlen($_SESSION['discord_access_token']));
+
 // Fetch user information
-$user_response = discord_api_request('/users/@me', 'GET', [], $token_response['access_token']);
+$user_response = discord_api_request('/users/@me', 'GET', [], $_SESSION['discord_access_token']);
 
 if (!isset($user_response['id'])) {
     error_log('Failed to fetch user information: ' . json_encode($user_response));
@@ -142,6 +153,9 @@ try {
         $updateStmt->bindParam(':discord_id', $discord_id);
         
         $updateStmt->execute();
+        
+        // Log database update
+        error_log('Updated existing Discord user: ' . $discord_id);
     } else {
         // Create new user
         $insertStmt = $conn->prepare("INSERT INTO discord_users 
@@ -165,6 +179,9 @@ try {
         $insertStmt->bindParam(':token_expires', $token_expires);
         
         $insertStmt->execute();
+        
+        // Log database insert
+        error_log('Created new Discord user: ' . $discord_id);
     }
     
     $_SESSION['discord_success'] = 'Successfully logged in with Discord!';
