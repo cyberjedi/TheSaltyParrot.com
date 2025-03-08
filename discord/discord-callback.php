@@ -51,6 +51,16 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
 $response = curl_exec($ch);
 $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curl_error = curl_error($ch);
+
+// New debugging code - add this
+if ($response) {
+    // Log the entire raw response to see exactly what Discord is sending
+    error_log('COMPLETE TOKEN RESPONSE: ' . $response);
+    
+    // Store raw response in a separate file for inspection
+    file_put_contents('/home/theshfmb/discord_response.txt', $response);
+}
+
 curl_close($ch);
 
 // Enhanced logging for debugging
