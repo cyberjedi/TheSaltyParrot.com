@@ -18,13 +18,17 @@ $base_path = getBasePath();
 // Check if Discord is enabled and user is authenticated
 $discord_enabled = false;
 $discord_authenticated = false;
+$discord_user = null;
 if (file_exists($base_path . 'discord/discord-config.php')) {
     try {
-        if (!function_exists('is_discord_authenticated')) {
-            require_once $base_path . 'discord/discord-config.php';
-        }
+        require_once $base_path . 'discord/discord-config.php';
         $discord_enabled = true;
         $discord_authenticated = function_exists('is_discord_authenticated') && is_discord_authenticated();
+        
+        // Get user info if authenticated
+        if ($discord_authenticated && isset($_SESSION['discord_user'])) {
+            $discord_user = $_SESSION['discord_user'];
+        }
     } catch (Exception $e) {
         error_log('Discord integration error in sidebar: ' . $e->getMessage());
     }
@@ -77,16 +81,21 @@ if (file_exists($base_path . 'discord/discord-config.php')) {
     <!-- Discord connection section at the bottom of sidebar -->
     <div class="sidebar-discord-status">
         <?php if ($discord_enabled): ?>
-            <?php if ($discord_authenticated): ?>
+            <?php if ($discord_authenticated && $discord_user): ?>
                 <div class="discord-status-connected">
                     <?php
                     // Get Discord user avatar
-                    $avatarUrl = isset($_SESSION['discord_user']['avatar']) && !empty($_SESSION['discord_user']['avatar']) 
-                        ? 'https://cdn.discordapp.com/avatars/' . $_SESSION['discord_user']['id'] . '/' . $_SESSION['discord_user']['avatar'] . '.png' 
+                    $avatarUrl = isset($discord_user['avatar']) && !empty($discord_user['avatar']) 
+                        ? 'https://cdn.discordapp.com/avatars/' . $discord_user['id'] . '/' . $discord_user['avatar'] . '.png' 
                         : $base_path . 'assets/discord-default-avatar.png';
                     
                     // Get username
-                    $username = isset($_SESSION['discord_user']['username']) ? $_SESSION['discord_user']['username'] : 'User';
+                    $username = isset($discord_user['username']) ? $discord_user['username'] : 'User';
+                    
+                    // Ensure we have a default avatar fallback
+                    if (!file_exists($base_path . 'assets/discord-default-avatar.png')) {
+                        $avatarUrl = 'https://cdn.discordapp.com/embed/avatars/0.png'; // Discord's default avatar
+                    }
                     ?>
                     <div class="discord-user-info">
                         <img src="<?php echo $avatarUrl; ?>" alt="Discord Avatar" class="discord-avatar">
