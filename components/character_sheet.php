@@ -1,4 +1,32 @@
-<?php
+<!-- Character Switcher Modal -->
+<div id="character-switcher-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h3>Switch Character</h3>
+        
+        <?php if (count($user_characters) > 0): ?>
+            <div class="character-list">
+                <?php foreach ($user_characters as $char): ?>
+                    <a href="character_sheet.php?id=<?php echo $char['id']; ?>" class="character-list-item <?php echo ($character && $character['id'] == $char['id']) ? 'active' : ''; ?>">
+                        <span class="character-name"><?php echo htmlspecialchars($char['name']); ?></span>
+                        <?php if ($character && $character['id'] == $char['id']): ?>
+                            <span class="current-badge">Current</span>
+                        <?php endif; ?>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <p>You don't have any characters yet. Create your first character!</p>
+        <?php endif; ?>
+        
+        <div class="form-buttons">
+            <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
+            <?php if ($discord_authenticated): ?>
+            <button type="button" class="btn btn-primary" id="create-new-from-switcher">Create New Character</button>
+            <?php endif; ?>
+        </div>
+    </div>
+</div><?php
 // components/character_sheet.php
 
 // Check if a character ID is provided in the URL
@@ -153,14 +181,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         <h1>Character Sheet</h1>
     </div>
     <div class="actions">
+        <?php if ($discord_authenticated && count($user_characters) > 0): ?>
+        <button id="switch-character-btn" class="btn btn-secondary">
+            <i class="fas fa-exchange-alt"></i> Switch Character
+        </button>
+        <?php endif; ?>
         <button id="print-character-btn" class="btn btn-secondary">
             <i class="fas fa-print"></i> Print
         </button>
+        <?php if ($discord_authenticated): ?>
         <button id="new-character-btn" class="btn btn-primary">
             <i class="fas fa-plus"></i> New Character
         </button>
+        <?php endif; ?>
     </div>
 </div>
+
+<?php if (!$discord_authenticated): ?>
+<div class="alert alert-warning">
+    <i class="fab fa-discord"></i> <?php echo isset($auth_message) ? $auth_message : 'Connect with Discord to save and manage characters.'; ?>
+</div>
+<?php endif; ?>
 
 <?php if ($error_message): ?>
 <div class="alert alert-error">
@@ -245,8 +286,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 <label for="character_image">Character Image:</label>
                 <div class="image-upload-container">
                     <div class="image-preview-container">
-                        <div class="current-image">
-                            <img src="<?php echo htmlspecialchars($character['image_path']); ?>" alt="Current Image" id="image-preview">
+                        <div class="current-image-wrapper">
+                            <img src="<?php echo htmlspecialchars($character['image_path']); ?>" alt="Current Image" id="image-preview" style="max-width: 150px; max-height: 150px; width: auto; height: auto; object-fit: contain;">
                         </div>
                     </div>
                     <div class="file-input-wrapper">
@@ -544,46 +585,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Get modal elements
-    const modal = document.getElementById('edit-character-modal');
+    const editModal = document.getElementById('edit-character-modal');
+    const switcherModal = document.getElementById('character-switcher-modal');
     const editBtn = document.getElementById('edit-character-btn');
-    const closeBtn = document.querySelector('.close-modal');
-    const closeBtnForm = document.querySelector('.close-modal-btn');
+    const switchBtn = document.getElementById('switch-character-btn');
+    const closeBtns = document.querySelectorAll('.close-modal');
+    const closeFormBtns = document.querySelectorAll('.close-modal-btn');
     const newCharacterBtn = document.getElementById('new-character-btn');
+    const createNewFromSwitcherBtn = document.getElementById('create-new-from-switcher');
     const printBtn = document.getElementById('print-character-btn');
     const imageInput = document.getElementById('character_image');
     const imagePreview = document.getElementById('image-preview');
     
-    // Open modal when edit button is clicked
+    // Discord authentication status
+    const isAuthenticated = <?php echo $discord_authenticated ? 'true' : 'false'; ?>;
+    
+    // Open edit modal when edit button is clicked
     if (editBtn) {
         editBtn.addEventListener('click', function() {
-            modal.style.display = 'block';
+            if (isAuthenticated) {
+                editModal.style.display = 'block';
+            } else {
+                alert('You must connect with Discord to edit characters.');
+            }
         });
     }
     
-    // Close modal when X is clicked
-    if (closeBtn) {
-        closeBtn.addEventListener('click', function() {
-            modal.style.display = 'none';
+    // Open switcher modal when switch button is clicked
+    if (switchBtn) {
+        switchBtn.addEventListener('click', function() {
+            switcherModal.style.display = 'block';
         });
     }
     
-    // Close modal when Cancel button is clicked
-    if (closeBtnForm) {
-        closeBtnForm.addEventListener('click', function() {
-            modal.style.display = 'none';
+    // Close modals when X is clicked
+    if (closeBtns) {
+        closeBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                editModal.style.display = 'none';
+                switcherModal.style.display = 'none';
+            });
         });
     }
     
-    // Close modal when clicking outside of it
+    // Close modals when Cancel button is clicked
+    if (closeFormBtns) {
+        closeFormBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                editModal.style.display = 'none';
+                switcherModal.style.display = 'none';
+            });
+        });
+    }
+    
+    // Close modals when clicking outside of them
     window.addEventListener('click', function(event) {
-        if (event.target == modal) {
-            modal.style.display = 'none';
+        if (event.target == editModal) {
+            editModal.style.display = 'none';
+        }
+        if (event.target == switcherModal) {
+            switcherModal.style.display = 'none';
         }
     });
     
     // New Character button functionality
     if (newCharacterBtn) {
         newCharacterBtn.addEventListener('click', function() {
+            if (!isAuthenticated) {
+                alert('You must connect with Discord to create characters.');
+                return;
+            }
+            
             // Reset the form for a new character
             document.getElementById('edit-character-form').reset();
             document.querySelector('input[name="character_id"]').value = '';
@@ -598,7 +670,17 @@ document.addEventListener('DOMContentLoaded', function() {
             imagePreview.src = 'assets/TSP_default_character.jpg';
             
             // Show the modal
-            modal.style.display = 'block';
+            editModal.style.display = 'block';
+        });
+    }
+    
+    // Create New from switcher button
+    if (createNewFromSwitcherBtn) {
+        createNewFromSwitcherBtn.addEventListener('click', function() {
+            switcherModal.style.display = 'none';
+            if (newCharacterBtn) {
+                newCharacterBtn.click();
+            }
         });
     }
     
@@ -620,9 +702,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     const tempImg = new Image();
                     tempImg.src = e.target.result;
                     
-                    tempImg.onload = function() {
+    tempImg.onload = function() {
+                        // Apply strict size constraints to prevent oversized images
+                        const img = new Image();
+                        img.src = e.target.result;
+                        
+                        // Set max dimensions for display
+                        img.style.maxWidth = '150px';
+                        img.style.maxHeight = '150px';
+                        img.style.width = 'auto';
+                        img.style.height = 'auto';
+                        
                         // Update the image preview
                         imagePreview.src = e.target.result;
+                        
+                        // Force size constraints on the preview element
+                        imagePreview.style.maxWidth = '150px';
+                        imagePreview.style.maxHeight = '150px';
+                        imagePreview.style.width = 'auto';
+                        imagePreview.style.height = 'auto';
                     };
                 };
                 
