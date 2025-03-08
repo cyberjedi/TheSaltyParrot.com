@@ -92,13 +92,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt->bindParam(':webhook_description', $webhook_description);
                         $stmt->bindParam(':sharing_code', $sharing_code);
                         
-                        $stmt->execute();
-                        
-                        $message = "Webhook successfully added for #{$channelName}!";
-                        $messageType = 'success';
-                        
-                        // Clear form
-                        $webhookName = 'The Salty Parrot';
+                        // Get the database user ID based on Discord ID
+                        try {
+                            $userStmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
+                            $discord_id = $_SESSION['discord_user']['id'];
+                            $userStmt->bindParam(':discord_id', $discord_id);
+                            $userStmt->execute();
+                            $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
+                            
+                            if (!$userData) {
+                                throw new Exception('User not found in database');
+                            }
+                            
+                            $user_id = $userData['id'];
+                            $stmt->bindParam(':user_id', $user_id);
+                            
+                            $stmt->execute();
+                            
+                            $message = "Webhook successfully added for #{$channelName}!";
+                            $messageType = 'success';
+                            
+                            // Clear form
+                            $webhookName = 'The Salty Parrot';
+                        } catch (Exception $userEx) {
+                            error_log('User lookup error: ' . $userEx->getMessage());
+                            $message = 'Error finding your user account. Please try logging out and back in.';
+                            $messageType = 'error';
+                        }
                     } catch (PDOException $e) {
                         error_log('Database error: ' . $e->getMessage());
                         $message = 'Error saving webhook to database.';
@@ -160,20 +180,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             (:user_id, :server_id, :channel_id, :channel_name, :webhook_id, :webhook_token, :webhook_name, :webhook_description,
                              :sharing_code, 1, NOW(), NOW())");
                              
-                        $stmt->bindParam(':user_id', $user_id);
-                        $stmt->bindParam(':server_id', $shared_webhook['server_id']);
-                        $stmt->bindParam(':channel_id', $shared_webhook['channel_id']);
-                        $stmt->bindParam(':channel_name', $shared_webhook['channel_name']);
-                        $stmt->bindParam(':webhook_id', $webhook_id);
-                        $stmt->bindParam(':webhook_token', $webhook_token);
-                        $stmt->bindParam(':webhook_name', $shared_webhook['webhook_name'] . ' (Shared)');
-                        $stmt->bindParam(':webhook_description', $shared_webhook['webhook_description']);
-                        $stmt->bindParam(':sharing_code', $sharing_code);
-                        
-                        $stmt->execute();
-                        
-                        $message = "Shared webhook successfully imported!";
-                        $messageType = 'success';
+                        // Get the database user ID based on Discord ID
+                        try {
+                            $userStmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
+                            $discord_id = $_SESSION['discord_user']['id'];
+                            $userStmt->bindParam(':discord_id', $discord_id);
+                            $userStmt->execute();
+                            $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
+                            
+                            if (!$userData) {
+                                throw new Exception('User not found in database');
+                            }
+                            
+                            $user_id = $userData['id'];
+                            $stmt->bindParam(':user_id', $user_id);
+                            $stmt->bindParam(':server_id', $shared_webhook['server_id']);
+                            $stmt->bindParam(':channel_id', $shared_webhook['channel_id']);
+                            $stmt->bindParam(':channel_name', $shared_webhook['channel_name']);
+                            $stmt->bindParam(':webhook_id', $webhook_id);
+                            $stmt->bindParam(':webhook_token', $webhook_token);
+                            $stmt->bindParam(':webhook_name', $shared_webhook['webhook_name'] . ' (Shared)');
+                            $stmt->bindParam(':webhook_description', $shared_webhook['webhook_description']);
+                            $stmt->bindParam(':sharing_code', $sharing_code);
+                            
+                            $stmt->execute();
+                            
+                            $message = "Shared webhook successfully imported!";
+                            $messageType = 'success';
+                        } catch (Exception $userEx) {
+                            error_log('User lookup error: ' . $userEx->getMessage());
+                            $message = 'Error finding your user account. Please try logging out and back in.';
+                            $messageType = 'error';
+                        }
                     } else {
                         $message = 'This webhook no longer exists or is invalid.';
                         $messageType = 'error';
@@ -193,7 +231,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif (isset($_POST['action']) && $_POST['action'] === 'set_default' && isset($_POST['webhook_id'])) {
         try {
             $webhook_id = $_POST['webhook_id'];
-            $user_id = $_SESSION['discord_user']['id'];
+            
+            // Get the database user ID based on Discord ID
+            $userStmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
+            $discord_id = $_SESSION['discord_user']['id'];
+            $userStmt->bindParam(':discord_id', $discord_id);
+            $userStmt->execute();
+            $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$userData) {
+                throw new Exception('User not found in database');
+            }
+            
+            $user_id = $userData['id'];
             
             // First, unset all defaults for this user
             $stmt = $conn->prepare("UPDATE discord_webhooks SET is_default = 0 WHERE user_id = :user_id");
@@ -208,8 +258,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $message = "Default webhook has been updated.";
             $messageType = 'success';
-        } catch (PDOException $e) {
-            error_log('Database error: ' . $e->getMessage());
+        } catch (Exception $e) {
+            error_log('Default webhook error: ' . $e->getMessage());
             $message = 'Error setting default webhook.';
             $messageType = 'error';
         }
@@ -217,9 +267,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Handle deleting a webhook
     elseif (isset($_POST['action']) && $_POST['action'] === 'delete_webhook' && isset($_POST['webhook_id'])) {
         try {
+            // Get the database user ID based on Discord ID
+            $userStmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
+            $discord_id = $_SESSION['discord_user']['id'];
+            $userStmt->bindParam(':discord_id', $discord_id);
+            $userStmt->execute();
+            $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$userData) {
+                throw new Exception('User not found in database');
+            }
+            
+            $user_id = $userData['id'];
+            
             // Get webhook details first
             $webhook_id = $_POST['webhook_id'];
-            $user_id = $_SESSION['discord_user']['id'];
             $stmt = $conn->prepare("SELECT webhook_id, webhook_token, channel_name, is_shared FROM discord_webhooks WHERE id = :id AND user_id = :user_id");
             $stmt->bindParam(':id', $webhook_id);
             $stmt->bindParam(':user_id', $user_id);
@@ -253,8 +315,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = 'Webhook not found or you do not have permission to delete it.';
                 $messageType = 'error';
             }
-        } catch (PDOException $e) {
-            error_log('Database error: ' . $e->getMessage());
+        } catch (Exception $e) {
+            error_log('Delete webhook error: ' . $e->getMessage());
             $message = 'Error deleting webhook.';
             $messageType = 'error';
         }
@@ -294,7 +356,20 @@ if ($http_code >= 200 && $http_code < 300) {
 
 // Fetch user's existing webhooks from database
 try {
-    $user_id = $_SESSION['discord_user']['id'];
+    // Get the database user ID based on Discord ID
+    $userStmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
+    $discord_id = $_SESSION['discord_user']['id'];
+    $userStmt->bindParam(':discord_id', $discord_id);
+    $userStmt->execute();
+    $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$userData) {
+        throw new Exception('User not found in database');
+    }
+    
+    $user_id = $userData['id'];
+    
+    // Fetch webhooks using database user ID
     $stmt = $conn->prepare("SELECT * FROM discord_webhooks WHERE user_id = :user_id ORDER BY is_default DESC, last_updated DESC");
     $stmt->bindParam(':user_id', $user_id);
     $stmt->execute();
@@ -323,9 +398,9 @@ try {
         $stmt->execute();
         $webhooks = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-} catch (PDOException $e) {
-    error_log('Database error: ' . $e->getMessage());
-    $message = 'Error fetching your webhooks.';
+} catch (Exception $e) {
+    error_log('Fetch webhooks error: ' . $e->getMessage());
+    $message = 'Error fetching your webhooks. Try logging out and back in.';
     $messageType = 'error';
 }
 
