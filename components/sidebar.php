@@ -106,18 +106,50 @@ if (file_exists($base_path . 'discord/discord-config.php')) {
                     </div>
                 </div>
             <?php else: ?>
-                <a href="javascript:void(0);" onclick="handleDiscordLogin(event);" class="discord-connect-btn" id="discord-login-btn">
+                <a href="javascript:void(0);" onclick="openDiscordAuthPopup(event);" class="discord-connect-btn" id="discord-login-btn">
                     <i class="fab fa-discord"></i> Connect Discord
                 </a>
                 <script>
-                function handleDiscordLogin(event) {
+                // Global variable to track the popup
+                let discordAuthWindow = null;
+
+                // Function to open the Discord auth in a popup
+                function openDiscordAuthPopup(event) {
                     event.preventDefault();
                     
-                    // Store current URL in a cookie to return to this page
-                    document.cookie = "discord_return_url=" + encodeURIComponent(window.location.href) + "; path=/; max-age=3600";
+                    // Close any existing popup
+                    if (discordAuthWindow && !discordAuthWindow.closed) {
+                        discordAuthWindow.close();
+                    }
                     
-                    // Redirect to the login page
-                    window.location.href = '<?php echo $base_path; ?>discord/discord-login.php';
+                    // Configure the popup
+                    const popupWidth = 600;
+                    const popupHeight = 800;
+                    const left = (window.innerWidth - popupWidth) / 2 + window.screenX;
+                    const top = (window.innerHeight - popupHeight) / 2 + window.screenY;
+                    
+                    // Open the Discord auth directly in the popup with proper size and position
+                    discordAuthWindow = window.open(
+                        '<?php echo $base_path; ?>discord/discord-direct-popup.php',
+                        'DiscordAuth',
+                        `width=${popupWidth},height=${popupHeight},left=${left},top=${top},resizable=yes,scrollbars=yes`
+                    );
+
+                    // Focus the popup
+                    if (discordAuthWindow) {
+                        discordAuthWindow.focus();
+                        
+                        // Set up an interval to check if the popup is closed
+                        const checkPopupInterval = setInterval(() => {
+                            if (discordAuthWindow.closed) {
+                                clearInterval(checkPopupInterval);
+                                // Reload the parent page to reflect auth changes
+                                window.location.reload();
+                            }
+                        }, 500);
+                    } else {
+                        alert('Please allow popups for this site to use Discord authentication.');
+                    }
                 }
                 </script>
             <?php endif; ?>

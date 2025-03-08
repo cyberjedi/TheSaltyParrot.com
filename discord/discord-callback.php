@@ -8,18 +8,88 @@ require_once '../config/db_connect.php';
 // Get redirect URL (either referring page or default to index)
 $redirect_url = isset($_SESSION['discord_auth_referrer']) ? $_SESSION['discord_auth_referrer'] : '../index.php';
 
+// Helper function to render error page
+function renderErrorPage($error_message) {
+    ?>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Authentication Failed</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                text-align: center;
+                margin: 0;
+                padding: 20px;
+                background-color: #36393f;
+                color: #ffffff;
+            }
+            .container {
+                max-width: 500px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            h2 {
+                color: #f04747;
+                margin-bottom: 20px;
+            }
+            .error-icon {
+                font-size: 48px;
+                color: #f04747;
+                margin: 20px 0;
+            }
+            .message {
+                margin: 20px 0;
+                line-height: 1.5;
+            }
+            .button {
+                display: inline-block;
+                background-color: #7289da;
+                color: white;
+                padding: 10px 20px;
+                text-decoration: none;
+                border-radius: 4px;
+                margin-top: 20px;
+            }
+        </style>
+        <script>
+            // Close popup after a short delay
+            window.onload = function() {
+                setTimeout(function() {
+                    if (window.opener && !window.opener.closed) {
+                        window.close();
+                    } else {
+                        window.location.href = '../index.php';
+                    }
+                }, 3000);
+            };
+        </script>
+    </head>
+    <body>
+        <div class="container">
+            <h2>Authentication Failed</h2>
+            <div class="error-icon">✕</div>
+            <div class="message">
+                <p><?php echo htmlspecialchars($error_message); ?></p>
+                <p>This window will close automatically...</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
 // Check for errors or authorization denial
 if (isset($_GET['error'])) {
     $_SESSION['discord_error'] = 'Authorization denied: ' . $_GET['error_description'];
-    header('Location: ' . $redirect_url);
-    exit;
+    renderErrorPage('Authorization denied: ' . $_GET['error_description']);
 }
 
 // Verify state parameter to prevent CSRF attacks
 if (!isset($_GET['state']) || !isset($_SESSION['discord_oauth_state']) || $_GET['state'] !== $_SESSION['discord_oauth_state']) {
     $_SESSION['discord_error'] = 'Invalid state parameter. Please try again.';
-    header('Location: ' . $redirect_url);
-    exit;
+    renderErrorPage('Invalid state parameter. Please try again.');
 }
 
 // Clear the state from session
@@ -28,8 +98,7 @@ unset($_SESSION['discord_oauth_state']);
 // Check for the authorization code
 if (!isset($_GET['code'])) {
     $_SESSION['discord_error'] = 'No authorization code received.';
-    header('Location: ' . $redirect_url);
-    exit;
+    renderErrorPage('No authorization code received. Please try again.');
 }
 
 // Exchange the code for an access token
@@ -70,17 +139,15 @@ $token_response = json_decode($response, true);
 if ($http_code < 200 || $http_code >= 300) {
     error_log('Discord token error response: ' . $response);
     $_SESSION['discord_error'] = 'Failed to exchange code for token (HTTP ' . $http_code . ').';
-    header('Location: ' . $redirect_url);
-    exit;
+    renderErrorPage('Failed to exchange code for token. Please try again.');
 }
 
 // Check for missing or malformed tokens
 if (!isset($token_response['access_token']) || !isset($token_response['refresh_token']) || !isset($token_response['expires_in'])) {
-    $error_message = 'Invalid token response from Discord: ' . substr($response, 0, 100) . '...';
-    error_log($error_message);
+    $error_message = 'Invalid token response from Discord';
+    error_log($error_message . ': ' . substr($response, 0, 100) . '...');
     $_SESSION['discord_error'] = $error_message;
-    header('Location: ' . $redirect_url);
-    exit;
+    renderErrorPage('Invalid response from Discord. Please try again.');
 }
 
 // Store original tokens for direct debugging and database storage
@@ -98,8 +165,7 @@ $user_response = discord_api_request('/users/@me', 'GET', [], $_SESSION['discord
 if (!isset($user_response['id'])) {
     error_log('Failed to fetch user information: ' . json_encode($user_response));
     $_SESSION['discord_error'] = 'Failed to fetch user information.';
-    header('Location: ' . $redirect_url);
-    exit;
+    renderErrorPage('Failed to fetch your Discord user information. Please try again.');
 }
 
 // Store basic user data in session
@@ -179,17 +245,80 @@ try {
     $_SESSION['discord_warning'] = 'Your login worked, but we had trouble saving your session.';
 }
 
-// Get redirect URL and clear it from session
-$redirect_url = isset($_SESSION['discord_auth_referrer']) ? $_SESSION['discord_auth_referrer'] : '../index.php';
-unset($_SESSION['discord_auth_referrer']);
-
-// Log the success and redirect URL for debugging
-error_log('Discord auth success. Redirecting to: ' . $redirect_url);
-
 // Add a clear message about the success
 $_SESSION['discord_success'] = 'Successfully connected to Discord! You can now send content to your Discord servers.';
 
-// Redirect directly back to the original page
-header('Location: ' . $redirect_url);
+// Log the success
+error_log('Discord auth success. User ID: ' . $_SESSION['discord_user']['id']);
+
+// Display a success page with JavaScript to close popup and reload parent
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Authentication Successful</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            background-color: #36393f;
+            color: #ffffff;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h2 {
+            color: #7289da;
+            margin-bottom: 20px;
+        }
+        .success-icon {
+            font-size: 48px;
+            color: #43b581;
+            margin: 20px 0;
+        }
+        .message {
+            margin: 20px 0;
+            line-height: 1.5;
+        }
+    </style>
+    <script>
+        // Close popup and reload parent window after a short delay
+        window.onload = function() {
+            // Display success message for a moment
+            setTimeout(function() {
+                // If this window was opened by another window, close it and refresh parent
+                if (window.opener && !window.opener.closed) {
+                    // Try to reload the parent window
+                    try {
+                        window.opener.location.reload();
+                    } catch(e) {
+                        console.error("Could not reload parent window:", e);
+                    }
+                    // Close this popup
+                    window.close();
+                } else {
+                    // If not in a popup, redirect to index
+                    window.location.href = '../index.php';
+                }
+            }, 1500);
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>Authentication Successful!</h2>
+        <div class="success-icon">✓</div>
+        <div class="message">
+            <p>You've successfully connected to Discord.</p>
+            <p>This window will close automatically...</p>
+        </div>
+    </div>
+</body>
+</html>
+<?php
 exit;
 ?>
