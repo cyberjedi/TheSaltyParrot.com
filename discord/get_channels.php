@@ -1,6 +1,5 @@
 <?php
 // File: discord/get_channels.php
-// Improved version with better error handling
 
 // Enable error reporting for troubleshooting
 error_reporting(E_ALL);
@@ -20,16 +19,8 @@ if (!is_discord_authenticated()) {
     exit;
 }
 
-// Refresh token if needed
-if (!refresh_discord_token_if_needed()) {
-    header('Content-Type: application/json');
-    echo json_encode([
-        'status' => 'error', 
-        'message' => 'Session expired',
-        'needs_reauth' => true
-    ]);
-    exit;
-}
+// Force token refresh to ensure fresh permissions
+force_discord_token_refresh();
 
 // Check if guild ID is provided
 if (!isset($_GET['guild_id']) || empty($_GET['guild_id'])) {
@@ -53,12 +44,17 @@ $debug_info = [
 // Make request to get channels
 $url = DISCORD_API_URL . '/guilds/' . $guild_id . '/channels';
 
-$ch = curl_init($url);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
+// Set the correct Authorization header
+$headers = [
     'Authorization: Bearer ' . $access_token,
     'Content-Type: application/json'
-]);
+];
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+curl_setopt($ch, CURLOPT_HEADER, false);
 
 $response = curl_exec($ch);
 $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -79,11 +75,6 @@ if ($http_code >= 200 && $http_code < 300) {
         // Filter text channels (type 0 = text, type 5 = announcement channel)
         $text_channels = array_filter($response_data, function($channel) {
             return isset($channel['type']) && ($channel['type'] === 0 || $channel['type'] === 5);
-        });
-        
-        // Sort channels by name
-        usort($text_channels, function($a, $b) {
-            return strcmp($a['name'], $b['name']);
         });
         
         // Convert to indexed array
