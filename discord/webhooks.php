@@ -63,7 +63,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 if ($http_code === 200 && isset($response['id']) && isset($response['token'])) {
                     // Extract channel and guild information from the response
-                    $channelName = isset($response['channel']['name']) ? $response['channel']['name'] : 'Unknown Channel';
+                    // Use user-provided channel name if available, otherwise try to get from response
+                    $channelName = !empty($_POST['channel_name']) ? $_POST['channel_name'] : 
+                                  (isset($response['channel']['name']) ? $response['channel']['name'] : 'Unknown Channel');
                     $channelId = isset($response['channel_id']) ? $response['channel_id'] : '';
                     $guildId = isset($response['guild_id']) ? $response['guild_id'] : '';
                     $guildName = isset($response['guild']['name']) ? $response['guild']['name'] : 'Unknown Server';
@@ -264,6 +266,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $messageType = 'error';
         }
     }
+    // Handle editing a webhook
+    elseif (isset($_POST['action']) && $_POST['action'] === 'edit_webhook' && isset($_POST['webhook_id'])) {
+        try {
+            // Get the database user ID based on Discord ID
+            $userStmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
+            $discord_id = $_SESSION['discord_user']['id'];
+            $userStmt->bindParam(':discord_id', $discord_id);
+            $userStmt->execute();
+            $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$userData) {
+                throw new Exception('User not found in database');
+            }
+            
+            $user_id = $userData['id'];
+            $webhook_id = $_POST['webhook_id'];
+            
+            // Update the webhook details
+            $stmt = $conn->prepare("UPDATE discord_webhooks SET 
+                webhook_name = :webhook_name,
+                webhook_description = :webhook_description,
+                channel_name = :channel_name,
+                last_updated = NOW()
+                WHERE id = :id AND user_id = :user_id");
+                
+            $webhook_name = $_POST['webhook_name'];
+            $webhook_description = $_POST['webhook_description'];
+            $channel_name = $_POST['channel_name'];
+            
+            $stmt->bindParam(':webhook_name', $webhook_name);
+            $stmt->bindParam(':webhook_description', $webhook_description);
+            $stmt->bindParam(':channel_name', $channel_name);
+            $stmt->bindParam(':id', $webhook_id);
+            $stmt->bindParam(':user_id', $user_id);
+            
+            $stmt->execute();
+            
+            $message = "Webhook has been updated.";
+            $messageType = 'success';
+        } catch (Exception $e) {
+            error_log('Edit webhook error: ' . $e->getMessage());
+            $message = 'Error updating webhook.';
+            $messageType = 'error';
+        }
+    }
     // Handle deleting a webhook
     elseif (isset($_POST['action']) && $_POST['action'] === 'delete_webhook' && isset($_POST['webhook_id'])) {
         try {
@@ -439,6 +486,23 @@ $base_path = '../';
                     <i class="fab fa-discord"></i>
                     <h1><?php echo $page_title; ?></h1>
                 </div>
+                
+                <?php if (!empty($webhooks)): ?>
+                <div class="active-webhook-selector">
+                    <form method="post" action="" id="default-webhook-form" class="default-webhook-form">
+                        <input type="hidden" name="action" value="set_default">
+                        <label for="active_webhook">Active Webhook:</label>
+                        <select name="webhook_id" id="active_webhook" onchange="document.getElementById('default-webhook-form').submit();">
+                            <?php foreach ($webhooks as $webhook): ?>
+                                <option value="<?php echo $webhook['id']; ?>" <?php echo $webhook['is_default'] ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($webhook['webhook_name']); ?> (#<?php echo htmlspecialchars($webhook['channel_name']); ?>)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </form>
+                </div>
+                <?php endif; ?>
+                
                 <a href="../index.php" class="btn btn-secondary">Back to Dashboard</a>
             </div>
             
@@ -528,6 +592,10 @@ $base_path = '../';
                                                 <i class="fas fa-vial"></i>
                                             </button>
                                             
+                                            <button onclick="editWebhook(<?php echo $webhook['id']; ?>, '<?php echo htmlspecialchars(addslashes($webhook['webhook_name'])); ?>', '<?php echo htmlspecialchars(addslashes($webhook['webhook_description'] ?? '')); ?>', '<?php echo htmlspecialchars(addslashes($webhook['channel_name'])); ?>')" class="btn-icon" title="Edit Webhook">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            
                                             <form method="post" action="" class="inline-form delete-form">
                                                 <input type="hidden" name="action" value="delete_webhook">
                                                 <input type="hidden" name="webhook_id" value="<?php echo $webhook['id']; ?>">
@@ -578,6 +646,15 @@ $base_path = '../';
                                 <label for="webhook_description">Description (optional):</label>
                                 <input type="text" id="webhook_description" name="webhook_description" 
                                        placeholder="My campaign webhook">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="channel_name">Channel Name:</label>
+                                <input type="text" id="channel_name" name="channel_name" required
+                                       placeholder="general">
+                                <div class="input-help">
+                                    Enter the Discord channel name without the # symbol
+                                </div>
                             </div>
                             
                             <div class="webhook-buttons">
@@ -683,6 +760,42 @@ $base_path = '../';
         </main>
     </div>
     
+    <!-- Edit Webhook Modal -->
+    <div id="edit-webhook-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Edit Webhook</h3>
+            
+            <form method="post" action="" id="edit-webhook-form">
+                <input type="hidden" name="action" value="edit_webhook">
+                <input type="hidden" name="webhook_id" id="edit-webhook-id">
+                
+                <div class="form-group">
+                    <label for="edit-webhook-name">Webhook Name:</label>
+                    <input type="text" id="edit-webhook-name" name="webhook_name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-webhook-description">Description:</label>
+                    <input type="text" id="edit-webhook-description" name="webhook_description">
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit-channel-name">Channel Name:</label>
+                    <input type="text" id="edit-channel-name" name="channel_name" required>
+                    <div class="input-help">
+                        Enter the Discord channel name without the # symbol
+                    </div>
+                </div>
+                
+                <div class="form-buttons">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <footer>
         <p>The Salty Parrot is an independent production by Stuart Greenwell. It is not affiliated with Limithron LLC. It is published under the PIRATE BORG Third Party License. PIRATE BORG is ©2022 Limithron LLC.</p>
         <p>&copy; 2025 The Salty Parrot</p>
@@ -891,6 +1004,79 @@ $base_path = '../';
         .delete-form button {
             position: relative;
         }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+        
+        .modal-content {
+            background-color: var(--dark);
+            margin: 10% auto;
+            padding: 25px;
+            border: 1px solid var(--secondary);
+            border-radius: 8px;
+            width: 80%;
+            max-width: 550px;
+            position: relative;
+        }
+        
+        .close-modal, .close-modal-btn {
+            cursor: pointer;
+            color: #aaa;
+        }
+        
+        .close-modal {
+            position: absolute;
+            right: 15px;
+            top: 10px;
+            font-size: 28px;
+        }
+        
+        .close-modal:hover {
+            color: var(--secondary);
+        }
+        
+        .form-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        /* Active webhook selector */
+        .active-webhook-selector {
+            display: flex;
+            align-items: center;
+            margin: 0 20px;
+        }
+        
+        .default-webhook-form {
+            display: flex;
+            align-items: center;
+        }
+        
+        .default-webhook-form label {
+            margin-right: 10px;
+            color: var(--secondary);
+            font-weight: bold;
+        }
+        
+        .default-webhook-form select {
+            background-color: rgba(0, 0, 0, 0.3);
+            color: white;
+            border: 1px solid rgba(191, 157, 97, 0.5);
+            padding: 6px 10px;
+            border-radius: 4px;
+            min-width: 250px;
+        }
     </style>
 
     <script>
@@ -902,7 +1088,50 @@ $base_path = '../';
             
             // Setup delete confirmation
             setupDeleteConfirmation();
+            
+            // Setup modal functionality
+            setupModal();
         });
+        
+        // Function to handle edit webhook
+        function editWebhook(webhookId, webhookName, webhookDescription, channelName) {
+            // Populate the edit form
+            document.getElementById('edit-webhook-id').value = webhookId;
+            document.getElementById('edit-webhook-name').value = webhookName;
+            document.getElementById('edit-webhook-description').value = webhookDescription || '';
+            document.getElementById('edit-channel-name').value = channelName;
+            
+            // Show the modal
+            document.getElementById('edit-webhook-modal').style.display = 'block';
+        }
+        
+        // Function to setup modal
+        function setupModal() {
+            const modal = document.getElementById('edit-webhook-modal');
+            const closeBtn = document.getElementsByClassName('close-modal')[0];
+            const cancelBtn = document.getElementsByClassName('close-modal-btn')[0];
+            
+            // Close the modal when clicking the X
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    modal.style.display = 'none';
+                });
+            }
+            
+            // Close the modal when clicking the Cancel button
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function() {
+                    modal.style.display = 'none';
+                });
+            }
+            
+            // Close the modal when clicking outside of it
+            window.addEventListener('click', function(event) {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
         
     function fetchChannels() {
         const guildSelect = document.getElementById('guild_id');

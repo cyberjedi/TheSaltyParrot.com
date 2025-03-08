@@ -95,6 +95,46 @@ if (file_exists($base_path . 'discord/discord-config.php')) {
                         <img src="<?php echo htmlspecialchars($avatarUrl); ?>" alt="Discord Avatar" class="discord-avatar">
                         <div class="discord-username"><?php echo htmlspecialchars($username); ?></div>
                         <div class="discord-connection-label">Connected</div>
+                        <?php
+                        // Try to get the default webhook
+                        $default_webhook_name = '';
+                        $default_channel_name = '';
+                        try {
+                            require_once $base_path . 'config/db_connect.php';
+                            
+                            // Get the database user ID based on Discord ID
+                            $userStmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
+                            $discord_id = $discord_user['id'];
+                            $userStmt->bindParam(':discord_id', $discord_id);
+                            $userStmt->execute();
+                            $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
+                            
+                            if ($userData) {
+                                $user_id = $userData['id'];
+                                
+                                // Get default webhook
+                                $webhookStmt = $conn->prepare("SELECT webhook_name, channel_name FROM discord_webhooks WHERE user_id = :user_id AND is_default = 1 LIMIT 1");
+                                $webhookStmt->bindParam(':user_id', $user_id);
+                                $webhookStmt->execute();
+                                $webhook = $webhookStmt->fetch(PDO::FETCH_ASSOC);
+                                
+                                if ($webhook) {
+                                    $default_webhook_name = $webhook['webhook_name'];
+                                    $default_channel_name = $webhook['channel_name'];
+                                }
+                            }
+                        } catch (Exception $e) {
+                            // Silently fail
+                        }
+                        
+                        if (!empty($default_webhook_name)) {
+                            echo '<div class="active-webhook">
+                                <span class="webhook-indicator"><i class="fas fa-link"></i></span>
+                                ' . htmlspecialchars($default_webhook_name) . ' 
+                                <span class="channel-name">#' . htmlspecialchars($default_channel_name) . '</span>
+                            </div>';
+                        }
+                        ?>
                     </div>
                     <div class="discord-actions">
                         <a href="javascript:void(0);" onclick="window.location.href='<?php echo $base_path; ?>discord/webhooks.php';" class="discord-action-btn" title="Discord Settings">
