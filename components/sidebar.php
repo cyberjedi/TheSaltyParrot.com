@@ -74,23 +74,44 @@ if (file_exists($base_path . 'discord/discord-config.php')) {
         </button>
     </div>
     
-    <!-- Discord connection section in sidebar -->
-    <div class="sidebar-section">
-        <h3>Discord</h3>
+    <!-- Discord connection section at the bottom of sidebar -->
+    <div class="sidebar-discord-status">
         <?php if ($discord_enabled): ?>
             <?php if ($discord_authenticated): ?>
-                <a href="<?php echo $base_path; ?>discord/webhooks.php" class="sidebar-btn discord-sidebar-btn connected">
-                    <i class="fab fa-discord"></i> Manage Discord
-                </a>
+                <div class="discord-status-connected">
+                    <?php
+                    // Get Discord user avatar
+                    $avatarUrl = isset($_SESSION['discord_user']['avatar']) && !empty($_SESSION['discord_user']['avatar']) 
+                        ? 'https://cdn.discordapp.com/avatars/' . $_SESSION['discord_user']['id'] . '/' . $_SESSION['discord_user']['avatar'] . '.png' 
+                        : $base_path . 'assets/discord-default-avatar.png';
+                    
+                    // Get username
+                    $username = isset($_SESSION['discord_user']['username']) ? $_SESSION['discord_user']['username'] : 'User';
+                    ?>
+                    <div class="discord-user-info">
+                        <img src="<?php echo $avatarUrl; ?>" alt="Discord Avatar" class="discord-avatar">
+                        <div class="discord-username"><?php echo htmlspecialchars($username); ?></div>
+                        <div class="discord-connection-label">Connected</div>
+                    </div>
+                    <div class="discord-actions">
+                        <a href="<?php echo $base_path; ?>discord/webhooks.php" class="discord-action-btn" title="Discord Settings">
+                            <i class="fas fa-cog"></i>
+                        </a>
+                        <a href="<?php echo $base_path; ?>discord/discord-logout.php" class="discord-action-btn" title="Disconnect Discord">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </a>
+                    </div>
+                </div>
             <?php else: ?>
-                <a href="<?php echo $base_path; ?>discord/discord-login.php" class="sidebar-btn discord-sidebar-btn">
+                <a href="<?php echo $base_path; ?>discord/discord-login.php" class="discord-connect-btn">
                     <i class="fab fa-discord"></i> Connect Discord
                 </a>
             <?php endif; ?>
         <?php else: ?>
-            <button class="sidebar-btn disabled">
-                <i class="fab fa-discord"></i> Discord Coming Soon
-            </button>
+            <div class="discord-status-disabled">
+                <i class="fab fa-discord"></i>
+                <span>Discord Coming Soon</span>
+            </div>
         <?php endif; ?>
     </div>
 </aside>
