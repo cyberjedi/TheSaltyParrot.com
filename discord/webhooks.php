@@ -255,6 +255,16 @@ $base_path = '../';
             print_r(debug_discord_token());
             ?>
             </div>
+
+            <!-- Raw Token Debug - ADD THIS NEW SECTION -->
+            <div style="background: #333; padding: 10px; margin: 10px 0; font-family: monospace; white-space: pre-wrap;">
+            <?php
+            echo "Access Token Type: " . gettype($_SESSION['discord_access_token']) . "\n";
+            echo "Access Token Length: " . (isset($_SESSION['discord_access_token']) ? strlen($_SESSION['discord_access_token']) : 'N/A') . "\n";
+            echo "Token Expiration: " . (isset($_SESSION['discord_token_expires']) ? date('Y-m-d H:i:s', $_SESSION['discord_token_expires']) : 'N/A') . "\n";
+            echo "Current Time: " . date('Y-m-d H:i:s', time()) . "\n";
+            ?>
+            </div>
             
             <div class="webhook-list">
                 <h2>Your Discord Webhooks</h2>
