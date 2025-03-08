@@ -247,6 +247,14 @@ $base_path = '../';
                     <?php echo htmlspecialchars($message); ?>
                 </div>
             <?php endif; ?>
+
+            <!-- Debug token output -->
+            <div style="background: #333; padding: 10px; margin: 10px 0; font-family: monospace; white-space: pre-wrap;">
+            <?php
+            echo "Token Debug:\n";
+            print_r(debug_discord_token());
+            ?>
+            </div>
             
             <div class="webhook-list">
                 <h2>Your Discord Webhooks</h2>
