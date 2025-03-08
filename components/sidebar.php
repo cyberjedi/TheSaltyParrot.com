@@ -1,10 +1,17 @@
 <?php
+// File: components/sidebar.php
+
 // Determine the active page
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
 // Determine base path (different for pages in subdirectories)
 function getBasePath() {
-    return strpos($_SERVER['PHP_SELF'], '/pages/') !== false ? '../' : './';
+    // Check if base_path is already set from the parent script
+    if (isset($GLOBALS['base_path'])) {
+        return $GLOBALS['base_path'];
+    }
+    
+    return strpos($_SERVER['PHP_SELF'], '/discord/') !== false ? '../' : './';
 }
 $base_path = getBasePath();
 
@@ -13,7 +20,9 @@ $discord_enabled = false;
 $discord_authenticated = false;
 if (file_exists($base_path . 'discord/discord-config.php')) {
     try {
-        require_once $base_path . 'discord/discord-config.php';
+        if (!function_exists('is_discord_authenticated')) {
+            require_once $base_path . 'discord/discord-config.php';
+        }
         $discord_enabled = true;
         $discord_authenticated = function_exists('is_discord_authenticated') && is_discord_authenticated();
     } catch (Exception $e) {
