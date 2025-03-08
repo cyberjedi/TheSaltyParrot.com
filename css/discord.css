@@ -301,25 +301,101 @@
     border-color: var(--secondary);
 }
 
-/* Media queries for responsiveness */
-@media (max-width: 768px) {
-    .discord-connection-status {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .discord-status-actions {
-        margin-top: 15px;
-        align-self: flex-end;
-    }
-    
-    .webhook-item {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .webhook-actions {
-        margin-top: 10px;
-        align-self: flex-end;
-    }
+/* Enhanced Sidebar Discord Status Styles */
+.sidebar-discord-status {
+    margin-top: auto;
+    padding: 15px;
+    border-top: 1px solid rgba(191, 157, 97, 0.3);
+    background-color: rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 100;
+}
+
+.discord-connect-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 10px;
+    background-color: #5865F2;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+.discord-connect-btn i {
+    margin-right: 8px;
+    font-size: 1.1em;
+}
+
+.discord-connect-btn:hover {
+    background-color: #4752c4;
+}
+
+.discord-status-disabled {
+    color: rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    opacity: 0.7;
+}
+
+.discord-status-disabled i {
+    margin-right: 8px;
+}
+
+.discord-status-connected {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.discord-user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.discord-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin-bottom: 8px;
+    border: 2px solid #5865F2;
+    box-shadow: 0 0 10px rgba(88, 101, 242, 0.5);
+}
+
+.discord-username {
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: var(--light);
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.discord-connection-label {
+    font-size: 0.8rem;
+    color: #3ba55c; /* Discord green */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.discord-connection-label::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #3ba55c;
+    border-radius: 50%;
+    margin-right: 5px;
 }
