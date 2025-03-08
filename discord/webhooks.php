@@ -87,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     $webhook_id = $response['id'];
                     $webhook_token = $response['token'];
+                    $user_id = $_SESSION['discord_user']['id'];
                         
                     $stmt->bindParam(':user_id', $user_id);
                     $stmt->bindParam(':server_id', $selectedGuild);
@@ -120,6 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             // Get webhook details first
             $webhook_id = $_POST['webhook_id'];
+            $user_id = $_SESSION['discord_user']['id'];
             $stmt = $conn->prepare("SELECT webhook_id, webhook_token, channel_name FROM discord_webhooks WHERE id = :id AND user_id = :user_id");
             $stmt->bindParam(':id', $webhook_id);
             $stmt->bindParam(':user_id', $user_id);
@@ -167,6 +169,7 @@ if (is_array($guildResponse)) {
 
 // Fetch user's existing webhooks from database
 try {
+    $user_id = $_SESSION['discord_user']['id'];
     $stmt = $conn->prepare("SELECT * FROM discord_webhooks WHERE user_id = :user_id ORDER BY last_updated DESC");
     $stmt->bindParam(':user_id', $user_id);
     $stmt->execute();
@@ -221,36 +224,7 @@ $base_path = '../';
                 </div>
             <?php endif; ?>
 
-            <!-- Debug token output -->
-            <div style="background: #333; padding: 10px; margin: 10px 0; font-family: monospace; white-space: pre-wrap;">
-            <?php
-            echo "Token Debug:\n";
-            print_r(debug_discord_token());
-            ?>
-            </div>
-
-            <!-- Raw Token Debug - ADD THIS NEW SECTION -->
-            <div style="background: #333; padding: 10px; margin: 10px 0; font-family: monospace; white-space: pre-wrap;">
-            <?php
-            echo "Access Token Type: " . gettype($_SESSION['discord_access_token']) . "\n";
-            echo "Access Token Length: " . (isset($_SESSION['discord_access_token']) ? strlen($_SESSION['discord_access_token']) : 'N/A') . "\n";
-            echo "Token Expiration: " . (isset($_SESSION['discord_token_expires']) ? date('Y-m-d H:i:s', $_SESSION['discord_token_expires']) : 'N/A') . "\n";
-            echo "Current Time: " . date('Y-m-d H:i:s', time()) . "\n";
-            ?>
-            </div>
-
-            <!-- Token Value Debug -->
-            <div style="background: #333; padding: 10px; margin: 10px 0; font-family: monospace; white-space: pre-wrap;">
-            <?php
-            echo "First 10 chars of token: " . (isset($_SESSION['discord_access_token']) ? substr($_SESSION['discord_access_token'], 0, 10) . '...' : 'N/A') . "\n";
-            
-            // Check the token_response directly from discord-callback.php
-            if (isset($_SESSION['discord_token_debug'])) {
-                echo "Token Response Debug:\n";
-                print_r($_SESSION['discord_token_debug']);
-            }
-            ?>
-            </div>
+            <!-- Debug section removed for production -->
             
             <div class="webhook-list">
                 <h2>Your Discord Webhooks</h2>

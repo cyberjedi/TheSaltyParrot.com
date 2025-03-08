@@ -25,9 +25,13 @@ if (file_exists('discord/discord-config.php')) {
                 $stmt->execute();
                 $user = $stmt->fetch(PDO::FETCH_ASSOC);
                 
-                if ($user && function_exists('get_user_webhooks')) {
+                if ($user) {
                     $user_id = $user['id'];
-                    $user_webhooks = get_user_webhooks($conn, $user_id);
+                    // Include the discord_service.php file to get the get_user_webhooks function
+                    if (file_exists('discord/discord_service.php')) {
+                        require_once 'discord/discord_service.php';
+                        $user_webhooks = get_user_webhooks($conn, $user_id);
+                    }
                 }
             } catch (Exception $e) {
                 error_log('Discord user webhooks error: ' . $e->getMessage());

@@ -1,8 +1,28 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-// Enable CORS
-header("Access-Control-Allow-Origin: *");
+// Only show errors in development environment
+if (getenv('ENVIRONMENT') == 'development') {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+} else {
+    error_reporting(0);
+    ini_set('display_errors', 0);
+}
+
+// Enable CORS for specific domains
+$allowed_origins = [
+    'https://thesaltyparrot.com',
+    'https://www.thesaltyparrot.com',
+    'http://localhost:8000'
+];
+
+$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
+
+if (in_array($origin, $allowed_origins)) {
+    header("Access-Control-Allow-Origin: $origin");
+} else {
+    header("Access-Control-Allow-Origin: https://thesaltyparrot.com");
+}
+
 header("Access-Control-Allow-Methods: GET");
 header("Content-Type: application/json");
 

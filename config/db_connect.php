@@ -1,21 +1,43 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-// Use a single, hardcoded path to the configuration
-$config_file = '/home/theshfmb/private/secure_variables.php';
-
-// Check if file exists
-if (!file_exists($config_file)) {
-    die('Configuration file not found: ' . $config_file);
+// Only show errors in development environment
+if (getenv('ENVIRONMENT') == 'development') {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+} else {
+    error_reporting(0);
+    ini_set('display_errors', 0);
 }
 
-// Load the configuration file directly
+// Define possible config file locations based on environment
+$config_paths = [
+    '/home/theshfmb/private/secure_variables.php', // Production
+    dirname(__DIR__) . '/private/secure_variables.php', // Relative path
+    $_SERVER['DOCUMENT_ROOT'] . '/private/secure_variables.php', // Document root
+    __DIR__ . '/../private/secure_variables.php' // Local development
+];
+
+// Find the first config file that exists
+$config_file = null;
+foreach ($config_paths as $path) {
+    if (file_exists($path)) {
+        $config_file = $path;
+        break;
+    }
+}
+
+// Check if any configuration file was found
+if (!$config_file) {
+    http_response_code(500);
+    exit('Configuration file not found. Please contact the administrator.');
+}
+
+// Load the configuration file
 $config = require $config_file;
 
-// Simple check if it's an array
+// Check if it's an array
 if (!is_array($config)) {
-    die('Configuration file did not return an array');
+    http_response_code(500);
+    exit('Invalid configuration format. Please contact the administrator.');
 }
 
 try {
@@ -30,8 +52,12 @@ try {
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
 } catch(PDOException $e) {
-    // Simple error handling
-    die('Database connection failed: ' . $e->getMessage());
+    // Log error for administrators
+    error_log('Database connection error: ' . $e->getMessage());
+    
+    // Return a user-friendly error message
+    http_response_code(500);
+    exit('Database connection error. Please try again later or contact support.');
 }
 
 // No fancy error handling, no table checks, just the basics

@@ -54,12 +54,21 @@ if ($config === null) {
 
 // Sessions configuration
 if (session_status() === PHP_SESSION_NONE) {
-    // Set secure session parameters
+    // Set secure session parameters - always apply these security settings
     ini_set('session.cookie_httponly', 1);
     ini_set('session.use_only_cookies', 1);
-    if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
+    
+    // Set secure flag in production or when HTTPS is detected
+    if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' || 
+        getenv('ENVIRONMENT') !== 'development') {
         ini_set('session.cookie_secure', 1);
     }
+    
+    // Set session lifetime (30 days)
+    ini_set('session.gc_maxlifetime', 2592000);
+    ini_set('session.cookie_lifetime', 2592000);
+    
+    // Start the session
     session_start();
 }
 
@@ -74,11 +83,13 @@ function discord_api_request($endpoint, $method = 'GET', $data = [], $token = nu
     
     $url = DISCORD_API_URL . $endpoint;
     
-    // Log the request we're about to make
-    error_log("Discord API Request: $method $url");
-    if ($token) {
-        error_log("Using token (first 10 chars): " . substr($token, 0, 10) . "...");
-        error_log("Token length: " . strlen($token));
+    // Only log detailed API information in development environment
+    if (getenv('ENVIRONMENT') == 'development') {
+        error_log("Discord API Request: $method $url");
+        if ($token) {
+            error_log("Using token (first 10 chars): " . substr($token, 0, 10) . "...");
+            error_log("Token length: " . strlen($token));
+        }
     }
     
     curl_setopt($ch, CURLOPT_URL, $url);
