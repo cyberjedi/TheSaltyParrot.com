@@ -72,27 +72,79 @@ if ($discord_authenticated && isset($_SESSION['discord_user'])) {
         $userStmt->execute();
         $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
         
+        error_log("Discord user ID: " . $discord_id);
+        
         if ($userData) {
             $user_id = $userData['id'];
+            error_log("Found database user ID: " . $user_id);
+        } else {
+            error_log("No user found in discord_users table for Discord ID: " . $discord_id);
         }
     } catch (PDOException $e) {
         error_log("Error getting user ID: " . $e->getMessage());
     }
+} else {
+    error_log("User not authenticated via Discord or session discord_user not set");
+    if ($discord_authenticated) {
+        error_log("discord_authenticated is true but $_SESSION['discord_user'] is not set");
+    }
 }
+
+// Debug session data
+error_log("SESSION data: " . json_encode($_SESSION));
 
 // Fetch all characters for this user
 $user_characters = [];
-if ($discord_authenticated) {
-    try {
-        require_once 'config/db_connect.php';
+try {
+    require_once 'config/db_connect.php';
+    
+    // Let's directly check what characters exist for the current user_id
+    error_log("Fetching characters for user_id: " . $user_id);
+    
+    // First approach - using user_id from Discord auth
+    $charsStmt = $conn->prepare("SELECT id, name, image_path FROM characters WHERE user_id = :user_id ORDER BY name ASC");
+    $charsStmt->bindParam(':user_id', $user_id);
+    $charsStmt->execute();
+    $user_characters = $charsStmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    error_log("Found " . count($user_characters) . " characters for user_id " . $user_id);
+    
+    // If no characters found, let's try with the default user ID 1
+    if (count($user_characters) === 0 && $user_id !== 1) {
+        error_log("No characters found for user_id " . $user_id . ". Trying with default user_id 1");
+        $default_user_id = 1;
+        $defaultCharsStmt = $conn->prepare("SELECT id, name, image_path FROM characters WHERE user_id = :user_id ORDER BY name ASC");
+        $defaultCharsStmt->bindParam(':user_id', $default_user_id);
+        $defaultCharsStmt->execute();
+        $default_characters = $defaultCharsStmt->fetchAll(PDO::FETCH_ASSOC);
         
-        $charsStmt = $conn->prepare("SELECT id, name, image_path FROM characters WHERE user_id = :user_id ORDER BY name ASC");
-        $charsStmt->bindParam(':user_id', $user_id);
-        $charsStmt->execute();
-        $user_characters = $charsStmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        error_log("Error fetching user characters: " . $e->getMessage());
+        if (count($default_characters) > 0) {
+            error_log("Found " . count($default_characters) . " characters for default user_id 1");
+            // Use these characters instead
+            $user_characters = $default_characters;
+        }
     }
+    
+    // Let's also check if there are any characters at all in the database
+    $allCharsStmt = $conn->prepare("SELECT * FROM characters");
+    $allCharsStmt->execute();
+    $allChars = $allCharsStmt->fetchAll(PDO::FETCH_ASSOC);
+    error_log("All characters in database: " . json_encode($allChars));
+    
+    // Check the structure of the characters table
+    $tableStructureStmt = $conn->prepare("DESCRIBE characters");
+    $tableStructureStmt->execute();
+    $tableStructure = $tableStructureStmt->fetchAll(PDO::FETCH_ASSOC);
+    error_log("Characters table structure: " . json_encode($tableStructure));
+    
+    // Check the structure of the discord_users table
+    $discordUsersStructureStmt = $conn->prepare("DESCRIBE discord_users");
+    $discordUsersStructureStmt->execute();
+    $discordUsersStructure = $discordUsersStructureStmt->fetchAll(PDO::FETCH_ASSOC);
+    error_log("Discord users table structure: " . json_encode($discordUsersStructure));
+    
+} catch (PDOException $e) {
+    error_log("Error fetching user characters: " . $e->getMessage());
 }
 
 // If a character ID is provided, load the character from the database
