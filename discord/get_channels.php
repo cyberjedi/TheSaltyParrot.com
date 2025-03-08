@@ -29,11 +29,14 @@ if (!isset($_GET['guild_id']) || empty($_GET['guild_id'])) {
 
 $debug_output[] = "Authentication check passed";
 
-// Refresh token if needed
-if (!refresh_discord_token_if_needed()) {
-    header('Content-Type: application/json');
-    echo json_encode(['status' => 'error', 'message' => 'Token refresh failed']);
-    exit;
+// Force token refresh instead of just checking
+if (!force_discord_token_refresh()) {
+    // If forced refresh fails, try the normal refresh
+    if (!refresh_discord_token_if_needed()) {
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 'error', 'message' => 'Token refresh failed']);
+        exit;
+    }
 }
 
 $guild_id = $_GET['guild_id'];
@@ -41,6 +44,8 @@ $access_token = $_SESSION['discord_access_token'];
 
 $debug_output[] = "Guild ID: " . $guild_id;
 $debug_output[] = "Token (first 10 chars): " . substr($access_token, 0, 10) . "...";
+$debug_output[] = "Token expiration: " . date('Y-m-d H:i:s', $_SESSION['discord_token_expires']);
+$debug_output[] = "Current time: " . date('Y-m-d H:i:s', time());
 
 // Test the Discord API with a basic request
 $user_info = discord_api_request('/users/@me', 'GET', [], $access_token);
