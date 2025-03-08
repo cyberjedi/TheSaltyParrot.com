@@ -62,21 +62,7 @@ if (file_exists('discord/discord-config.php')) {
         <!-- Main Content Area -->
         <main class="main-content">
             <div class="dashboard-container">
-                <!-- Discord Connection Box -->
-                <div class="discord-box">
-                    <h3 class="box-title">Discord Status</h3>
-                    
-                    <?php if ($discord_enabled && function_exists('renderDiscordConnectionStatus')): ?>
-                        <?php renderDiscordConnectionStatus(); ?>
-                    <?php else: ?>
-                        <div id="discord-status" class="placeholder-display">
-                            <i class="fab fa-discord"></i>
-                            <p>Discord integration coming soon! Use the sidebar button to connect when available.</p>
-                        </div>
-                    <?php endif; ?>
-                </div>
-                
-                <!-- Rest of your page content -->
+                <!-- Modified dashboard to remove Discord box from the top -->                
                 <!-- Character Display Box -->
                 <div class="character-box">
                     <h3 class="box-title">
