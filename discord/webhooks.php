@@ -265,6 +265,19 @@ $base_path = '../';
             echo "Current Time: " . date('Y-m-d H:i:s', time()) . "\n";
             ?>
             </div>
+
+            <!-- Token Value Debug -->
+            <div style="background: #333; padding: 10px; margin: 10px 0; font-family: monospace; white-space: pre-wrap;">
+            <?php
+            echo "First 10 chars of token: " . (isset($_SESSION['discord_access_token']) ? substr($_SESSION['discord_access_token'], 0, 10) . '...' : 'N/A') . "\n";
+            
+            // Check the token_response directly from discord-callback.php
+            if (isset($_SESSION['discord_token_debug'])) {
+                echo "Token Response Debug:\n";
+                print_r($_SESSION['discord_token_debug']);
+            }
+            ?>
+            </div>
             
             <div class="webhook-list">
                 <h2>Your Discord Webhooks</h2>
