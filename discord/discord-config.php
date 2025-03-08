@@ -141,53 +141,7 @@ function refresh_discord_token_if_needed() {
     
     error_log("Discord token expired. Attempting refresh...");
     
-    // If we have a refresh token, try to refresh
-    if (isset($_SESSION['discord_refresh_token'])) {
-        $data = [
-            'client_id' => DISCORD_CLIENT_ID,
-            'client_secret' => DISCORD_CLIENT_SECRET,
-            'grant_type' => 'refresh_token',
-            'refresh_token' => $_SESSION['discord_refresh_token']
-        ];
-        
-        $ch = curl_init();
-        
-        curl_setopt($ch, CURLOPT_URL, DISCORD_API_URL . '/oauth2/token');
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/x-www-form-urlencoded'
-        ]);
-        
-        $response = curl_exec($ch);
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        if ($http_code >= 200 && $http_code < 300) {
-            $result = json_decode($response, true);
-            
-            $_SESSION['discord_access_token'] = $result['access_token'];
-            $_SESSION['discord_refresh_token'] = $result['refresh_token'];
-            $_SESSION['discord_token_expires'] = time() + $result['expires_in'];
-            
-            error_log("Discord token refreshed successfully");
-            return true;
-        } else {
-            // Log the error response
-            error_log("Discord token refresh failed: " . $response);
-            
-            // If refresh fails, clear session and return false
-            unset($_SESSION['discord_user']);
-            unset($_SESSION['discord_access_token']);
-            unset($_SESSION['discord_refresh_token']);
-            unset($_SESSION['discord_token_expires']);
-            return false;
-        }
-    }
-    
-    // No refresh token or refresh failed
-    return false;
+    return force_discord_token_refresh();
 }
 
 // Function to force a token refresh regardless of expiration time
@@ -227,14 +181,50 @@ function force_discord_token_refresh() {
             $_SESSION['discord_refresh_token'] = $result['refresh_token'];
             $_SESSION['discord_token_expires'] = time() + $result['expires_in'];
             
-            error_log("Discord token force refreshed successfully");
+            error_log("Discord token refreshed successfully");
+            
+            // Update database with new tokens
+            try {
+                require_once dirname(__FILE__) . '/../config/db_connect.php';
+                if (isset($conn) && isset($_SESSION['discord_user']['id'])) {
+                    $stmt = $conn->prepare("UPDATE discord_users SET 
+                        access_token = :access_token, 
+                        refresh_token = :refresh_token, 
+                        token_expires = :token_expires
+                        WHERE discord_id = :discord_id");
+                        
+                    $access_token = $result['access_token'];
+                    $refresh_token = $result['refresh_token'];
+                    $token_expires = $_SESSION['discord_token_expires'];
+                    $discord_id = $_SESSION['discord_user']['id'];
+                    
+                    $stmt->bindParam(':access_token', $access_token);
+                    $stmt->bindParam(':refresh_token', $refresh_token);
+                    $stmt->bindParam(':token_expires', $token_expires);
+                    $stmt->bindParam(':discord_id', $discord_id);
+                    
+                    $stmt->execute();
+                    error_log("Updated tokens in database for user " . $discord_id);
+                }
+            } catch (Exception $e) {
+                error_log("Error updating database with refreshed tokens: " . $e->getMessage());
+            }
+            
             return true;
         } else {
-            error_log("Discord token force refresh failed: " . $response);
+            // Log the error response
+            error_log("Discord token refresh failed: " . $response);
+            
+            // If refresh fails, clear session and return false
+            unset($_SESSION['discord_user']);
+            unset($_SESSION['discord_access_token']);
+            unset($_SESSION['discord_refresh_token']);
+            unset($_SESSION['discord_token_expires']);
             return false;
         }
     }
     
+    // No refresh token or refresh failed
     return false;
 }
 
@@ -343,7 +333,7 @@ function renderDiscordConnectionStatus() {
         echo '</div>'; // End discord-connection-status
     }
     
-    // Display any pending messages
+// Display any pending messages
     if (isset($_SESSION['discord_error'])) {
         echo '<div class="discord-message error">' . htmlspecialchars($_SESSION['discord_error']) . '</div>';
         unset($_SESSION['discord_error']);
@@ -387,4 +377,3 @@ function debug_discord_token() {
 }
 
 ?>
-```
