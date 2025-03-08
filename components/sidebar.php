@@ -78,7 +78,6 @@ if (file_exists($base_path . 'discord/discord-config.php')) {
         </button>
     </div>
     
-    <!-- Discord connection section at the bottom of sidebar -->
     <div class="sidebar-discord-status">
         <?php if ($discord_enabled): ?>
             <?php if ($discord_authenticated && $discord_user): ?>
@@ -91,14 +90,9 @@ if (file_exists($base_path . 'discord/discord-config.php')) {
                     
                     // Get username
                     $username = isset($discord_user['username']) ? $discord_user['username'] : 'User';
-                    
-                    // Ensure we have a default avatar fallback
-                    if (!file_exists($base_path . 'assets/discord-default-avatar.png')) {
-                        $avatarUrl = 'https://cdn.discordapp.com/embed/avatars/0.png'; // Discord's default avatar
-                    }
                     ?>
                     <div class="discord-user-info">
-                        <img src="<?php echo $avatarUrl; ?>" alt="Discord Avatar" class="discord-avatar">
+                        <img src="<?php echo htmlspecialchars($avatarUrl); ?>" alt="Discord Avatar" class="discord-avatar">
                         <div class="discord-username"><?php echo htmlspecialchars($username); ?></div>
                         <div class="discord-connection-label">Connected</div>
                     </div>
@@ -123,6 +117,8 @@ if (file_exists($base_path . 'discord/discord-config.php')) {
             </div>
         <?php endif; ?>
     </div>
+
+
 </aside>
 
 <script>
