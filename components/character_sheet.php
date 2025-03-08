@@ -2,27 +2,49 @@
 <div id="character-switcher-modal" class="modal">
     <div class="modal-content">
         <span class="close-modal">&times;</span>
-        <h3>Switch Character</h3>
+        <h3>Character Selection</h3>
         
         <?php if (count($user_characters) > 0): ?>
             <div class="character-list">
                 <?php foreach ($user_characters as $char): ?>
-                    <a href="character_sheet.php?id=<?php echo $char['id']; ?>" class="character-list-item <?php echo ($character && $character['id'] == $char['id']) ? 'active' : ''; ?>">
-                        <span class="character-name"><?php echo htmlspecialchars($char['name']); ?></span>
-                        <?php if ($character && $character['id'] == $char['id']): ?>
-                            <span class="current-badge">Current</span>
-                        <?php endif; ?>
-                    </a>
+                    <div class="character-list-item <?php echo ($character && $character['id'] == $char['id']) ? 'active' : ''; ?>">
+                        <div class="character-list-info">
+                            <?php
+                            // Get character image
+                            $charImage = !empty($char['image_path']) ? htmlspecialchars($char['image_path']) : 'assets/TSP_default_character.jpg';
+                            ?>
+                            <div class="character-list-avatar">
+                                <img src="<?php echo $charImage; ?>" alt="Character Portrait" onerror="this.src='assets/TSP_default_character.jpg'">
+                            </div>
+                            <div class="character-list-details">
+                                <span class="character-name"><?php echo htmlspecialchars($char['name']); ?></span>
+                                <?php if ($character && $character['id'] == $char['id']): ?>
+                                    <span class="current-badge">Current</span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="character-list-actions">
+                            <a href="character_sheet.php?id=<?php echo $char['id']; ?>" class="btn btn-primary btn-sm">
+                                <i class="fas fa-user"></i> Select
+                            </a>
+                        </div>
+                    </div>
                 <?php endforeach; ?>
             </div>
         <?php else: ?>
-            <p>You don't have any characters yet. Create your first character!</p>
+            <div class="empty-characters">
+                <i class="fas fa-user-slash" style="font-size: 3rem; color: var(--secondary); margin-bottom: 20px;"></i>
+                <p>You don't have any characters yet.</p>
+                <p>Create your first character to get started!</p>
+            </div>
         <?php endif; ?>
         
         <div class="form-buttons">
-            <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
+            <button type="button" class="btn btn-secondary close-modal-btn">Close</button>
             <?php if ($discord_authenticated): ?>
-            <button type="button" class="btn btn-primary" id="create-new-from-switcher">Create New Character</button>
+            <button type="button" class="btn btn-primary" id="create-new-from-switcher">
+                <i class="fas fa-plus-circle"></i> Create New Character
+            </button>
             <?php endif; ?>
         </div>
     </div>
@@ -34,8 +56,44 @@ $character_id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $character = null;
 $error_message = null;
 
-// If user is logged in, load their character (placeholder for user authentication)
-$user_id = 1; // This should be replaced with actual user authentication
+// If user is logged in, load their character
+// Get user ID from Discord session if authenticated
+$user_id = 1; // Default fallback
+
+// Check if the user is authenticated via Discord
+if ($discord_authenticated && isset($_SESSION['discord_user'])) {
+    try {
+        require_once 'config/db_connect.php';
+        
+        // Get the database user ID based on Discord ID
+        $userStmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
+        $discord_id = $_SESSION['discord_user']['id'];
+        $userStmt->bindParam(':discord_id', $discord_id);
+        $userStmt->execute();
+        $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($userData) {
+            $user_id = $userData['id'];
+        }
+    } catch (PDOException $e) {
+        error_log("Error getting user ID: " . $e->getMessage());
+    }
+}
+
+// Fetch all characters for this user
+$user_characters = [];
+if ($discord_authenticated) {
+    try {
+        require_once 'config/db_connect.php';
+        
+        $charsStmt = $conn->prepare("SELECT id, name, image_path FROM characters WHERE user_id = :user_id ORDER BY name ASC");
+        $charsStmt->bindParam(':user_id', $user_id);
+        $charsStmt->execute();
+        $user_characters = $charsStmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error fetching user characters: " . $e->getMessage());
+    }
+}
 
 // If a character ID is provided, load the character from the database
 if ($character_id) {
@@ -181,14 +239,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         <h1>Character Sheet</h1>
     </div>
     <div class="actions">
-        <?php if ($discord_authenticated && count($user_characters) > 0): ?>
+        <!-- Always show the switch character button, even if there are no characters yet -->
+        <?php if ($discord_authenticated): ?>
         <button id="switch-character-btn" class="btn btn-secondary">
             <i class="fas fa-exchange-alt"></i> Switch Character
         </button>
         <?php endif; ?>
+        
         <button id="print-character-btn" class="btn btn-secondary">
             <i class="fas fa-print"></i> Print
         </button>
+        
         <?php if ($discord_authenticated): ?>
         <button id="new-character-btn" class="btn btn-primary">
             <i class="fas fa-plus"></i> New Character
@@ -352,6 +413,96 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 .character-sheet-inner {
     padding: 30px;
+}
+
+/* Character Switcher Modal Styles */
+.character-list {
+    margin: 20px 0;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.character-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    background-color: #fff;
+}
+
+.character-list-item:hover {
+    border-color: #bf9d61;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.character-list-item.active {
+    border-color: #bf9d61;
+    background-color: #fcf7ee;
+}
+
+.character-list-info {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.character-list-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #bf9d61;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.character-list-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.character-list-details {
+    flex: 1;
+}
+
+.character-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #1a2639;
+    display: block;
+}
+
+.character-list-actions {
+    margin-left: 10px;
+}
+
+.current-badge {
+    display: inline-block;
+    background-color: #e0f0e0;
+    color: #2c8527;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid #c0e0c0;
+}
+
+.empty-characters {
+    text-align: center;
+    padding: 30px 0;
+    color: #666;
+}
+
+.btn-sm {
+    padding: 5px 10px;
+    font-size: 0.85rem;
 }
 
 .character-header {
