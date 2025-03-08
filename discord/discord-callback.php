@@ -44,12 +44,23 @@ curl_setopt($ch, CURLOPT_URL, DISCORD_API_URL . '/oauth2/token');
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($token_data));
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Content-Type: application/x-www-form-urlencoded'
+]);
 
 $response = curl_exec($ch);
 $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curl_error = curl_error($ch);
 curl_close($ch);
 
+// Log the response for debugging
+error_log('Discord token response code: ' . $http_code);
+if ($curl_error) {
+    error_log('Discord token curl error: ' . $curl_error);
+}
+
 if ($http_code < 200 || $http_code >= 300) {
+    error_log('Discord token error response: ' . $response);
     $_SESSION['discord_error'] = 'Failed to exchange code for token.';
     header('Location: ../index.php');
     exit;
@@ -57,15 +68,29 @@ if ($http_code < 200 || $http_code >= 300) {
 
 $token_response = json_decode($response, true);
 
+// Validate the token response
+if (!isset($token_response['access_token']) || !isset($token_response['refresh_token']) || !isset($token_response['expires_in'])) {
+    error_log('Invalid token response: ' . $response);
+    $_SESSION['discord_error'] = 'Invalid token response from Discord.';
+    header('Location: ../index.php');
+    exit;
+}
+
 // Store the access token in session
 $_SESSION['discord_access_token'] = $token_response['access_token'];
 $_SESSION['discord_refresh_token'] = $token_response['refresh_token'];
 $_SESSION['discord_token_expires'] = time() + $token_response['expires_in'];
 
+// Log token details for debugging
+error_log('Discord token scopes: ' . ($token_response['scope'] ?? 'none'));
+error_log('Discord token type: ' . ($token_response['token_type'] ?? 'none'));
+error_log('Discord token expires_in: ' . $token_response['expires_in']);
+
 // Fetch user information
 $user_response = discord_api_request('/users/@me', 'GET', [], $token_response['access_token']);
 
 if (!isset($user_response['id'])) {
+    error_log('Failed to fetch user information: ' . json_encode($user_response));
     $_SESSION['discord_error'] = 'Failed to fetch user information.';
     header('Location: ../index.php');
     exit;
