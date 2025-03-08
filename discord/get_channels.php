@@ -104,34 +104,26 @@ if ($http_code >= 200 && $http_code < 300) {
         ]);
     }
 } else if ($http_code === 401 || $http_code === 403) {
-    // Try alternative approach - get channels using users/@me/channels
-    error_log("Guild channels request failed with " . $http_code . ". Trying alternative endpoint...");
-    
-    // Let's try to get the channels a different way - by fetching available guilds first
-    // This assumes we at least have permission to see our guilds
-    $channels = [];
-    
-    // Get channels from the current guild
-    // Create a dummy list of channels based on the guild ID
-    $channels = [
-        [
-            'id' => $guild_id . '0001',
-            'name' => 'general',
-            'type' => 0
-        ],
-        [
-            'id' => $guild_id . '0002',
-            'name' => 'announcements',
-            'type' => 5
-        ]
-    ];
+    // Unable to fetch channels due to permission limitations
+    error_log("Guild channels request failed with " . $http_code . ". Unable to access guild channels.");
     
     header('Content-Type: application/json');
     echo json_encode([
-        'status' => 'success',
-        'channels' => $channels,
+        'status' => 'error',
+        'message' => 'Unable to access Discord channels due to API limitations',
+        'http_code' => $http_code,
         'debug' => $debug_info,
-        'note' => 'Using fallback channel list due to permission limitations'
+        'needs_manual_entry' => true,
+        'help' => [
+            'title' => 'Discord Channel Access Limitation',
+            'message' => 'Due to Discord API limitations, we cannot automatically fetch your channels. You will need to enter your channel details manually.',
+            'instructions' => [
+                'Go to your Discord server',
+                'Right-click on the text channel you want to use',
+                'Select "Copy ID" (enable Developer Mode in Discord settings if needed)',
+                'Paste the ID in the form'
+            ]
+        ]
     ]);
     exit;
 } else {

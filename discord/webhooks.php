@@ -30,141 +30,218 @@ $webhookName = 'The Salty Parrot';
 $message = '';
 $messageType = '';
 
-// Process webhook creation/deletion if form submitted
+// Process webhook actions if form submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['action']) && $_POST['action'] === 'create_webhook') {
+    if (isset($_POST['action']) && $_POST['action'] === 'add_webhook') {
         // Validate inputs
-        if (empty($_POST['guild_id']) || empty($_POST['channel_id'])) {
-            $message = 'Please select both a server and a channel.';
+        if (empty($_POST['webhook_url'])) {
+            $message = 'Please enter a Discord webhook URL.';
             $messageType = 'error';
         } else {
-            // Get server and channel info
-            $selectedGuild = $_POST['guild_id'];
-            $selectedChannel = $_POST['channel_id'];
+            // Parse the webhook URL to extract ID and token
+            $webhookUrl = trim($_POST['webhook_url']);
+            $webhook_name = !empty($_POST['webhook_name']) ? $_POST['webhook_name'] : 'The Salty Parrot';
+            $webhook_description = !empty($_POST['webhook_description']) ? $_POST['webhook_description'] : '';
             
-            // Get custom webhook name if provided
-            if (!empty($_POST['webhook_name'])) {
-                $webhookName = $_POST['webhook_name'];
+            // Match Discord webhook URL pattern (https://discord.com/api/webhooks/ID/TOKEN)
+            if (preg_match('#https?://(?:canary\.|ptb\.)?discord(?:app)?\.com/api/webhooks/(\d+)/([a-zA-Z0-9_-]+)#', $webhookUrl, $matches)) {
+                $webhook_id = $matches[1];
+                $webhook_token = $matches[2];
+                
+                // Verify the webhook by making a GET request to Discord
+                $url = DISCORD_API_URL . "/webhooks/{$webhook_id}/{$webhook_token}";
+                
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                
+                $response_json = curl_exec($ch);
+                $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+                
+                $response = json_decode($response_json, true);
+                
+                if ($http_code === 200 && isset($response['id']) && isset($response['token'])) {
+                    // Extract channel and guild information from the response
+                    $channelName = isset($response['channel']['name']) ? $response['channel']['name'] : 'Unknown Channel';
+                    $channelId = isset($response['channel_id']) ? $response['channel_id'] : '';
+                    $guildId = isset($response['guild_id']) ? $response['guild_id'] : '';
+                    $guildName = isset($response['guild']['name']) ? $response['guild']['name'] : 'Unknown Server';
+                    
+                    try {
+                        // Generate a unique sharing code for this webhook
+                        $sharing_code = substr(md5($webhook_id . $webhook_token . time()), 0, 10);
+                        
+                        // Insert webhook into database
+                        $stmt = $conn->prepare("INSERT INTO discord_webhooks 
+                            (user_id, server_id, channel_id, channel_name, webhook_id, webhook_token, webhook_name, webhook_description, 
+                             sharing_code, is_shared, created_at, last_updated) 
+                            VALUES 
+                            (:user_id, :server_id, :channel_id, :channel_name, :webhook_id, :webhook_token, :webhook_name, :webhook_description,
+                             :sharing_code, 0, NOW(), NOW())");
+                        
+                        $user_id = $_SESSION['discord_user']['id'];
+                            
+                        $stmt->bindParam(':user_id', $user_id);
+                        $stmt->bindParam(':server_id', $guildId);
+                        $stmt->bindParam(':channel_id', $channelId);
+                        $stmt->bindParam(':channel_name', $channelName);
+                        $stmt->bindParam(':webhook_id', $webhook_id);
+                        $stmt->bindParam(':webhook_token', $webhook_token);
+                        $stmt->bindParam(':webhook_name', $webhook_name);
+                        $stmt->bindParam(':webhook_description', $webhook_description);
+                        $stmt->bindParam(':sharing_code', $sharing_code);
+                        
+                        $stmt->execute();
+                        
+                        $message = "Webhook successfully added for #{$channelName}!";
+                        $messageType = 'success';
+                        
+                        // Clear form
+                        $webhookName = 'The Salty Parrot';
+                    } catch (PDOException $e) {
+                        error_log('Database error: ' . $e->getMessage());
+                        $message = 'Error saving webhook to database.';
+                        $messageType = 'error';
+                    }
+                } else {
+                    $message = 'Invalid webhook URL or the webhook no longer exists.';
+                    $messageType = 'error';
+                }
+            } else {
+                $message = 'Invalid Discord webhook URL format. Please check and try again.';
+                $messageType = 'error';
             }
+        }
+    }
+    // Handle importing a shared webhook with a code
+    elseif (isset($_POST['action']) && $_POST['action'] === 'import_webhook' && isset($_POST['sharing_code'])) {
+        $sharing_code = trim($_POST['sharing_code']);
+        
+        try {
+            // Look up the webhook by sharing code
+            $stmt = $conn->prepare("SELECT * FROM discord_webhooks WHERE sharing_code = :sharing_code");
+            $stmt->bindParam(':sharing_code', $sharing_code);
+            $stmt->execute();
+            $shared_webhook = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Create webhook on Discord
-            $data = [
-                'name' => $webhookName
-            ];
-            
-            // Optional: Add avatar if you have a default one
-            // $data['avatar'] = base64_encode(file_get_contents('../assets/discord_webhook_avatar.png'));
-            
-            // Use Direct Discord API endpoint for webhook creation - this is more reliable
-            $url = DISCORD_API_URL . "/channels/{$selectedChannel}/webhooks";
-            $headers = [
-                'Authorization: Bearer ' . $_SESSION['discord_access_token'],
-                'Content-Type: application/json'
-            ];
-            
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-            
-            $response_json = curl_exec($ch);
-            $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-            
-            $response = json_decode($response_json, true);
-            
-            if (isset($response['id']) && isset($response['token'])) {
-                // Store webhook in database
-                try {
-                    // First, get channel name from API directly
-                    $url = DISCORD_API_URL . "/channels/{$selectedChannel}";
-                    $headers = [
-                        'Authorization: Bearer ' . $_SESSION['discord_access_token'],
-                        'Content-Type: application/json'
-                    ];
+            if ($shared_webhook) {
+                // Check if user already has this webhook
+                $user_id = $_SESSION['discord_user']['id'];
+                $webhook_id = $shared_webhook['webhook_id'];
+                $webhook_token = $shared_webhook['webhook_token'];
+                
+                $stmt = $conn->prepare("SELECT id FROM discord_webhooks WHERE user_id = :user_id AND webhook_id = :webhook_id");
+                $stmt->bindParam(':user_id', $user_id);
+                $stmt->bindParam(':webhook_id', $webhook_id);
+                $stmt->execute();
+                
+                if ($stmt->rowCount() > 0) {
+                    $message = 'You already have this webhook added to your account.';
+                    $messageType = 'info';
+                } else {
+                    // Verify the webhook still exists by making a GET request to Discord
+                    $url = DISCORD_API_URL . "/webhooks/{$webhook_id}/{$webhook_token}";
                     
                     $ch = curl_init();
                     curl_setopt($ch, CURLOPT_URL, $url);
                     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
                     
-                    $channel_response = curl_exec($ch);
+                    $response_json = curl_exec($ch);
+                    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
                     curl_close($ch);
                     
-                    $channelInfo = json_decode($channel_response, true);
-                    
-                    $channelName = isset($channelInfo['name']) ? $channelInfo['name'] : 'Unknown Channel';
-                    
-                    // Get server name
-                    $guildName = '';
-                    foreach ($guilds as $guild) {
-                        if ($guild['id'] === $selectedGuild) {
-                            $guildName = $guild['name'];
-                            break;
-                        }
-                    }
-                    
-                    // Insert webhook
-                    $stmt = $conn->prepare("INSERT INTO discord_webhooks 
-                        (user_id, server_id, channel_id, channel_name, webhook_id, webhook_token, webhook_name, created_at, last_updated) 
-                        VALUES 
-                        (:user_id, :server_id, :channel_id, :channel_name, :webhook_id, :webhook_token, :webhook_name, NOW(), NOW())");
-                    
-                    $webhook_id = $response['id'];
-                    $webhook_token = $response['token'];
-                    $user_id = $_SESSION['discord_user']['id'];
+                    if ($http_code === 200) {
+                        // Clone the webhook for this user
+                        $stmt = $conn->prepare("INSERT INTO discord_webhooks 
+                            (user_id, server_id, channel_id, channel_name, webhook_id, webhook_token, webhook_name, webhook_description,
+                             sharing_code, is_shared, created_at, last_updated) 
+                            VALUES 
+                            (:user_id, :server_id, :channel_id, :channel_name, :webhook_id, :webhook_token, :webhook_name, :webhook_description,
+                             :sharing_code, 1, NOW(), NOW())");
+                             
+                        $stmt->bindParam(':user_id', $user_id);
+                        $stmt->bindParam(':server_id', $shared_webhook['server_id']);
+                        $stmt->bindParam(':channel_id', $shared_webhook['channel_id']);
+                        $stmt->bindParam(':channel_name', $shared_webhook['channel_name']);
+                        $stmt->bindParam(':webhook_id', $webhook_id);
+                        $stmt->bindParam(':webhook_token', $webhook_token);
+                        $stmt->bindParam(':webhook_name', $shared_webhook['webhook_name'] . ' (Shared)');
+                        $stmt->bindParam(':webhook_description', $shared_webhook['webhook_description']);
+                        $stmt->bindParam(':sharing_code', $sharing_code);
                         
-                    $stmt->bindParam(':user_id', $user_id);
-                    $stmt->bindParam(':server_id', $selectedGuild);
-                    $stmt->bindParam(':channel_id', $selectedChannel);
-                    $stmt->bindParam(':channel_name', $channelName);
-                    $stmt->bindParam(':webhook_id', $webhook_id);
-                    $stmt->bindParam(':webhook_token', $webhook_token);
-                    $stmt->bindParam(':webhook_name', $webhookName);
-                    
-                    $stmt->execute();
-                    
-                    $message = "Webhook successfully created for #{$channelName} in {$guildName}!";
-                    $messageType = 'success';
-                    
-                    // Clear selection
-                    $selectedGuild = '';
-                    $selectedChannel = '';
-                    $webhookName = 'The Salty Parrot';
-                } catch (PDOException $e) {
-                    error_log('Database error: ' . $e->getMessage());
-                    $message = 'Error saving webhook to database.';
-                    $messageType = 'error';
+                        $stmt->execute();
+                        
+                        $message = "Shared webhook successfully imported!";
+                        $messageType = 'success';
+                    } else {
+                        $message = 'This webhook no longer exists or is invalid.';
+                        $messageType = 'error';
+                    }
                 }
             } else {
-                $message = 'Error creating webhook: ' . ($response['message'] ?? 'Unknown error');
+                $message = 'Invalid sharing code. Please check and try again.';
                 $messageType = 'error';
             }
+        } catch (PDOException $e) {
+            error_log('Database error: ' . $e->getMessage());
+            $message = 'Error importing webhook.';
+            $messageType = 'error';
         }
-    } elseif (isset($_POST['action']) && $_POST['action'] === 'delete_webhook' && isset($_POST['webhook_id'])) {
-        // Delete webhook
+    }
+    // Handle setting a webhook as default
+    elseif (isset($_POST['action']) && $_POST['action'] === 'set_default' && isset($_POST['webhook_id'])) {
+        try {
+            $webhook_id = $_POST['webhook_id'];
+            $user_id = $_SESSION['discord_user']['id'];
+            
+            // First, unset all defaults for this user
+            $stmt = $conn->prepare("UPDATE discord_webhooks SET is_default = 0 WHERE user_id = :user_id");
+            $stmt->bindParam(':user_id', $user_id);
+            $stmt->execute();
+            
+            // Then set the selected webhook as default
+            $stmt = $conn->prepare("UPDATE discord_webhooks SET is_default = 1 WHERE id = :id AND user_id = :user_id");
+            $stmt->bindParam(':id', $webhook_id);
+            $stmt->bindParam(':user_id', $user_id);
+            $stmt->execute();
+            
+            $message = "Default webhook has been updated.";
+            $messageType = 'success';
+        } catch (PDOException $e) {
+            error_log('Database error: ' . $e->getMessage());
+            $message = 'Error setting default webhook.';
+            $messageType = 'error';
+        }
+    }
+    // Handle deleting a webhook
+    elseif (isset($_POST['action']) && $_POST['action'] === 'delete_webhook' && isset($_POST['webhook_id'])) {
         try {
             // Get webhook details first
             $webhook_id = $_POST['webhook_id'];
             $user_id = $_SESSION['discord_user']['id'];
-            $stmt = $conn->prepare("SELECT webhook_id, webhook_token, channel_name FROM discord_webhooks WHERE id = :id AND user_id = :user_id");
+            $stmt = $conn->prepare("SELECT webhook_id, webhook_token, channel_name, is_shared FROM discord_webhooks WHERE id = :id AND user_id = :user_id");
             $stmt->bindParam(':id', $webhook_id);
             $stmt->bindParam(':user_id', $user_id);
             $stmt->execute();
             $webhook = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if ($webhook) {
-                // Delete from Discord first
-                $deleteResponse = discord_api_request(
-                    "/webhooks/{$webhook['webhook_id']}/{$webhook['webhook_token']}",
-                    'DELETE',
-                    [],
-                    $_SESSION['discord_access_token']
-                );
+                // If this is not a shared webhook, delete it from Discord too
+                if (!$webhook['is_shared']) {
+                    // Delete from Discord first
+                    $url = DISCORD_API_URL . "/webhooks/{$webhook['webhook_id']}/{$webhook['webhook_token']}";
+                    
+                    $ch = curl_init();
+                    curl_setopt($ch, CURLOPT_URL, $url);
+                    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    
+                    curl_exec($ch);
+                    curl_close($ch);
+                }
                 
-                // Delete from database even if Discord deletion fails (webhook might already be deleted on Discord side)
+                // Delete from database
                 $stmt = $conn->prepare("DELETE FROM discord_webhooks WHERE id = :id AND user_id = :user_id");
                 $stmt->bindParam(':id', $webhook_id);
                 $stmt->bindParam(':user_id', $user_id);
@@ -218,10 +295,34 @@ if ($http_code >= 200 && $http_code < 300) {
 // Fetch user's existing webhooks from database
 try {
     $user_id = $_SESSION['discord_user']['id'];
-    $stmt = $conn->prepare("SELECT * FROM discord_webhooks WHERE user_id = :user_id ORDER BY last_updated DESC");
+    $stmt = $conn->prepare("SELECT * FROM discord_webhooks WHERE user_id = :user_id ORDER BY is_default DESC, last_updated DESC");
     $stmt->bindParam(':user_id', $user_id);
     $stmt->execute();
     $webhooks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Check if user has a default webhook
+    $has_default = false;
+    foreach ($webhooks as $webhook) {
+        if ($webhook['is_default']) {
+            $has_default = true;
+            break;
+        }
+    }
+    
+    // If no default webhook is set, set the first one as default
+    if (!$has_default && count($webhooks) > 0) {
+        $default_id = $webhooks[0]['id'];
+        $stmt = $conn->prepare("UPDATE discord_webhooks SET is_default = 1 WHERE id = :id AND user_id = :user_id");
+        $stmt->bindParam(':id', $default_id);
+        $stmt->bindParam(':user_id', $user_id);
+        $stmt->execute();
+        
+        // Refresh webhooks list
+        $stmt = $conn->prepare("SELECT * FROM discord_webhooks WHERE user_id = :user_id ORDER BY is_default DESC, last_updated DESC");
+        $stmt->bindParam(':user_id', $user_id);
+        $stmt->execute();
+        $webhooks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 } catch (PDOException $e) {
     error_log('Database error: ' . $e->getMessage());
     $message = 'Error fetching your webhooks.';
@@ -279,83 +380,159 @@ $base_path = '../';
                 
                 <?php if (empty($webhooks)): ?>
                     <div class="no-webhooks">
-                        <p>You haven't set up any webhooks yet. Create one below to start sending content to Discord.</p>
+                        <p>You haven't set up any webhooks yet. Add one below to start sending content to Discord.</p>
                     </div>
                 <?php else: ?>
-                    <?php foreach ($webhooks as $webhook): ?>
-                        <div class="webhook-item">
-                            <div class="webhook-info">
-                                <div class="webhook-server">Server: <?php 
-                                    // Try to find the server name
-                                    $serverName = 'Unknown Server';
-                                    foreach ($guilds as $guild) {
-                                        if ($guild['id'] === $webhook['server_id']) {
-                                            $serverName = htmlspecialchars($guild['name']);
-                                            break;
-                                        }
-                                    }
-                                    echo $serverName;
-                                ?></div>
-                                <div class="webhook-channel">Channel: #<?php echo htmlspecialchars($webhook['channel_name']); ?></div>
-                                <div class="webhook-name">Webhook: <?php echo htmlspecialchars($webhook['webhook_name']); ?></div>
-                            </div>
-                            <div class="webhook-actions">
-                                <form method="post" action="" onsubmit="return confirm('Are you sure you want to delete this webhook?');">
-                                    <input type="hidden" name="action" value="delete_webhook">
-                                    <input type="hidden" name="webhook_id" value="<?php echo $webhook['id']; ?>">
-                                    <button type="submit" title="Delete Webhook"><i class="fas fa-trash"></i> Delete</button>
-                                </form>
-                                <button onclick="testWebhook(<?php echo $webhook['id']; ?>)" title="Test Webhook"><i class="fas fa-vial"></i> Test</button>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
+                    <div class="webhooks-table-container">
+                        <table class="webhooks-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Channel</th>
+                                    <th>Sharing Code</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($webhooks as $webhook): ?>
+                                    <tr class="<?php echo $webhook['is_default'] ? 'default-webhook' : ''; ?>">
+                                        <td>
+                                            <?php echo htmlspecialchars($webhook['webhook_name']); ?>
+                                            <?php if ($webhook['is_default']): ?>
+                                                <span class="default-badge">Default</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            #<?php echo htmlspecialchars($webhook['channel_name']); ?>
+                                            <span class="server-name">
+                                                <?php
+                                                    // Try to find the server name
+                                                    $serverName = 'Unknown Server';
+                                                    foreach ($guilds as $guild) {
+                                                        if ($guild['id'] === $webhook['server_id']) {
+                                                            $serverName = htmlspecialchars($guild['name']);
+                                                            break;
+                                                        }
+                                                    }
+                                                    echo $serverName;
+                                                ?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <?php if (isset($webhook['sharing_code']) && !empty($webhook['sharing_code'])): ?>
+                                                <div class="sharing-code">
+                                                    <code><?php echo htmlspecialchars($webhook['sharing_code']); ?></code>
+                                                    <button onclick="copyToClipboard('<?php echo htmlspecialchars($webhook['sharing_code']); ?>')" class="btn-icon" title="Copy sharing code">
+                                                        <i class="fas fa-copy"></i>
+                                                    </button>
+                                                </div>
+                                            <?php else: ?>
+                                                <em>Not available</em>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if ($webhook['is_shared']): ?>
+                                                <span class="status-badge shared">Shared</span>
+                                            <?php else: ?>
+                                                <span class="status-badge owner">Owner</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="webhook-actions">
+                                            <?php if (!$webhook['is_default']): ?>
+                                                <form method="post" action="" class="inline-form">
+                                                    <input type="hidden" name="action" value="set_default">
+                                                    <input type="hidden" name="webhook_id" value="<?php echo $webhook['id']; ?>">
+                                                    <button type="submit" class="btn-icon" title="Set as Default">
+                                                        <i class="fas fa-star"></i>
+                                                    </button>
+                                                </form>
+                                            <?php endif; ?>
+                                            
+                                            <button onclick="testWebhook(<?php echo $webhook['id']; ?>)" class="btn-icon" title="Test Webhook">
+                                                <i class="fas fa-vial"></i>
+                                            </button>
+                                            
+                                            <form method="post" action="" class="inline-form delete-form">
+                                                <input type="hidden" name="action" value="delete_webhook">
+                                                <input type="hidden" name="webhook_id" value="<?php echo $webhook['id']; ?>">
+                                                <button type="submit" class="btn-icon delete" title="Delete Webhook">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 <?php endif; ?>
             </div>
-
-            <!-- Reconnect section removed -->
             
-            <div class="webhook-form">
-                <h2 class="webhook-form-title">Create New Webhook</h2>
-                <form method="post" action="">
-                    <input type="hidden" name="action" value="create_webhook">
-                    
-                    <div class="form-group">
-                        <label for="guild_id">Select Discord Server:</label>
-                        <select id="guild_id" name="guild_id" required onchange="fetchChannels()">
-                            <option value="">-- Select a server --</option>
-                            <?php foreach ($guilds as $guild): ?>
-                                <?php 
-                                    // Check if user has required permissions (Manage Webhooks)
-                                    // Permission flag for MANAGE_WEBHOOKS is 1 << 29 = 536870912
-                                    $permissions = isset($guild['permissions']) ? intval($guild['permissions']) : 0;
-                                    $canManageWebhooks = ($permissions & 536870912) === 536870912 || ($permissions & 8) === 8; // MANAGE_WEBHOOKS or ADMINISTRATOR
-                                    
-                                    if ($canManageWebhooks):
-                                ?>
-                                    <option value="<?php echo $guild['id']; ?>" <?php echo $selectedGuild === $guild['id'] ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($guild['name']); ?>
-                                    </option>
-                                <?php endif; ?>
-                            <?php endforeach; ?>
-                        </select>
+            <div class="webhook-tabs">
+                <div class="tab-buttons">
+                    <button id="tab-add" class="tab-button active">Add Webhook</button>
+                    <button id="tab-import" class="tab-button">Import Shared Webhook</button>
+                </div>
+                
+                <div id="tab-add-content" class="tab-content active">
+                    <div class="webhook-form">
+                        <h3>Add Discord Webhook</h3>
+                        <p class="form-help">
+                            Add a webhook created in Discord. You'll need to create the webhook in your Discord server first.
+                        </p>
+                        <form method="post" action="">
+                            <input type="hidden" name="action" value="add_webhook">
+                            
+                            <div class="form-group">
+                                <label for="webhook_url">Discord Webhook URL:</label>
+                                <input type="text" id="webhook_url" name="webhook_url" required 
+                                       placeholder="https://discord.com/api/webhooks/...">
+                                <div class="input-help">
+                                    Paste the full webhook URL from Discord
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="webhook_name">Webhook Name (optional):</label>
+                                <input type="text" id="webhook_name" name="webhook_name" 
+                                       placeholder="The Salty Parrot" value="<?php echo htmlspecialchars($webhookName); ?>">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="webhook_description">Description (optional):</label>
+                                <input type="text" id="webhook_description" name="webhook_description" 
+                                       placeholder="My campaign webhook">
+                            </div>
+                            
+                            <div class="webhook-buttons">
+                                <button type="submit" class="btn btn-primary">Add Webhook</button>
+                            </div>
+                        </form>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="channel_id">Select Channel:</label>
-                        <select id="channel_id" name="channel_id" required disabled>
-                            <option value="">-- Select a server first --</option>
-                        </select>
+                </div>
+                
+                <div id="tab-import-content" class="tab-content">
+                    <div class="webhook-form">
+                        <h3>Import Shared Webhook</h3>
+                        <p class="form-help">
+                            Import a webhook shared by another user using their sharing code.
+                        </p>
+                        <form method="post" action="">
+                            <input type="hidden" name="action" value="import_webhook">
+                            
+                            <div class="form-group">
+                                <label for="sharing_code">Sharing Code:</label>
+                                <input type="text" id="sharing_code" name="sharing_code" required 
+                                       placeholder="Enter webhook sharing code">
+                            </div>
+                            
+                            <div class="webhook-buttons">
+                                <button type="submit" class="btn btn-primary">Import Webhook</button>
+                            </div>
+                        </form>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="webhook_name">Webhook Name (optional):</label>
-                        <input type="text" id="webhook_name" name="webhook_name" placeholder="The Salty Parrot" value="<?php echo htmlspecialchars($webhookName); ?>">
-                    </div>
-                    
-                    <div class="webhook-buttons">
-                        <button type="submit" class="btn btn-primary">Create Webhook</button>
-                    </div>
-                </form>
+                </div>
             </div>
             
             <!-- Webhook Guide Section -->
@@ -365,26 +542,51 @@ $base_path = '../';
                 <div class="guide-section">
                     <h3><i class="fas fa-key"></i> Prerequisites</h3>
                     <ul>
-                        <li>You must have the <strong>"Manage Webhooks"</strong> permission on your Discord server to create webhooks</li>
-                        <li>Only servers where you have appropriate permissions will appear in the dropdown menu</li>
-                        <li>You need to be logged in with Discord to create and manage webhooks</li>
+                        <li>You must have the <strong>"Manage Webhooks"</strong> permission on your Discord server</li>
+                        <li>You need to be logged in with Discord on both The Salty Parrot and your Discord server</li>
                     </ul>
                 </div>
                 
                 <div class="guide-section">
                     <h3><i class="fas fa-list-ol"></i> Step-by-Step Guide</h3>
                     <ol>
-                        <li><strong>Select a Server</strong> - Choose the Discord server where you want to send content</li>
-                        <li><strong>Choose a Channel</strong> - Select the specific text channel that will receive messages</li>
-                        <li><strong>Name Your Webhook</strong> - By default, it will be "The Salty Parrot" but you can customize this</li>
-                        <li><strong>Create the Webhook</strong> - Click the "Create Webhook" button to set it up</li>
+                        <li><strong>Create a Webhook in Discord</strong>
+                            <ul>
+                                <li>Go to your Discord server</li>
+                                <li>Click on the server name and select "Server Settings"</li>
+                                <li>Select "Integrations" from the left menu</li>
+                                <li>Click on "Webhooks" and then "New Webhook"</li>
+                                <li>Give your webhook a name (e.g., "The Salty Parrot")</li>
+                                <li>Select the channel you want messages to go to</li>
+                                <li>Click "Copy Webhook URL" to copy the full webhook URL</li>
+                            </ul>
+                        </li>
+                        <li><strong>Add the Webhook to The Salty Parrot</strong>
+                            <ul>
+                                <li>On this page, paste the webhook URL into the "Discord Webhook URL" field</li>
+                                <li>Give it a name to help you identify it (optional)</li>
+                                <li>Add a description if desired</li>
+                                <li>Click "Add Webhook" to save it</li>
+                            </ul>
+                        </li>
                         <li><strong>Test the Connection</strong> - Use the "Test" button to verify the webhook works</li>
                     </ol>
                 </div>
                 
                 <div class="guide-section">
+                    <h3><i class="fas fa-share-alt"></i> Sharing Webhooks</h3>
+                    <p>You can share your webhooks with other users of The Salty Parrot:</p>
+                    <ol>
+                        <li>Find the sharing code for your webhook in the table above</li>
+                        <li>Copy the code and send it to other players in your group</li>
+                        <li>They can import your webhook using the "Import Shared Webhook" tab</li>
+                        <li>This allows your entire group to send content to the same Discord channel</li>
+                    </ol>
+                </div>
+                
+                <div class="guide-section">
                     <h3><i class="fas fa-info-circle"></i> How It Works</h3>
-                    <p>After creating a webhook, you'll be able to:</p>
+                    <p>After adding a webhook, you'll be able to:</p>
                     <ul>
                         <li>Generate ships, loot, and other content on The Salty Parrot</li>
                         <li>Send the generated content directly to your Discord server with a single click</li>
@@ -396,21 +598,10 @@ $base_path = '../';
                 <div class="guide-section">
                     <h3><i class="fas fa-exclamation-triangle"></i> Troubleshooting</h3>
                     <ul>
-                        <li><strong>No servers visible?</strong> You need "Manage Webhooks" permission on the server</li>
-                        <li><strong>No channels visible?</strong> Make sure there are text channels in your selected server</li>
+                        <li><strong>Invalid webhook URL?</strong> Make sure you copied the entire URL from Discord</li>
                         <li><strong>Test message fails?</strong> The webhook may have been deleted from Discord's side</li>
-                        <li><strong>Other issues?</strong> Try logging out and back in to refresh your Discord connection</li>
-                    </ul>
-                </div>
-                
-                <div class="guide-section">
-                    <h3><i class="fas fa-shield-alt"></i> Privacy & Security</h3>
-                    <p>The Salty Parrot only stores the minimum information needed to send messages to your Discord channels:</p>
-                    <ul>
-                        <li>We never store your Discord password</li>
-                        <li>Webhook tokens are securely stored and only used to send messages</li>
-                        <li>You can delete webhooks at any time from this page</li>
-                        <li>You can also delete webhooks directly from Discord's Integrations settings</li>
+                        <li><strong>Sharing code doesn't work?</strong> The webhook may have been deleted or changed</li>
+                        <li><strong>Other issues?</strong> Try deleting the webhook and creating a new one</li>
                     </ul>
                 </div>
             </div>
@@ -467,9 +658,175 @@ $base_path = '../';
         }
     </style>
 
+    <style>
+        /* Webhook List Table Styles */
+        .webhooks-table-container {
+            overflow-x: auto;
+        }
+        
+        .webhooks-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .webhooks-table th,
+        .webhooks-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .webhooks-table th {
+            background-color: rgba(0, 0, 0, 0.2);
+            font-weight: bold;
+            color: var(--secondary);
+        }
+        
+        .webhooks-table tr:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .default-webhook {
+            background-color: rgba(191, 157, 97, 0.1);
+        }
+        
+        .default-badge {
+            display: inline-block;
+            background-color: var(--secondary);
+            color: var(--dark);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            margin-left: 6px;
+        }
+        
+        .server-name {
+            display: block;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 3px;
+        }
+        
+        .sharing-code {
+            display: flex;
+            align-items: center;
+        }
+        
+        .sharing-code code {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            margin-right: 5px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        
+        .status-badge.owner {
+            background-color: #4caf50;
+            color: white;
+        }
+        
+        .status-badge.shared {
+            background-color: #2196f3;
+            color: white;
+        }
+        
+        .webhook-actions {
+            white-space: nowrap;
+        }
+        
+        .inline-form {
+            display: inline-block;
+            margin-right: 5px;
+        }
+        
+        .btn-icon {
+            background: none;
+            border: none;
+            color: white;
+            padding: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .btn-icon:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .btn-icon.delete:hover {
+            background-color: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+        
+        /* Tab Styles */
+        .webhook-tabs {
+            margin: 20px 0;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 10px 20px;
+            color: white;
+            cursor: pointer;
+            position: relative;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab-button.active {
+            color: var(--secondary);
+            border-color: var(--secondary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Form styles */
+        .form-help {
+            margin-bottom: 20px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .input-help {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 5px;
+        }
+        
+        /* Delete form confirmation */
+        .delete-form button {
+            position: relative;
+        }
+    </style>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Webhook page loaded');
+            
+            // Setup tab switching
+            setupTabs();
+            
+            // Setup delete confirmation
+            setupDeleteConfirmation();
         });
         
     function fetchChannels() {
@@ -503,26 +860,56 @@ $base_path = '../';
                 if (data.status === 'error') {
                     console.error('Error fetching Discord channels:', data.message);
                     
-                    // Try to use hardcoded channel names as fallback
+                    // Let user enter their own channel ID and name if we can't fetch them
                     if (data.http_code === 401 || data.http_code === 403) {
-                        // Use fallback list of common Discord channel names
-                        const fallbackChannels = [
-                            { id: guildId + "-general", name: "general" },
-                            { id: guildId + "-announcements", name: "announcements" },
-                            { id: guildId + "-bot-commands", name: "bot-commands" },
-                            { id: guildId + "-discussion", name: "discussion" }
-                        ];
+                        // Show a custom input form instead of the dropdown
+                        const formGroup = channelSelect.parentElement;
                         
-                        channelSelect.innerHTML = '<option value="">-- Select a channel --</option>';
+                        // Create a container for custom inputs
+                        const customInputs = document.createElement('div');
+                        customInputs.className = 'custom-channel-inputs';
+                        customInputs.style.marginTop = '10px';
                         
-                        fallbackChannels.forEach(channel => {
-                            const option = document.createElement('option');
-                            option.value = channel.id;
-                            option.textContent = `#${channel.name}`;
-                            channelSelect.appendChild(option);
-                        });
+                        // Add explanation text
+                        const explanation = document.createElement('p');
+                        explanation.className = 'discord-message info';
+                        explanation.style.fontSize = '14px';
+                        explanation.style.padding = '10px';
+                        explanation.style.marginBottom = '15px';
+                        explanation.innerHTML = `
+                            <strong>We can't automatically fetch your Discord channels.</strong><br>
+                            Please enter your channel details manually:<br>
+                            1. Go to your Discord server<br>
+                            2. Right-click on the text channel you want to use<br>
+                            3. Select "Copy ID" (you may need to enable Developer Mode in Discord settings)<br>
+                            4. Paste the ID below and provide a channel name
+                        `;
                         
-                        channelSelect.disabled = false;
+                        // Create input for channel ID
+                        const idInput = document.createElement('input');
+                        idInput.type = 'text';
+                        idInput.id = 'custom_channel_id';
+                        idInput.name = 'channel_id';
+                        idInput.placeholder = 'Paste Discord Channel ID here';
+                        idInput.style.width = '100%';
+                        idInput.style.marginBottom = '10px';
+                        idInput.required = true;
+                        
+                        // Create input for channel name (for display only)
+                        const nameInput = document.createElement('input');
+                        nameInput.type = 'text';
+                        nameInput.id = 'custom_channel_name';
+                        nameInput.name = 'channel_name';
+                        nameInput.placeholder = 'Enter channel name (e.g., general)';
+                        nameInput.style.width = '100%';
+                        
+                        // Replace the select element with our custom inputs
+                        formGroup.innerHTML = '<label for="custom_channel_id">Enter Discord Channel:</label>';
+                        formGroup.appendChild(customInputs);
+                        customInputs.appendChild(explanation);
+                        customInputs.appendChild(idInput);
+                        customInputs.appendChild(nameInput);
+                        
                         return;
                     }
                 }
@@ -579,6 +966,62 @@ $base_path = '../';
                     alert('Error sending test message. Check console for details.');
                 });
             }
+        }
+        
+        // Function to setup tabs
+        function setupTabs() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Get the tab ID from the button
+                    const tabId = button.id.replace('tab-', '');
+                    
+                    // Remove active class from all buttons and contents
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // Add active class to clicked button and corresponding content
+                    button.classList.add('active');
+                    document.getElementById(`tab-${tabId}-content`).classList.add('active');
+                });
+            });
+        }
+        
+        // Function to setup delete confirmation
+        function setupDeleteConfirmation() {
+            const deleteForms = document.querySelectorAll('.delete-form');
+            
+            deleteForms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const confirmed = confirm('Are you sure you want to delete this webhook? This cannot be undone.');
+                    if (!confirmed) {
+                        e.preventDefault();
+                    }
+                });
+            });
+        }
+        
+        // Function to copy text to clipboard
+        function copyToClipboard(text) {
+            // Create a temporary textarea element
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.setAttribute('readonly', '');
+            textarea.style.position = 'absolute';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            
+            // Copy the text
+            textarea.select();
+            document.execCommand('copy');
+            
+            // Remove the textarea
+            document.body.removeChild(textarea);
+            
+            // Show a message
+            alert(`Webhook code ${text} copied to clipboard!`);
         }
     </script>
 </body>
