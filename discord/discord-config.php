@@ -159,6 +159,7 @@ function refresh_discord_token_if_needed() {
 function force_discord_token_refresh() {
     // Check if we're authenticated first
     if (!is_discord_authenticated()) {
+        error_log("Token refresh attempted without authentication");
         return false;
     }
     
@@ -173,6 +174,10 @@ function force_discord_token_refresh() {
         
         $ch = curl_init();
         
+        // Detailed error logging for token refresh
+        error_log("Attempting to refresh Discord token for user: " . $_SESSION['discord_user']['id'] . 
+                  " with refresh token starting with: " . substr($_SESSION['discord_refresh_token'], 0, 10) . "...");
+        
         curl_setopt($ch, CURLOPT_URL, DISCORD_API_URL . '/oauth2/token');
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
@@ -183,16 +188,29 @@ function force_discord_token_refresh() {
         
         $response = curl_exec($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($ch);
         curl_close($ch);
+        
+        // Log response details
+        if ($curl_error) {
+            error_log("Discord token refresh curl error: " . $curl_error);
+        }
         
         if ($http_code >= 200 && $http_code < 300) {
             $result = json_decode($response, true);
             
+            if (!isset($result['access_token']) || !isset($result['refresh_token']) || !isset($result['expires_in'])) {
+                error_log("Discord token refresh invalid response: " . substr($response, 0, 100) . "...");
+                return false;
+            }
+            
+            // Update session with new tokens
             $_SESSION['discord_access_token'] = $result['access_token'];
             $_SESSION['discord_refresh_token'] = $result['refresh_token'];
             $_SESSION['discord_token_expires'] = time() + $result['expires_in'];
             
-            error_log("Discord token refreshed successfully");
+            error_log("Discord token refreshed successfully. New token starts with: " . 
+                      substr($_SESSION['discord_access_token'], 0, 10) . "...");
             
             // Update database with new tokens
             try {
@@ -219,23 +237,28 @@ function force_discord_token_refresh() {
                 }
             } catch (Exception $e) {
                 error_log("Error updating database with refreshed tokens: " . $e->getMessage());
+                // Continue even if database update fails
             }
             
             return true;
         } else {
             // Log the error response
-            error_log("Discord token refresh failed: " . $response);
+            error_log("Discord token refresh failed (HTTP " . $http_code . "): " . $response);
             
-            // If refresh fails, clear session and return false
-            unset($_SESSION['discord_user']);
-            unset($_SESSION['discord_access_token']);
-            unset($_SESSION['discord_refresh_token']);
-            unset($_SESSION['discord_token_expires']);
+            // Only clear the session if there was an actual auth error (not a network issue)
+            if ($http_code == 400 || $http_code == 401) {
+                error_log("Auth error detected, clearing Discord session");
+                unset($_SESSION['discord_user']);
+                unset($_SESSION['discord_access_token']);
+                unset($_SESSION['discord_refresh_token']);
+                unset($_SESSION['discord_token_expires']);
+            }
+            
             return false;
         }
     }
     
-    // No refresh token or refresh failed
+    error_log("No refresh token available");
     return false;
 }
 

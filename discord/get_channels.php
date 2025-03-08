@@ -53,6 +53,7 @@ $debug_info = [
 $url = DISCORD_API_URL . '/guilds/' . $guild_id . '/channels';
 
 // Set the correct Authorization header
+// For user OAuth tokens, use Bearer
 $headers = [
     'Authorization: Bearer ' . $access_token,
     'Content-Type: application/json'

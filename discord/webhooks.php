@@ -14,7 +14,12 @@ if (!is_discord_authenticated()) {
 }
 
 // Force a token refresh to ensure fresh permissions
-force_discord_token_refresh();
+if (!force_discord_token_refresh()) {
+    // If token refresh fails, redirect to re-authenticate
+    $_SESSION['discord_error'] = 'Your Discord session has expired. Please log in again.';
+    header('Location: discord-login.php');
+    exit;
+}
 
 // Initialize variables
 $guilds = [];
@@ -264,28 +269,7 @@ $base_path = '../';
                 <?php endif; ?>
             </div>
 
-            <div class="discord-reconnect-section">
-                <div class="discord-message info">
-                    <p><strong>Having trouble accessing your Discord servers or channels?</strong></p>
-                    <p>If you're unable to see your Discord servers or channels, you may need to reconnect with the right permissions.</p>
-                    <a href="reauth.php" class="btn btn-primary">
-                        <i class="fab fa-discord"></i> Reconnect Discord
-                    </a>
-                </div>
-            </div>
-            
-            <style>
-            .discord-reconnect-section {
-                margin: 20px 0 30px 0;
-            }
-            .discord-reconnect-section .discord-message {
-                padding: 15px;
-                border-radius: 5px;
-            }
-            .discord-reconnect-section .btn {
-                margin-top: 10px;
-            }
-            </style>
+            <!-- Reconnect section removed -->
             
             <div class="webhook-form">
                 <h2 class="webhook-form-title">Create New Webhook</h2>
@@ -469,12 +453,10 @@ $base_path = '../';
             .then(data => {
                 console.log('Data received:', data);
                 
-                // Check if we need to reauthenticate
-                if (data.status === 'error' && data.needs_reauth) {
-                    if (confirm('Your Discord permissions need to be refreshed. Would you like to reconnect now?')) {
-                        window.location.href = 'reauth.php';
-                        return;
-                    }
+                // Check if there was an error
+                if (data.status === 'error') {
+                    console.error('Error fetching Discord channels:', data.message);
+                    // Don't show popup, just handle gracefully
                 }
                 
                 channelSelect.innerHTML = '<option value="">-- Select a channel --</option>';
