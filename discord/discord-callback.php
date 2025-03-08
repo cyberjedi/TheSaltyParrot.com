@@ -5,17 +5,20 @@
 require_once 'discord-config.php';
 require_once '../config/db_connect.php';
 
+// Get redirect URL (either referring page or default to index)
+$redirect_url = isset($_SESSION['discord_auth_referrer']) ? $_SESSION['discord_auth_referrer'] : '../index.php';
+
 // Check for errors or authorization denial
 if (isset($_GET['error'])) {
     $_SESSION['discord_error'] = 'Authorization denied: ' . $_GET['error_description'];
-    header('Location: ../index.php');
+    header('Location: ' . $redirect_url);
     exit;
 }
 
 // Verify state parameter to prevent CSRF attacks
 if (!isset($_GET['state']) || !isset($_SESSION['discord_oauth_state']) || $_GET['state'] !== $_SESSION['discord_oauth_state']) {
     $_SESSION['discord_error'] = 'Invalid state parameter. Please try again.';
-    header('Location: ../index.php');
+    header('Location: ' . $redirect_url);
     exit;
 }
 
@@ -25,7 +28,7 @@ unset($_SESSION['discord_oauth_state']);
 // Check for the authorization code
 if (!isset($_GET['code'])) {
     $_SESSION['discord_error'] = 'No authorization code received.';
-    header('Location: ../index.php');
+    header('Location: ' . $redirect_url);
     exit;
 }
 
@@ -67,7 +70,7 @@ $token_response = json_decode($response, true);
 if ($http_code < 200 || $http_code >= 300) {
     error_log('Discord token error response: ' . $response);
     $_SESSION['discord_error'] = 'Failed to exchange code for token (HTTP ' . $http_code . ').';
-    header('Location: ../index.php');
+    header('Location: ' . $redirect_url);
     exit;
 }
 
@@ -76,7 +79,7 @@ if (!isset($token_response['access_token']) || !isset($token_response['refresh_t
     $error_message = 'Invalid token response from Discord: ' . substr($response, 0, 100) . '...';
     error_log($error_message);
     $_SESSION['discord_error'] = $error_message;
-    header('Location: ../index.php');
+    header('Location: ' . $redirect_url);
     exit;
 }
 
@@ -95,7 +98,7 @@ $user_response = discord_api_request('/users/@me', 'GET', [], $_SESSION['discord
 if (!isset($user_response['id'])) {
     error_log('Failed to fetch user information: ' . json_encode($user_response));
     $_SESSION['discord_error'] = 'Failed to fetch user information.';
-    header('Location: ../index.php');
+    header('Location: ' . $redirect_url);
     exit;
 }
 
@@ -225,8 +228,13 @@ try {
     <script>
         // Set a timeout before redirecting to make sure the user sees the success message
         setTimeout(function() {
-            // Always redirect to index page since we're not using popups anymore
-            window.location.href = "../index.php";
+            // Redirect to the original referring page if available
+            window.location.href = "<?php 
+                $redirect = isset($_SESSION['discord_auth_referrer']) ? $_SESSION['discord_auth_referrer'] : '../index.php'; 
+                // Clear the referrer from session to avoid reusing it
+                unset($_SESSION['discord_auth_referrer']);
+                echo $redirect;
+            ?>";
         }, 2000);
     </script>
 </head>

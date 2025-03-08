@@ -2,6 +2,13 @@
 // File: discord/discord-login.php
 require_once 'discord-config.php';
 
+// Store the referrer URL to redirect back after authentication
+if (isset($_SERVER['HTTP_REFERER'])) {
+    $_SESSION['discord_auth_referrer'] = $_SERVER['HTTP_REFERER'];
+} else {
+    $_SESSION['discord_auth_referrer'] = '../index.php';
+}
+
 // Generate a random state parameter to prevent CSRF attacks
 $state = bin2hex(random_bytes(16));
 $_SESSION['discord_oauth_state'] = $state;
