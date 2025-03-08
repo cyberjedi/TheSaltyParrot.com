@@ -3,31 +3,19 @@
  * The Salty Parrot
  */
 
-/* Dashboard Container Layout */
+/* Dashboard Container Layout - Modified to remove Discord box from top */
 .dashboard-container {
     display: grid;
     grid-template-columns: 1fr 600px; 
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto 1fr;
     gap: 20px;
     height: calc(100vh - 180px);
-}
-
-/* Discord Connection Box */
-.discord-box {
-    grid-column: 1 / span 2;
-    grid-row: 1;
-    background-color: var(--dark);
-    border-radius: 8px;
-    padding: 20px;
-    border: 1px solid rgba(191, 157, 97, 0.3);
-    overflow: auto;
-    min-height: 80px;
 }
 
 /* Character Box */
 .character-box {
     grid-column: 1;
-    grid-row: 2;
+    grid-row: 1;
     background-color: var(--dark);
     border-radius: 8px;
     padding: 20px;
@@ -39,7 +27,7 @@
 /* Ship Box */
 .ship-box {
     grid-column: 1;
-    grid-row: 3;
+    grid-row: 2;
     background-color: var(--dark);
     border-radius: 8px;
     padding: 20px;
@@ -51,7 +39,7 @@
 /* Output Box */
 .output-box {
     grid-column: 2;
-    grid-row: 2 / span 2;
+    grid-row: 1 / span 2;
     background-color: var(--dark);
     border-radius: 8px;
     padding: 20px;
@@ -283,28 +271,23 @@
 @media (max-width: 1200px) {
     .dashboard-container {
         grid-template-columns: 1fr;
-        grid-template-rows: auto auto auto auto;
+        grid-template-rows: auto auto auto;
         height: auto;
-    }
-    
-    .discord-box {
-        grid-column: 1;
-        grid-row: 1;
     }
     
     .character-box {
         grid-column: 1;
-        grid-row: 2;
+        grid-row: 1;
     }
     
     .ship-box {
         grid-column: 1;
-        grid-row: 3;
+        grid-row: 2;
     }
     
     .output-box {
         grid-column: 1;
-        grid-row: 4;
+        grid-row: 3;
         height: 500px;
     }
 }
