@@ -29,7 +29,8 @@ $auth_url .= '?client_id=' . DISCORD_CLIENT_ID;
 $auth_url .= '&redirect_uri=' . urlencode(DISCORD_REDIRECT_URI);
 $auth_url .= '&response_type=code';
 $auth_url .= '&state=' . $state;
-$auth_url .= '&scope=identify%20guilds%20guilds.members.read%20guilds.channels.read';
+// Use only the basic scopes that are definitely supported
+$auth_url .= '&scope=identify%20guilds';
 
 // Add a custom parameter to track that we're coming from our login page
 $auth_url .= '&custom_source=direct_login';
