@@ -29,16 +29,23 @@ if (!isset($_GET['guild_id']) || empty($_GET['guild_id'])) {
 
 $debug_output[] = "Authentication check passed";
 
-// Force token refresh instead of just checking
-if (!force_discord_token_refresh()) {
-    // If forced refresh fails, try the normal refresh
-    if (!refresh_discord_token_if_needed()) {
-        header('Content-Type: application/json');
-        echo json_encode(['status' => 'error', 'message' => 'Token refresh failed']);
-        exit;
-    }
+// Force a reauth by clearing the token and redirecting
+if (isset($_GET['force_reauth']) && $_GET['force_reauth'] == 1) {
+    // Save the guild_id to come back to
+    $_SESSION['last_guild_id'] = $_GET['guild_id'];
+    
+    // Clear Discord session data
+    unset($_SESSION['discord_access_token']);
+    unset($_SESSION['discord_token_expires']);
+    
+    // Redirect to login
+    header('Content-Type: application/json');
+    echo json_encode(['status' => 'reauth', 'redirect' => 'discord-login.php']);
+    exit;
 }
 
+// Try a different approach - instead of using the API to get channels,
+// hardcode a request to Discord using curl directly
 $guild_id = $_GET['guild_id'];
 $access_token = $_SESSION['discord_access_token'];
 
@@ -47,83 +54,81 @@ $debug_output[] = "Token (first 10 chars): " . substr($access_token, 0, 10) . ".
 $debug_output[] = "Token expiration: " . date('Y-m-d H:i:s', $_SESSION['discord_token_expires']);
 $debug_output[] = "Current time: " . date('Y-m-d H:i:s', time());
 
-// Test the Discord API with a basic request
-$user_info = discord_api_request('/users/@me', 'GET', [], $access_token);
-if (!empty($user_info) && isset($user_info['id'])) {
-    $debug_output[] = "API test successful - authenticated as user: " . $user_info['username'];
-} else {
-    $debug_output[] = "API test failed - could not fetch user info";
+// Make the request directly with curl
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, 'https://discord.com/api/v10/guilds/' . $guild_id . '/channels');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Authorization: Bearer ' . $access_token,
+    'Accept: application/json',
+    'Content-Type: application/json',
+    'User-Agent: The Salty Parrot (Discord OAuth2)'
+]);
+
+$response = curl_exec($ch);
+$status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curl_error = curl_error($ch);
+curl_close($ch);
+
+$debug_output[] = "Direct CURL request sent";
+$debug_output[] = "Status code: " . $status_code;
+
+if (!empty($curl_error)) {
+    $debug_output[] = "CURL error: " . $curl_error;
 }
 
-// Fetch channels from Discord API
-$debug_output[] = "Attempting to fetch channels...";
-$channels = discord_api_request('/guilds/' . $guild_id . '/channels', 'GET', [], $access_token);
-
-// Check for direct error in response
-if (isset($channels['message']) && isset($channels['code'])) {
-    $debug_output[] = "Discord API error: Code " . $channels['code'] . " - " . $channels['message'];
+// If the request was successful, process the channels
+if ($status_code >= 200 && $status_code < 300) {
+    $channels = json_decode($response, true);
     
-    header('Content-Type: application/json');
-    echo json_encode([
-        'status' => 'error', 
-        'message' => 'Discord API error: ' . $channels['message'],
-        'debug' => $debug_output
-    ]);
-    exit;
-}
-
-// Check if we got a valid array response
-if (!is_array($channels)) {
-    $debug_output[] = "Invalid response format from Discord API";
-    $debug_output[] = "Response type: " . gettype($channels);
-    $debug_output[] = "Response (truncated): " . substr(json_encode($channels), 0, 100) . "...";
-    
-    header('Content-Type: application/json');
-    echo json_encode([
-        'status' => 'error', 
-        'message' => 'Failed to fetch channels - invalid response format',
-        'debug' => $debug_output
-    ]);
-    exit;
-}
-
-$debug_output[] = "Received " . count($channels) . " channels from API";
-
-// Examine each channel
-$channel_details = [];
-foreach ($channels as $channel) {
-    $channel_info = [
-        'id' => $channel['id'] ?? 'unknown',
-        'name' => $channel['name'] ?? 'unnamed',
-        'type' => $channel['type'] ?? 'unknown',
-    ];
-    $channel_details[] = $channel_info;
-    $debug_output[] = "Channel: " . json_encode($channel_info);
-}
-
-// Filter to include text channels (type 0) and announcement channels (type 5)
-$text_channels = [];
-foreach ($channels as $channel) {
-    if (isset($channel['type'])) {
-        $debug_output[] = "Checking channel: " . ($channel['name'] ?? 'unnamed') . " - Type: " . $channel['type'];
+    if (is_array($channels)) {
+        $debug_output[] = "Successfully fetched " . count($channels) . " channels";
         
-        if ($channel['type'] === 0 || $channel['type'] === 5) {
-            $debug_output[] = "Found valid text channel: " . ($channel['name'] ?? 'unnamed');
-            $text_channels[] = $channel;
+        // Filter to include text channels (type 0) and announcement channels (type 5)
+        $text_channels = [];
+        foreach ($channels as $channel) {
+            if (isset($channel['type']) && ($channel['type'] === 0 || $channel['type'] === 5)) {
+                $text_channels[] = $channel;
+            }
         }
+        
+        $debug_output[] = "Filtered to " . count($text_channels) . " text channels";
+        
+        // Return success response
+        header('Content-Type: application/json');
+        echo json_encode([
+            'status' => 'success',
+            'channels' => $text_channels,
+            'debug' => $debug_output
+        ]);
+        exit;
     } else {
-        $debug_output[] = "Channel is missing 'type' property: " . json_encode($channel);
+        $debug_output[] = "Invalid response format: not an array";
     }
+} else {
+    // If we got a 401 Unauthorized error, suggest force reauth
+    if ($status_code === 401) {
+        $debug_output[] = "Got 401 Unauthorized - suggesting reauth";
+        
+        header('Content-Type: application/json');
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Discord API error: 401: Unauthorized - Try reconnecting Discord',
+            'needs_reauth' => true,
+            'debug' => $debug_output
+        ]);
+        exit;
+    }
+    
+    $debug_output[] = "Error fetching channels: HTTP code " . $status_code;
+    $debug_output[] = "Response: " . substr($response, 0, 500); // Show first 500 chars of response
 }
 
-$debug_output[] = "Filtered " . count($text_channels) . " text channels";
-
-// Return results with debug info
+// Return error response
 header('Content-Type: application/json');
 echo json_encode([
-    'status' => 'success',
-    'channels' => array_values($text_channels),
-    'allChannels' => $channel_details,
+    'status' => 'error',
+    'message' => 'Discord API error: ' . $status_code,
     'debug' => $debug_output
 ]);
 exit;
