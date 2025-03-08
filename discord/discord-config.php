@@ -63,7 +63,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Helper function for making Discord API requests
+// Improved helper function for making Discord API requests
 function discord_api_request($endpoint, $method = 'GET', $data = [], $token = null) {
     $ch = curl_init();
     
@@ -73,6 +73,13 @@ function discord_api_request($endpoint, $method = 'GET', $data = [], $token = nu
     }
     
     $url = DISCORD_API_URL . $endpoint;
+    
+    // Log the request we're about to make
+    error_log("Discord API Request: $method $url");
+    if ($token) {
+        error_log("Using token (first 10 chars): " . substr($token, 0, 10) . "...");
+        error_log("Token length: " . strlen($token));
+    }
     
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -90,12 +97,23 @@ function discord_api_request($endpoint, $method = 'GET', $data = [], $token = nu
     
     $response = curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curl_error = curl_error($ch);
     curl_close($ch);
+    
+    // Log response information
+    error_log("Discord API Response Code: $http_code");
+    if ($curl_error) {
+        error_log("Discord API curl error: $curl_error");
+    }
     
     $result = json_decode($response, true);
     
     if ($http_code < 200 || $http_code >= 300) {
-        error_log("Discord API Error: " . ($result['message'] ?? $response));
+        error_log("Discord API Error ($http_code): " . ($result['message'] ?? $response));
+        // Log the full error response if debugging
+        if (isset($result['message'])) {
+            error_log("Error details: " . json_encode($result));
+        }
     }
     
     return $result;
