@@ -6,6 +6,11 @@
         
         <div class="character-debug-info" style="margin-bottom: 20px; padding: 10px; background: #f5f5f5; border-radius: 5px;">
             <p><strong>Debug Info:</strong> Found <?php echo count($user_characters); ?> characters in database</p>
+            <?php if (isset($discord_id) && $discord_id): ?>
+                <p><small>Discord ID: <?php echo $discord_id; ?> → DB User ID: <?php echo $db_user_id; ?></small></p>
+            <?php else: ?>
+                <p><small>Not authenticated with Discord</small></p>
+            <?php endif; ?>
         </div>
         
         <?php if (count($user_characters) > 0): ?>
@@ -75,30 +80,94 @@ $error_message = null;
 // Get user ID from Discord session if authenticated
 $user_id = 1; // Default fallback
 
-// IMPORTANT: Fix to directly access the proper database table
+// Step 1: Get Discord info and check Discord to DB user mapping
+$discord_id = null;
+if ($discord_authenticated && isset($_SESSION['discord_user']['id'])) {
+    $discord_id = $_SESSION['discord_user']['id'];
+    error_log("Discord user ID: " . $discord_id);
+}
+
 try {
     require_once 'config/db_connect.php';
     
-    // Display connection settings (without password)
-    error_log("DB Connection Info - Host: " . (defined('DB_HOST') ? DB_HOST : 'undefined'));
-    error_log("DB Connection Info - Database: " . (defined('DB_NAME') ? DB_NAME : 'undefined'));
-    
-    // IMPORTANT: Make sure we're using the correct database name
-    // Update this to your actual database name if needed
-    if (defined('DB_NAME') && DB_NAME != 'theshfmb_SPDB') {
-        $conn->exec("USE theshfmb_SPDB");
-        error_log("Switched to database: theshfmb_SPDB");
+    // First, let's check the discord_users table structure
+    $discordTableExists = $conn->query("SHOW TABLES LIKE 'discord_users'")->fetchColumn();
+    if (!$discordTableExists) {
+        error_log("discord_users table does not exist - creating it");
+        // Create the table if it doesn't exist
+        $conn->exec("CREATE TABLE IF NOT EXISTS discord_users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            discord_id VARCHAR(50) UNIQUE NOT NULL,
+            username VARCHAR(100) NOT NULL,
+            avatar VARCHAR(255),
+            access_token TEXT,
+            refresh_token TEXT,
+            token_expires BIGINT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )");
+    } else {
+        // Check what's in the discord_users table
+        $discordUsers = $conn->query("SELECT * FROM discord_users")->fetchAll(PDO::FETCH_ASSOC);
+        error_log("Found " . count($discordUsers) . " Discord users: " . json_encode($discordUsers));
     }
     
-    // Direct SQL query without prepared statement for simplicity
-    $result = $conn->query("SELECT * FROM characters ORDER BY name ASC");
+    // Step 2: Map Discord ID to database user ID
+    // If we have a Discord ID, try to find the user in the database
+    $db_user_id = 1; // Default to user_id 1
     
-    if ($result === false) {
-        error_log("Query failed: " . json_encode($conn->errorInfo()));
-        $user_characters = [];
-    } else {
-        $user_characters = $result->fetchAll(PDO::FETCH_ASSOC);
-        error_log("Direct query found " . count($user_characters) . " characters");
+    if ($discord_id) {
+        // Try to find the user in the discord_users table
+        $stmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = ?");
+        $stmt->execute([$discord_id]);
+        $discord_user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($discord_user) {
+            // Found a mapping - use this user ID
+            $db_user_id = $discord_user['id'];
+            error_log("Found Discord->DB user mapping: Discord ID $discord_id maps to user_id $db_user_id");
+        } else if ($discord_id) {
+            // No mapping found, create one
+            error_log("No Discord user mapping found - creating new mapping for Discord ID: $discord_id");
+            
+            try {
+                // Insert the Discord user
+                $username = isset($_SESSION['discord_user']['username']) ? $_SESSION['discord_user']['username'] : 'Unknown';
+                $avatar = isset($_SESSION['discord_user']['avatar']) ? $_SESSION['discord_user']['avatar'] : '';
+                
+                $stmt = $conn->prepare("INSERT INTO discord_users (discord_id, username, avatar) VALUES (?, ?, ?)");
+                $stmt->execute([$discord_id, $username, $avatar]);
+                
+                // Get the new user ID
+                $db_user_id = $conn->lastInsertId();
+                error_log("Created new Discord->DB user mapping: Discord ID $discord_id -> user_id $db_user_id");
+                
+                // Important: Now we need to associate existing characters with this user
+                // Since we found characters for user_id 1, let's associate them with the new user
+                $stmt = $conn->prepare("UPDATE characters SET user_id = ? WHERE user_id = 1");
+                $stmt->execute([$db_user_id]);
+                error_log("Associated existing characters with new user_id $db_user_id");
+            } catch (Exception $e) {
+                error_log("Error creating user mapping: " . $e->getMessage());
+                // Fall back to user_id 1
+                $db_user_id = 1;
+            }
+        }
+    }
+    
+    // Step 3: Get all characters for this user
+    $stmt = $conn->prepare("SELECT * FROM characters WHERE user_id = ? ORDER BY name ASC");
+    $stmt->execute([$db_user_id]);
+    $user_characters = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    error_log("Found " . count($user_characters) . " characters for user_id $db_user_id");
+    
+    // Special case: If no characters found, but we know they exist in the database
+    // This is only for the transition period
+    if (count($user_characters) === 0) {
+        error_log("No characters found for user_id $db_user_id, falling back to show all characters");
+        // Show all characters regardless of user_id
+        $all_chars = $conn->query("SELECT * FROM characters ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
+        $user_characters = $all_chars;
     }
     
 } catch (Exception $e) {
@@ -259,8 +328,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             }
         }
         
-        // IMPORTANT: Force user_id to 1 for now to ensure characters are visible
-        $user_id = 1;
+        // Use the properly mapped user ID from Discord authentication
+        $user_id = $db_user_id; // This will be either the mapped Discord user ID or the default (1)
         
         // Create date fields for record keeping
         $now = date('Y-m-d H:i:s');
