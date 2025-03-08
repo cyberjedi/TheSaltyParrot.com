@@ -285,6 +285,29 @@ $base_path = '../';
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>
+
+            <div class="discord-reconnect-section">
+                <div class="discord-message info">
+                    <p><strong>Having trouble accessing your Discord servers or channels?</strong></p>
+                    <p>If you're unable to see your Discord servers or channels, you may need to reconnect with the right permissions.</p>
+                    <a href="reauth.php" class="btn btn-primary">
+                        <i class="fab fa-discord"></i> Reconnect Discord
+                    </a>
+                </div>
+            </div>
+            
+            <style>
+            .discord-reconnect-section {
+                margin: 20px 0 30px 0;
+            }
+            .discord-reconnect-section .discord-message {
+                padding: 15px;
+                border-radius: 5px;
+            }
+            .discord-reconnect-section .btn {
+                margin-top: 10px;
+            }
+            </style>
             
             <div class="webhook-form">
                 <h2 class="webhook-form-title">Create New Webhook</h2>
