@@ -8,14 +8,14 @@ require_once '../config/db_connect.php';
 // Check for errors or authorization denial
 if (isset($_GET['error'])) {
     $_SESSION['discord_error'] = 'Authorization denied: ' . $_GET['error_description'];
-    header('Location: ../index.php');
+    echo "<script>window.opener.location.reload(); window.close();</script>";
     exit;
 }
 
 // Verify state parameter to prevent CSRF attacks
 if (!isset($_GET['state']) || !isset($_SESSION['discord_oauth_state']) || $_GET['state'] !== $_SESSION['discord_oauth_state']) {
     $_SESSION['discord_error'] = 'Invalid state parameter. Please try again.';
-    header('Location: ../index.php');
+    echo "<script>window.opener.location.reload(); window.close();</script>";
     exit;
 }
 
@@ -25,7 +25,7 @@ unset($_SESSION['discord_oauth_state']);
 // Check for the authorization code
 if (!isset($_GET['code'])) {
     $_SESSION['discord_error'] = 'No authorization code received.';
-    header('Location: ../index.php');
+    echo "<script>window.opener.location.reload(); window.close();</script>";
     exit;
 }
 
@@ -63,22 +63,11 @@ if ($curl_error) {
 // Parse response to get token information
 $token_response = json_decode($response, true);
 
-// Detailed logging for tokens
-error_log('COMPLETE TOKEN RESPONSE: ' . $response);
-error_log('Token response type: ' . gettype($token_response));
-if ($token_response) {
-    error_log('Token array keys: ' . implode(', ', array_keys($token_response)));
-    if (isset($token_response['access_token'])) {
-        error_log('Access token length: ' . strlen($token_response['access_token']));
-        error_log('Access token first 10 chars: ' . substr($token_response['access_token'], 0, 10));
-    }
-}
-
 // Check for errors in the response
 if ($http_code < 200 || $http_code >= 300) {
     error_log('Discord token error response: ' . $response);
     $_SESSION['discord_error'] = 'Failed to exchange code for token (HTTP ' . $http_code . ').';
-    header('Location: ../index.php');
+    echo "<script>window.opener.location.reload(); window.close();</script>";
     exit;
 }
 
@@ -87,7 +76,7 @@ if (!isset($token_response['access_token']) || !isset($token_response['refresh_t
     $error_message = 'Invalid token response from Discord: ' . substr($response, 0, 100) . '...';
     error_log($error_message);
     $_SESSION['discord_error'] = $error_message;
-    header('Location: ../index.php');
+    echo "<script>window.opener.location.reload(); window.close();</script>";
     exit;
 }
 
@@ -100,16 +89,13 @@ $_SESSION['discord_access_token'] = $original_access_token;
 $_SESSION['discord_refresh_token'] = $original_refresh_token;
 $_SESSION['discord_token_expires'] = time() + $token_response['expires_in'];
 
-// Verify storage worked correctly
-error_log('Session token length after storing: ' . strlen($_SESSION['discord_access_token']));
-
 // Fetch user information
 $user_response = discord_api_request('/users/@me', 'GET', [], $_SESSION['discord_access_token']);
 
 if (!isset($user_response['id'])) {
     error_log('Failed to fetch user information: ' . json_encode($user_response));
     $_SESSION['discord_error'] = 'Failed to fetch user information.';
-    header('Location: ../index.php');
+    echo "<script>window.opener.location.reload(); window.close();</script>";
     exit;
 }
 
@@ -159,10 +145,6 @@ try {
         $updateStmt->bindParam(':discord_id', $discord_id);
         
         $updateStmt->execute();
-        
-        // Log database update
-        error_log('Updated existing Discord user: ' . $discord_id);
-        error_log('Token length being stored in DB: ' . strlen($access_token));
     } else {
         // Create new user
         $insertStmt = $conn->prepare("INSERT INTO discord_users 
@@ -186,27 +168,30 @@ try {
         $insertStmt->bindParam(':token_expires', $token_expires);
         
         $insertStmt->execute();
-        
-        // Log database insert
-        error_log('Created new Discord user: ' . $discord_id);
-        error_log('Token length being stored in DB: ' . strlen($access_token));
     }
     
     $_SESSION['discord_success'] = 'Successfully logged in with Discord!';
 } catch (PDOException $e) {
-    // Still allow login even if DB storage fails, but log the error
     error_log('Discord login database error: ' . $e->getMessage());
-    $_SESSION['discord_warning'] = 'Your login worked, but we had trouble saving your session. Some features may be unavailable.';
+    $_SESSION['discord_warning'] = 'Your login worked, but we had trouble saving your session.';
 }
-
-// Close the popup and redirect parent window
-echo '<script>
-if (window.opener && !window.opener.closed) {
-    window.opener.location.reload();
-    window.close();
-} else {
-    window.location.href = "../index.php";
-}
-</script>';
-exit;
 ?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Discord Authentication</title>
+    <script>
+        window.onload = function() {
+            if (window.opener && !window.opener.closed) {
+                window.opener.location.reload();
+                window.close();
+            } else {
+                window.location.href = "../index.php";
+            }
+        };
+    </script>
+</head>
+<body>
+    <p>Authentication successful! This window should close automatically...</p>
+</body>
+</html>
