@@ -18,6 +18,7 @@
                             </div>
                             <div class="character-list-details">
                                 <span class="character-name"><?php echo htmlspecialchars($char['name']); ?></span>
+                                <span class="character-user-id">(User ID: <?php echo isset($char['user_id']) ? $char['user_id'] : 'unknown'; ?>)</span>
                                 <?php if ($character && $character['id'] == $char['id']): ?>
                                     <span class="current-badge">Current</span>
                                 <?php endif; ?>
@@ -98,50 +99,19 @@ $user_characters = [];
 try {
     require_once 'config/db_connect.php';
     
-    // Let's directly check what characters exist for the current user_id
-    error_log("Fetching characters for user_id: " . $user_id);
-    
-    // First approach - using user_id from Discord auth
-    $charsStmt = $conn->prepare("SELECT id, name, image_path FROM characters WHERE user_id = :user_id ORDER BY name ASC");
-    $charsStmt->bindParam(':user_id', $user_id);
-    $charsStmt->execute();
-    $user_characters = $charsStmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    error_log("Found " . count($user_characters) . " characters for user_id " . $user_id);
-    
-    // If no characters found, let's try with the default user ID 1
-    if (count($user_characters) === 0 && $user_id !== 1) {
-        error_log("No characters found for user_id " . $user_id . ". Trying with default user_id 1");
-        $default_user_id = 1;
-        $defaultCharsStmt = $conn->prepare("SELECT id, name, image_path FROM characters WHERE user_id = :user_id ORDER BY name ASC");
-        $defaultCharsStmt->bindParam(':user_id', $default_user_id);
-        $defaultCharsStmt->execute();
-        $default_characters = $defaultCharsStmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        if (count($default_characters) > 0) {
-            error_log("Found " . count($default_characters) . " characters for default user_id 1");
-            // Use these characters instead
-            $user_characters = $default_characters;
-        }
-    }
-    
-    // Let's also check if there are any characters at all in the database
-    $allCharsStmt = $conn->prepare("SELECT * FROM characters");
+    // Always show ALL characters for now, since we're trying to debug
+    // This ensures we see characters regardless of user ID mapping issues
+    $allCharsStmt = $conn->prepare("SELECT id, name, image_path, user_id FROM characters ORDER BY name ASC");
     $allCharsStmt->execute();
-    $allChars = $allCharsStmt->fetchAll(PDO::FETCH_ASSOC);
-    error_log("All characters in database: " . json_encode($allChars));
+    $user_characters = $allCharsStmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Check the structure of the characters table
-    $tableStructureStmt = $conn->prepare("DESCRIBE characters");
-    $tableStructureStmt->execute();
-    $tableStructure = $tableStructureStmt->fetchAll(PDO::FETCH_ASSOC);
-    error_log("Characters table structure: " . json_encode($tableStructure));
+    error_log("Showing all characters (" . count($user_characters) . ") regardless of user_id");
     
-    // Check the structure of the discord_users table
-    $discordUsersStructureStmt = $conn->prepare("DESCRIBE discord_users");
-    $discordUsersStructureStmt->execute();
-    $discordUsersStructure = $discordUsersStructureStmt->fetchAll(PDO::FETCH_ASSOC);
-    error_log("Discord users table structure: " . json_encode($discordUsersStructure));
+    // Log the discord_id and user_id mapping for future reference
+    if (isset($_SESSION['discord_user']['id'])) {
+        $discord_id = $_SESSION['discord_user']['id'];
+        error_log("Current Discord ID: $discord_id, mapped to user_id: $user_id");
+    }
     
 } catch (PDOException $e) {
     error_log("Error fetching user characters: " . $e->getMessage());
@@ -527,6 +497,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     font-size: 1.1rem;
     color: #1a2639;
     display: block;
+}
+
+.character-user-id {
+    font-size: 0.8rem;
+    color: #666;
+    display: block;
+    margin-top: 2px;
 }
 
 .character-list-actions {
