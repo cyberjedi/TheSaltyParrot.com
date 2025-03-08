@@ -467,54 +467,62 @@ $base_path = '../';
             console.log('Webhook page loaded');
         });
         
-        // Function to fetch channels for selected guild
-        function fetchChannels() {
-            const guildSelect = document.getElementById('guild_id');
-            const channelSelect = document.getElementById('channel_id');
-            
-            // Reset channel select
-            channelSelect.innerHTML = '<option value="">-- Loading channels... --</option>';
-            channelSelect.disabled = true;
-            
-            const guildId = guildSelect.value;
-            
-            if (!guildId) {
-                channelSelect.innerHTML = '<option value="">-- Select a server first --</option>';
-                return;
-            }
-            
-            // Fetch channels via AJAX
-            fetch(`get_channels.php?guild_id=${guildId}`)
-                .then(response => {
-                    console.log('Response status:', response.status);
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Data received:', data);
-                    channelSelect.innerHTML = '<option value="">-- Select a channel --</option>';
-                    
-                    if (data.status === 'success' && data.channels && data.channels.length > 0) {
-                        // Sort channels by name
-                        data.channels.sort((a, b) => a.name.localeCompare(b.name));
-                        
-                        // Add text channels to select
-                        data.channels.forEach(channel => {
-                            const option = document.createElement('option');
-                            option.value = channel.id;
-                            option.textContent = `#${channel.name}`;
-                            channelSelect.appendChild(option);
-                        });
-                        
-                        channelSelect.disabled = false;
-                    } else {
-                        channelSelect.innerHTML = '<option value="">-- No text channels available --</option>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching channels:', error);
-                    channelSelect.innerHTML = '<option value="">-- Error loading channels --</option>';
-                });
+    function fetchChannels() {
+        const guildSelect = document.getElementById('guild_id');
+        const channelSelect = document.getElementById('channel_id');
+        
+        // Reset channel select
+        channelSelect.innerHTML = '<option value="">-- Loading channels... --</option>';
+        channelSelect.disabled = true;
+        
+        const guildId = guildSelect.value;
+        
+        if (!guildId) {
+            channelSelect.innerHTML = '<option value="">-- Select a server first --</option>';
+            return;
         }
+        
+        // Fetch channels via AJAX
+        fetch(`get_channels.php?guild_id=${guildId}`)
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Data received:', data);
+                
+                // Check if we need to reauthenticate
+                if (data.status === 'error' && data.needs_reauth) {
+                    if (confirm('Your Discord permissions need to be refreshed. Would you like to reconnect now?')) {
+                        window.location.href = 'reauth.php';
+                        return;
+                    }
+                }
+                
+                channelSelect.innerHTML = '<option value="">-- Select a channel --</option>';
+                
+                if (data.status === 'success' && data.channels && data.channels.length > 0) {
+                    // Sort channels by name
+                    data.channels.sort((a, b) => a.name.localeCompare(b.name));
+                    
+                    // Add text channels to select
+                    data.channels.forEach(channel => {
+                        const option = document.createElement('option');
+                        option.value = channel.id;
+                        option.textContent = `#${channel.name}`;
+                        channelSelect.appendChild(option);
+                    });
+                    
+                    channelSelect.disabled = false;
+                } else {
+                    channelSelect.innerHTML = '<option value="">-- No text channels available --</option>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching channels:', error);
+                channelSelect.innerHTML = '<option value="">-- Error loading channels --</option>';
+            });
+    }
         
         // Function to test webhook
         function testWebhook(webhookId) {
