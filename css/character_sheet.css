@@ -130,13 +130,15 @@
 
 .modal-content {
     background-color: #f9f5eb;
-    margin: 10% auto;
+    margin: 5% auto;
     padding: 25px;
     border: 1px solid var(--secondary);
     border-radius: 8px;
     width: 80%;
     max-width: 550px;
     position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .close-modal, .close-modal-btn {
@@ -196,18 +198,30 @@
 /* Image Upload Styles */
 .image-upload-container {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 20px;
     margin-bottom: 20px;
 }
 
+.image-preview-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 150px;
+    height: 150px;
+    border-radius: 5px;
+    background-color: #f0f0f0;
+    overflow: hidden;
+}
+
 .current-image {
-    width: 100px;
-    height: 100px;
+    width: 150px;
+    height: 150px;
     border-radius: 50%;
     overflow: hidden;
     border: 2px solid var(--secondary);
     flex-shrink: 0;
+    background-color: #f0f0f0;
 }
 
 .current-image img {
@@ -216,8 +230,28 @@
     object-fit: cover;
 }
 
+/* Fix for image preview in the modal */
+#image-preview {
+    max-width: 100%;
+    max-height: 150px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+
 .file-input-wrapper {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.file-input-wrapper input[type="file"] {
+    padding: 8px;
+    background-color: #fff;
+    border: 1px solid var(--secondary);
+    border-radius: 4px;
+    width: 100%;
+    cursor: pointer;
 }
 
 .help-text {
