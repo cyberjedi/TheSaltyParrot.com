@@ -97,16 +97,16 @@ if (file_exists($base_path . 'discord/discord-config.php')) {
                         <div class="discord-connection-label">Connected</div>
                     </div>
                     <div class="discord-actions">
-                        <a href="<?php echo $base_path; ?>discord/webhooks.php" class="discord-action-btn" title="Discord Settings">
+                        <a href="javascript:void(0);" onclick="window.location.href='<?php echo $base_path; ?>discord/webhooks.php';" class="discord-action-btn" title="Discord Settings">
                             <i class="fas fa-cog"></i>
                         </a>
-                        <a href="<?php echo $base_path; ?>discord/discord-logout.php" class="discord-action-btn" title="Disconnect Discord">
+                        <a href="javascript:void(0);" onclick="window.location.href='<?php echo $base_path; ?>discord/discord-logout.php';" class="discord-action-btn" title="Disconnect Discord">
                             <i class="fas fa-sign-out-alt"></i>
                         </a>
                     </div>
                 </div>
             <?php else: ?>
-                <a href="<?php echo $base_path; ?>discord/discord-login.php" class="discord-connect-btn">
+                <a href="javascript:void(0);" onclick="window.location.href='<?php echo $base_path; ?>discord/discord-login.php';" class="discord-connect-btn">
                     <i class="fab fa-discord"></i> Connect Discord
                 </a>
             <?php endif; ?>

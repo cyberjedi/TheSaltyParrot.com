@@ -13,7 +13,10 @@ unset($_SESSION['discord_token_expires']);
 // Set a success message
 $_SESSION['discord_message'] = 'Successfully logged out of Discord.';
 
-// Redirect to the homepage
-header('Location: ../index.php');
+// Get referring page if available
+$redirect_url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '../index.php';
+
+// Redirect back to where the user came from
+header('Location: ' . $redirect_url);
 exit;
 ?>
