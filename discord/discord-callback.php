@@ -81,6 +81,13 @@ if ($http_code < 200 || $http_code >= 300) {
 
 $token_response = json_decode($response, true);
 
+// Store original tokens for direct debugging
+$original_access_token = $token_response['access_token'] ?? '';
+$original_refresh_token = $token_response['refresh_token'] ?? '';
+
+error_log('Original access token: ' . $original_access_token);
+error_log('Original access token length: ' . strlen($original_access_token));
+
 // Extended logging for token debugging
 error_log('Discord token after decode: ' . json_encode($token_response));
 
@@ -166,6 +173,24 @@ try {
         
         // Log database update
         error_log('Updated existing Discord user: ' . $discord_id);
+        
+        // Direct database insertion to bypass any potential middleware
+        try {
+            $direct_stmt = $conn->prepare("UPDATE discord_users SET 
+                access_token = :raw_token,
+                refresh_token = :raw_refresh
+                WHERE discord_id = :discord_id");
+                
+            $direct_stmt->bindParam(':raw_token', $original_access_token);
+            $direct_stmt->bindParam(':raw_refresh', $original_refresh_token);
+            $direct_stmt->bindParam(':discord_id', $discord_id);
+            
+            $direct_stmt->execute();
+            
+            error_log('Direct token update executed. Check database for results.');
+        } catch (PDOException $e) {
+            error_log('Direct token update failed: ' . $e->getMessage());
+        }
     } else {
         // Create new user
         $insertStmt = $conn->prepare("INSERT INTO discord_users 
@@ -200,6 +225,61 @@ try {
     error_log('Discord login database error: ' . $e->getMessage());
     $_SESSION['discord_warning'] = 'Your login worked, but we had trouble saving your session. Some features may be unavailable.';
 }
+
+// Save detailed token info to a file for inspection
+file_put_contents('/home/theshfmb/discord_token_debug.txt', 
+    "Original access token: $original_access_token\n" .
+    "Original access token length: " . strlen($original_access_token) . "\n" .
+    "Token type: " . ($token_response['token_type'] ?? 'not set') . "\n" .
+    "Expires in: " . ($token_response['expires_in'] ?? 'not set') . "\n" .
+    "Scope: " . ($token_response['scope'] ?? 'not set') . "\n" .
+    "Response HTTP code: $http_code\n" .
+    "Full response: $response\n"
+);
+
+// Also create a file to test token validity with Discord API
+file_put_contents('/home/theshfmb/discord_api_test.php', '<?php
+error_reporting(E_ALL);
+ini_set("display_errors", 1);
+
+$token = "' . $original_access_token . '";
+
+echo "<h1>Discord API Test</h1>";
+echo "Token length: " . strlen($token) . "<br>";
+echo "Token: " . htmlspecialchars($token) . "<br>";
+
+// Try a simple API request
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, "https://discord.com/api/v10/users/@me");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    "Authorization: Bearer " . $token,
+    "Content-Type: application/json"
+]);
+
+$response = curl_exec($ch);
+$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+echo "<h2>API Response (HTTP " . $http_code . "):</h2>";
+echo "<pre>" . htmlspecialchars($response) . "</pre>";
+
+// Try a guilds request too
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, "https://discord.com/api/v10/users/@me/guilds");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    "Authorization: Bearer " . $token,
+    "Content-Type: application/json"
+]);
+
+$response = curl_exec($ch);
+$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+echo "<h2>Guilds Response (HTTP " . $http_code . "):</h2>";
+echo "<pre>" . htmlspecialchars($response) . "</pre>";
+?>');
 
 // Redirect to dashboard or main page
 header('Location: ../index.php');
