@@ -487,25 +487,24 @@ $base_path = '../';
                     <i class="fab fa-discord"></i>
                     <h1><?php echo $page_title; ?></h1>
                 </div>
-                
-                <?php if (!empty($webhooks)): ?>
-                <div class="active-webhook-selector">
-                    <form method="post" action="" id="default-webhook-form" class="default-webhook-form">
-                        <input type="hidden" name="action" value="set_default">
-                        <label for="active_webhook">Active Webhook:</label>
-                        <select name="webhook_id" id="active_webhook" onchange="document.getElementById('default-webhook-form').submit();">
-                            <?php foreach ($webhooks as $webhook): ?>
-                                <option value="<?php echo $webhook['id']; ?>" <?php echo $webhook['is_default'] ? 'selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($webhook['webhook_name']); ?> (#<?php echo htmlspecialchars($webhook['channel_name']); ?>)
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </form>
-                </div>
-                <?php endif; ?>
-                
                 <a href="../index.php" class="btn btn-secondary">Back to Dashboard</a>
             </div>
+            
+            <?php if (!empty($webhooks)): ?>
+            <div class="active-webhook-selector">
+                <form method="post" action="" id="default-webhook-form" class="default-webhook-form">
+                    <input type="hidden" name="action" value="set_default">
+                    <label for="active_webhook">Active Webhook:</label>
+                    <select name="webhook_id" id="active_webhook" onchange="document.getElementById('default-webhook-form').submit();">
+                        <?php foreach ($webhooks as $webhook): ?>
+                            <option value="<?php echo $webhook['id']; ?>" <?php echo $webhook['is_default'] ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($webhook['webhook_name']); ?> (#<?php echo htmlspecialchars($webhook['channel_name']); ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </form>
+            </div>
+            <?php endif; ?>
             
             <?php if (!empty($message)): ?>
                 <div class="discord-message <?php echo $messageType; ?>">
@@ -617,6 +616,7 @@ $base_path = '../';
                 <div class="tab-buttons">
                     <button id="tab-add" class="tab-button active">Add Webhook</button>
                     <button id="tab-import" class="tab-button">Import Shared Webhook</button>
+                    <button id="tab-help" class="tab-button">Help</button>
                 </div>
                 
                 <div id="tab-add-content" class="tab-content active">
@@ -686,76 +686,77 @@ $base_path = '../';
                         </form>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Webhook Guide Section -->
-            <div class="webhook-guide">
-                <h2>Setting Up Discord Webhooks: A User Guide</h2>
                 
-                <div class="guide-section">
-                    <h3><i class="fas fa-key"></i> Prerequisites</h3>
-                    <ul>
-                        <li>You must have the <strong>"Manage Webhooks"</strong> permission on your Discord server</li>
-                        <li>You need to be logged in with Discord on both The Salty Parrot and your Discord server</li>
-                    </ul>
-                </div>
-                
-                <div class="guide-section">
-                    <h3><i class="fas fa-list-ol"></i> Step-by-Step Guide</h3>
-                    <ol>
-                        <li><strong>Create a Webhook in Discord</strong>
+                <div id="tab-help-content" class="tab-content">
+                    <div class="webhook-guide">
+                        <h2>Setting Up Discord Webhooks: A User Guide</h2>
+                        
+                        <div class="guide-section">
+                            <h3><i class="fas fa-key"></i> Prerequisites</h3>
                             <ul>
-                                <li>Go to your Discord server</li>
-                                <li>Click on the server name and select "Server Settings"</li>
-                                <li>Select "Integrations" from the left menu</li>
-                                <li>Click on "Webhooks" and then "New Webhook"</li>
-                                <li>Give your webhook a name (e.g., "The Salty Parrot")</li>
-                                <li>Select the channel you want messages to go to</li>
-                                <li>Click "Copy Webhook URL" to copy the full webhook URL</li>
+                                <li>You must have the <strong>"Manage Webhooks"</strong> permission on your Discord server</li>
+                                <li>You need to be logged in with Discord on both The Salty Parrot and your Discord server</li>
                             </ul>
-                        </li>
-                        <li><strong>Add the Webhook to The Salty Parrot</strong>
+                        </div>
+                        
+                        <div class="guide-section">
+                            <h3><i class="fas fa-list-ol"></i> Step-by-Step Guide</h3>
+                            <ol>
+                                <li><strong>Create a Webhook in Discord</strong>
+                                    <ul>
+                                        <li>Go to your Discord server</li>
+                                        <li>Click on the server name and select "Server Settings"</li>
+                                        <li>Select "Integrations" from the left menu</li>
+                                        <li>Click on "Webhooks" and then "New Webhook"</li>
+                                        <li>Give your webhook a name (e.g., "The Salty Parrot")</li>
+                                        <li>Select the channel you want messages to go to</li>
+                                        <li>Click "Copy Webhook URL" to copy the full webhook URL</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Add the Webhook to The Salty Parrot</strong>
+                                    <ul>
+                                        <li>On this page, paste the webhook URL into the "Discord Webhook URL" field</li>
+                                        <li>Give it a name to help you identify it (optional)</li>
+                                        <li>Add a description if desired</li>
+                                        <li>Click "Add Webhook" to save it</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Test the Connection</strong> - Use the "Test" button to verify the webhook works</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="guide-section">
+                            <h3><i class="fas fa-share-alt"></i> Sharing Webhooks</h3>
+                            <p>You can share your webhooks with other users of The Salty Parrot:</p>
+                            <ol>
+                                <li>Find the sharing code for your webhook in the table above</li>
+                                <li>Copy the code and send it to other players in your group</li>
+                                <li>They can import your webhook using the "Import Shared Webhook" tab</li>
+                                <li>This allows your entire group to send content to the same Discord channel</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="guide-section">
+                            <h3><i class="fas fa-info-circle"></i> How It Works</h3>
+                            <p>After adding a webhook, you'll be able to:</p>
                             <ul>
-                                <li>On this page, paste the webhook URL into the "Discord Webhook URL" field</li>
-                                <li>Give it a name to help you identify it (optional)</li>
-                                <li>Add a description if desired</li>
-                                <li>Click "Add Webhook" to save it</li>
+                                <li>Generate ships, loot, and other content on The Salty Parrot</li>
+                                <li>Send the generated content directly to your Discord server with a single click</li>
+                                <li>Share your creations with your gaming group without copy-pasting</li>
                             </ul>
-                        </li>
-                        <li><strong>Test the Connection</strong> - Use the "Test" button to verify the webhook works</li>
-                    </ol>
-                </div>
-                
-                <div class="guide-section">
-                    <h3><i class="fas fa-share-alt"></i> Sharing Webhooks</h3>
-                    <p>You can share your webhooks with other users of The Salty Parrot:</p>
-                    <ol>
-                        <li>Find the sharing code for your webhook in the table above</li>
-                        <li>Copy the code and send it to other players in your group</li>
-                        <li>They can import your webhook using the "Import Shared Webhook" tab</li>
-                        <li>This allows your entire group to send content to the same Discord channel</li>
-                    </ol>
-                </div>
-                
-                <div class="guide-section">
-                    <h3><i class="fas fa-info-circle"></i> How It Works</h3>
-                    <p>After adding a webhook, you'll be able to:</p>
-                    <ul>
-                        <li>Generate ships, loot, and other content on The Salty Parrot</li>
-                        <li>Send the generated content directly to your Discord server with a single click</li>
-                        <li>Share your creations with your gaming group without copy-pasting</li>
-                    </ul>
-                    <p>Webhooks only allow The Salty Parrot to <em>send</em> messages to your server. The app cannot read messages or access any other Discord data.</p>
-                </div>
-                
-                <div class="guide-section">
-                    <h3><i class="fas fa-exclamation-triangle"></i> Troubleshooting</h3>
-                    <ul>
-                        <li><strong>Invalid webhook URL?</strong> Make sure you copied the entire URL from Discord</li>
-                        <li><strong>Test message fails?</strong> The webhook may have been deleted from Discord's side</li>
-                        <li><strong>Sharing code doesn't work?</strong> The webhook may have been deleted or changed</li>
-                        <li><strong>Other issues?</strong> Try deleting the webhook and creating a new one</li>
-                    </ul>
+                            <p>Webhooks only allow The Salty Parrot to <em>send</em> messages to your server. The app cannot read messages or access any other Discord data.</p>
+                        </div>
+                        
+                        <div class="guide-section">
+                            <h3><i class="fas fa-exclamation-triangle"></i> Troubleshooting</h3>
+                            <ul>
+                                <li><strong>Invalid webhook URL?</strong> Make sure you copied the entire URL from Discord</li>
+                                <li><strong>Test message fails?</strong> The webhook may have been deleted from Discord's side</li>
+                                <li><strong>Sharing code doesn't work?</strong> The webhook may have been deleted or changed</li>
+                                <li><strong>Other issues?</strong> Try deleting the webhook and creating a new one</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
