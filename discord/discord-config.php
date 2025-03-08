@@ -340,4 +340,26 @@ function renderDiscordConnectionStatus() {
         unset($_SESSION['discord_message']);
     }
 }
+
+function debug_discord_token() {
+    if (!is_discord_authenticated()) {
+        return "Not authenticated";
+    }
+    
+    $token = $_SESSION['discord_access_token'];
+    $token_parts = explode('.', $token);
+    if (count($token_parts) != 3) {
+        return "Invalid token format";
+    }
+    
+    // Decode the middle part of the JWT token
+    $payload = json_decode(base64_decode(str_replace(
+        ['-', '_'], 
+        ['+', '/'], 
+        $token_parts[1]
+    )), true);
+    
+    return $payload;
+}
+
 ?>
