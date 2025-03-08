@@ -178,75 +178,12 @@ try {
     error_log('Discord login database error: ' . $e->getMessage());
     $_SESSION['discord_warning'] = 'Your login worked, but we had trouble saving your session.';
 }
+
+// Get redirect URL and clear it from session
+$redirect_url = isset($_SESSION['discord_auth_referrer']) ? $_SESSION['discord_auth_referrer'] : '../index.php';
+unset($_SESSION['discord_auth_referrer']);
+
+// Redirect directly back to the original page
+header('Location: ' . $redirect_url);
+exit;
 ?>
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Discord Authentication</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-            background-color: #36393f;
-            color: #ffffff;
-        }
-        .success-container {
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #2f3136;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        h2 {
-            color: #7289da;
-        }
-        .success-icon {
-            color: #43b581;
-            font-size: 48px;
-            margin: 20px 0;
-        }
-        .redirect-text {
-            margin: 20px 0;
-        }
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(114,137,218,0.3);
-            border-radius: 50%;
-            border-top-color: #7289da;
-            animation: spin 1s ease-in-out infinite;
-            vertical-align: middle;
-            margin-left: 10px;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-    </style>
-    <script>
-        // Set a timeout before redirecting to make sure the user sees the success message
-        setTimeout(function() {
-            // Redirect to the original referring page if available
-            window.location.href = "<?php 
-                $redirect = isset($_SESSION['discord_auth_referrer']) ? $_SESSION['discord_auth_referrer'] : '../index.php'; 
-                // Clear the referrer from session to avoid reusing it
-                unset($_SESSION['discord_auth_referrer']);
-                echo $redirect;
-            ?>";
-        }, 2000);
-    </script>
-</head>
-<body>
-    <div class="success-container">
-        <h2>Authentication Successful!</h2>
-        <div class="success-icon">✓</div>
-        <p>You've successfully connected your Discord account.</p>
-        <p class="redirect-text">
-            Redirecting to The Salty Parrot
-            <span class="loading-spinner"></span>
-        </p>
-    </div>
-</body>
-</html>
