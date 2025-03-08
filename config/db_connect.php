@@ -41,6 +41,9 @@ if (!is_array($config)) {
 }
 
 try {
+    // Log connection attempt (without sensitive information)
+    error_log("Attempting database connection to host: {$config['host']}, database: {$config['dbname']}");
+    
     // Create database connection
     $conn = new PDO(
         "mysql:host={$config['host']};dbname={$config['dbname']}",
@@ -50,6 +53,34 @@ try {
     
     // Set error mode
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    // Define constants for easy reference
+    define('DB_HOST', $config['host']);
+    define('DB_NAME', $config['dbname']);
+    define('DB_USER', $config['username']);
+    
+    // Check if we're connected to the correct database
+    // If not, try to use the production database name
+    $result = $conn->query("SELECT DATABASE()")->fetch(PDO::FETCH_NUM);
+    $current_db = $result[0];
+    
+    error_log("Connected to database: " . $current_db);
+    
+    // If not connected to the expected database, try to switch
+    if ($current_db != 'theshfmb_SPDB') {
+        $conn->exec("USE theshfmb_SPDB");
+        error_log("Switched to database: theshfmb_SPDB");
+    }
+    
+    // Verify we can access the characters table
+    $tables = $conn->query("SHOW TABLES LIKE 'characters'")->fetchAll();
+    if (count($tables) === 0) {
+        error_log("ERROR: characters table not found in database " . $current_db);
+    } else {
+        // Check how many characters exist
+        $charCount = $conn->query("SELECT COUNT(*) FROM characters")->fetchColumn();
+        error_log("Found " . $charCount . " characters in database");
+    }
     
 } catch(PDOException $e) {
     // Log error for administrators
