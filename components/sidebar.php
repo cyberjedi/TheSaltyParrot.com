@@ -106,9 +106,20 @@ if (file_exists($base_path . 'discord/discord-config.php')) {
                     </div>
                 </div>
             <?php else: ?>
-                <a href="javascript:void(0);" onclick="window.location.href='<?php echo $base_path; ?>discord/discord-login.php';" class="discord-connect-btn">
+                <a href="javascript:void(0);" onclick="handleDiscordLogin(event);" class="discord-connect-btn" id="discord-login-btn">
                     <i class="fab fa-discord"></i> Connect Discord
                 </a>
+                <script>
+                function handleDiscordLogin(event) {
+                    event.preventDefault();
+                    
+                    // Store current URL in a cookie to return to this page
+                    document.cookie = "discord_return_url=" + encodeURIComponent(window.location.href) + "; path=/; max-age=3600";
+                    
+                    // Redirect to the login page
+                    window.location.href = '<?php echo $base_path; ?>discord/discord-login.php';
+                }
+                </script>
             <?php endif; ?>
         <?php else: ?>
             <div class="discord-status-disabled">

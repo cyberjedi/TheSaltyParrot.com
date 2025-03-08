@@ -183,6 +183,12 @@ try {
 $redirect_url = isset($_SESSION['discord_auth_referrer']) ? $_SESSION['discord_auth_referrer'] : '../index.php';
 unset($_SESSION['discord_auth_referrer']);
 
+// Log the success and redirect URL for debugging
+error_log('Discord auth success. Redirecting to: ' . $redirect_url);
+
+// Add a clear message about the success
+$_SESSION['discord_success'] = 'Successfully connected to Discord! You can now send content to your Discord servers.';
+
 // Redirect directly back to the original page
 header('Location: ' . $redirect_url);
 exit;

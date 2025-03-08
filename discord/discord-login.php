@@ -2,12 +2,22 @@
 // File: discord/discord-login.php
 require_once 'discord-config.php';
 
-// Store the referrer URL to redirect back after authentication
-if (isset($_SERVER['HTTP_REFERER'])) {
-    $_SESSION['discord_auth_referrer'] = $_SERVER['HTTP_REFERER'];
-} else {
-    $_SESSION['discord_auth_referrer'] = '../index.php';
+// Get return URL from cookie if available, otherwise use HTTP_REFERER or default to index
+$return_url = '../index.php';
+
+// Try to get from cookie first
+if (isset($_COOKIE['discord_return_url']) && !empty($_COOKIE['discord_return_url'])) {
+    $return_url = $_COOKIE['discord_return_url'];
+    // Clear the cookie
+    setcookie('discord_return_url', '', time() - 3600, '/');
+} 
+// Fall back to HTTP_REFERER if available
+else if (isset($_SERVER['HTTP_REFERER'])) {
+    $return_url = $_SERVER['HTTP_REFERER'];
 }
+
+// Store in session for callback
+$_SESSION['discord_auth_referrer'] = $return_url;
 
 // Generate a random state parameter to prevent CSRF attacks
 $state = bin2hex(random_bytes(16));
@@ -20,6 +30,12 @@ $auth_url .= '&redirect_uri=' . urlencode(DISCORD_REDIRECT_URI);
 $auth_url .= '&response_type=code';
 $auth_url .= '&state=' . $state;
 $auth_url .= '&scope=identify%20guilds%20guilds.members.read%20guilds.channels.read';
+
+// Add a custom parameter to track that we're coming from our login page
+$auth_url .= '&custom_source=direct_login';
+
+// Log the authentication attempt with the return URL for debugging
+error_log('Discord auth attempt. Return URL: ' . $return_url);
 
 // Direct redirection without showing an intermediate page
 header('Location: ' . $auth_url);
