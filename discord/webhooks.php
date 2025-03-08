@@ -2,17 +2,7 @@
 // File: discord/webhooks.php
 // This file displays the webhook management interface
 
-
-// Check if user is logged in with Discord
-if (!is_discord_authenticated()) {
-    $_SESSION['discord_error'] = 'You need to log in with Discord first.';
-    header('Location: ../index.php');
-    exit;
-}
-
-// Force a token refresh to ensure fresh permissions
-force_discord_token_refresh();
-
+// Include required files
 require_once 'discord-config.php';
 require_once '../config/db_connect.php';
 
@@ -23,36 +13,8 @@ if (!is_discord_authenticated()) {
     exit;
 }
 
-// Refresh token if needed
-if (!refresh_discord_token_if_needed()) {
-    $_SESSION['discord_error'] = 'Your Discord session has expired. Please log in again.';
-    header('Location: ../index.php');
-    exit;
-}
-
-// Get user's Discord ID
-$discord_id = $_SESSION['discord_user']['id'];
-
-// Fetch user ID from database
-try {
-    $stmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
-    $stmt->bindParam(':discord_id', $discord_id);
-    $stmt->execute();
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if (!$user) {
-        $_SESSION['discord_error'] = 'User not found in database. Please log in again.';
-        header('Location: discord-logout.php');
-        exit;
-    }
-    
-    $user_id = $user['id'];
-} catch (PDOException $e) {
-    error_log('Database error: ' . $e->getMessage());
-    $_SESSION['discord_error'] = 'Database error. Please try again later.';
-    header('Location: ../index.php');
-    exit;
-}
+// Force a token refresh to ensure fresh permissions
+force_discord_token_refresh();
 
 // Initialize variables
 $guilds = [];
