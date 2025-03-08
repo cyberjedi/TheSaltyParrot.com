@@ -200,7 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             <!-- Character Sheet Header -->
             <div class="character-header">
                 <div class="character-image">
-                    <img src="<?php echo htmlspecialchars($character['image_path']); ?>" alt="Character Portrait">
+                    <img src="<?php echo htmlspecialchars($character['image_path']); ?>" alt="Character Portrait" onerror="this.src='assets/images/default_character.png'">
                 </div>
                 <div class="character-title">
                     <h2 id="character-name"><?php echo htmlspecialchars($character['name']); ?></h2>
@@ -264,8 +264,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             <div class="form-group">
                 <label for="character_image">Character Image:</label>
                 <div class="image-upload-container">
-                    <div class="current-image">
-                        <img src="<?php echo htmlspecialchars($character['image_path']); ?>" alt="Current Image" id="image-preview">
+                    <div class="image-preview-container">
+                        <div class="current-image">
+                            <img src="<?php echo htmlspecialchars($character['image_path']); ?>" alt="Current Image" id="image-preview">
+                        </div>
                     </div>
                     <div class="file-input-wrapper">
                         <input type="file" id="character_image" name="character_image" accept="image/jpeg,image/png,image/gif">
@@ -634,7 +636,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 const reader = new FileReader();
                 
                 reader.onload = function(e) {
-                    imagePreview.src = e.target.result;
+                    // Create a temporary image to check dimensions
+                    const tempImg = new Image();
+                    tempImg.src = e.target.result;
+                    
+                    tempImg.onload = function() {
+                        // Update the image preview
+                        imagePreview.src = e.target.result;
+                    };
                 };
                 
                 reader.readAsDataURL(this.files[0]);
