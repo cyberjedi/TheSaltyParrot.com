@@ -163,11 +163,17 @@ if (file_exists($base_path . 'discord/discord-config.php')) {
         </div>
     <?php endif; ?>
     
+    <!-- Add more space between Discord buttons and navigation -->
+    <div style="margin-bottom: 25px;"></div>
+    
     <!-- Navigation Links -->
     <div class="sidebar-section">
         <h3>Main Menu</h3>
         <a href="<?php echo $base_path; ?>index.php" class="sidebar-btn <?php echo ($current_page == 'index' || $current_page == 'dashboard') ? 'active' : ''; ?>">
-            <i class="fas fa-home"></i> Home
+            <i class="fas fa-dice"></i> Generators
+        </a>
+        <a href="<?php echo $base_path; ?>character_sheet.php" class="sidebar-btn <?php echo ($current_page == 'character_sheet') ? 'active' : ''; ?>">
+            <i class="fas fa-scroll"></i> Character Sheet
         </a>
     </div>
     
@@ -190,15 +196,6 @@ if (file_exists($base_path . 'discord/discord-config.php')) {
         </button>
     </div>
     
-    <div class="sidebar-section">
-        <h3>Character</h3>
-        <button id="character-creator-btn" class="sidebar-btn">
-            <i class="fas fa-user-plus"></i> Create Character
-        </button>
-        <button id="character-list-btn" class="sidebar-btn">
-            <i class="fas fa-users"></i> My Characters
-        </button>
-    </div>
 
 
 </aside>
@@ -271,20 +268,6 @@ if (file_exists($base_path . 'discord/discord-config.php')) {
             });
         }
         
-        // Character Creator
-        const characterCreatorBtn = document.getElementById('character-creator-btn');
-        if (characterCreatorBtn) {
-            characterCreatorBtn.addEventListener('click', function() {
-                alert("Character creator coming soon!");
-            });
-        }
-        
-        // Character List
-        const characterListBtn = document.getElementById('character-list-btn');
-        if (characterListBtn) {
-            characterListBtn.addEventListener('click', function() {
-                alert("Character list coming soon!");
-            });
-        }
+        // No more character creator/list buttons
     });
 </script>
