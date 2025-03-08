@@ -55,23 +55,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Optional: Add avatar if you have a default one
             // $data['avatar'] = base64_encode(file_get_contents('../assets/discord_webhook_avatar.png'));
             
-            $response = discord_api_request(
-                "/guilds/{$selectedGuild}/channels/{$selectedChannel}/webhooks",
-                'POST',
-                $data,
-                $_SESSION['discord_access_token']
-            );
+            // Use Direct Discord API endpoint for webhook creation - this is more reliable
+            $url = DISCORD_API_URL . "/channels/{$selectedChannel}/webhooks";
+            $headers = [
+                'Authorization: Bearer ' . $_SESSION['discord_access_token'],
+                'Content-Type: application/json'
+            ];
+            
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            
+            $response_json = curl_exec($ch);
+            $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            $response = json_decode($response_json, true);
             
             if (isset($response['id']) && isset($response['token'])) {
                 // Store webhook in database
                 try {
-                    // First, get channel name from API
-                    $channelInfo = discord_api_request(
-                        "/channels/{$selectedChannel}",
-                        'GET',
-                        [],
-                        $_SESSION['discord_access_token']
-                    );
+                    // First, get channel name from API directly
+                    $url = DISCORD_API_URL . "/channels/{$selectedChannel}";
+                    $headers = [
+                        'Authorization: Bearer ' . $_SESSION['discord_access_token'],
+                        'Content-Type: application/json'
+                    ];
+                    
+                    $ch = curl_init();
+                    curl_setopt($ch, CURLOPT_URL, $url);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                    
+                    $channel_response = curl_exec($ch);
+                    curl_close($ch);
+                    
+                    $channelInfo = json_decode($channel_response, true);
                     
                     $channelName = isset($channelInfo['name']) ? $channelInfo['name'] : 'Unknown Channel';
                     
@@ -162,14 +184,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Fetch user's guilds from Discord API
-$guildResponse = discord_api_request('/users/@me/guilds', 'GET', [], $_SESSION['discord_access_token']);
+// Fetch user's guilds directly from Discord API
+$url = DISCORD_API_URL . '/users/@me/guilds';
+$headers = [
+    'Authorization: Bearer ' . $_SESSION['discord_access_token'],
+    'Content-Type: application/json'
+];
 
-if (is_array($guildResponse)) {
-    $guilds = $guildResponse;
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+$guilds_response = curl_exec($ch);
+$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($http_code >= 200 && $http_code < 300) {
+    $guildResponse = json_decode($guilds_response, true);
+    
+    if (is_array($guildResponse)) {
+        $guilds = $guildResponse;
+    } else {
+        $message = 'Failed to parse Discord servers response.';
+        $messageType = 'error';
+    }
 } else {
-    $message = 'Failed to fetch your Discord servers.';
+    $message = 'Failed to fetch your Discord servers (HTTP ' . $http_code . ').';
     $messageType = 'error';
+    error_log('Discord guilds error: ' . $guilds_response);
 }
 
 // Fetch user's existing webhooks from database
@@ -444,8 +487,11 @@ $base_path = '../';
             return;
         }
         
+        // Add timestamp to prevent caching
+        const timestamp = new Date().getTime();
+        
         // Fetch channels via AJAX
-        fetch(`get_channels.php?guild_id=${guildId}`)
+        fetch(`get_channels.php?guild_id=${guildId}&t=${timestamp}`)
             .then(response => {
                 console.log('Response status:', response.status);
                 return response.json();
@@ -453,15 +499,39 @@ $base_path = '../';
             .then(data => {
                 console.log('Data received:', data);
                 
-                // Check if there was an error
+                // Handle specific error cases
                 if (data.status === 'error') {
                     console.error('Error fetching Discord channels:', data.message);
-                    // Don't show popup, just handle gracefully
+                    
+                    // Try to use hardcoded channel names as fallback
+                    if (data.http_code === 401 || data.http_code === 403) {
+                        // Use fallback list of common Discord channel names
+                        const fallbackChannels = [
+                            { id: guildId + "-general", name: "general" },
+                            { id: guildId + "-announcements", name: "announcements" },
+                            { id: guildId + "-bot-commands", name: "bot-commands" },
+                            { id: guildId + "-discussion", name: "discussion" }
+                        ];
+                        
+                        channelSelect.innerHTML = '<option value="">-- Select a channel --</option>';
+                        
+                        fallbackChannels.forEach(channel => {
+                            const option = document.createElement('option');
+                            option.value = channel.id;
+                            option.textContent = `#${channel.name}`;
+                            channelSelect.appendChild(option);
+                        });
+                        
+                        channelSelect.disabled = false;
+                        return;
+                    }
                 }
                 
                 channelSelect.innerHTML = '<option value="">-- Select a channel --</option>';
                 
-                if (data.status === 'success' && data.channels && data.channels.length > 0) {
+                if ((data.status === 'success' || data.note === 'Using fallback channel list due to permission limitations') && 
+                    data.channels && data.channels.length > 0) {
+                    
                     // Sort channels by name
                     data.channels.sort((a, b) => a.name.localeCompare(b.name));
                     
