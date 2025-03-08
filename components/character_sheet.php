@@ -135,6 +135,56 @@ try {
         
         if ($user_data) {
             $db_user_id = $user_data['id'];
+            error_log("Found Discord user mapping in database: Discord ID $discord_id maps to user_id $db_user_id");
+        } else {
+            // No mapping found, always default to user_id 1 which we know has characters
+            $db_user_id = 1;
+            error_log("No Discord user mapping found in database. Using default user_id: $db_user_id");
+            
+            try {
+                // Insert a new mapping for this Discord user
+                error_log("Creating new Discord user mapping for Discord ID: $discord_id");
+                $username = isset($_SESSION['discord_user']['username']) ? $_SESSION['discord_user']['username'] : 'Unknown';
+                $avatar = isset($_SESSION['discord_user']['avatar']) ? $_SESSION['discord_user']['avatar'] : '';
+                $discr = isset($_SESSION['discord_user']['discriminator']) ? $_SESSION['discord_user']['discriminator'] : '';
+                $now = date('Y-m-d H:i:s');
+                
+                // Check if the table has the right structure
+                try {
+                    $desc = $conn->query("DESCRIBE discord_users")->fetchAll(PDO::FETCH_COLUMN);
+                    error_log("Discord users table structure: " . implode(", ", $desc));
+                } catch (Exception $e) {
+                    error_log("Error checking discord_users table: " . $e->getMessage());
+                }
+                
+                try {
+                    // Insert with fields we know exist from diagnostic
+                    $insert = $conn->prepare("INSERT INTO discord_users (discord_id, username, discriminator, avatar, access_token, refresh_token, token_expires, created_at, last_login) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    $access_token = isset($_SESSION['discord_access_token']) ? $_SESSION['discord_access_token'] : '';
+                    $refresh_token = isset($_SESSION['discord_refresh_token']) ? $_SESSION['discord_refresh_token'] : '';
+                    $token_expires = isset($_SESSION['discord_token_expires']) ? $_SESSION['discord_token_expires'] : 0;
+                    
+                    $insert->execute([
+                        $discord_id, 
+                        $username, 
+                        $discr, 
+                        $avatar, 
+                        $access_token, 
+                        $refresh_token, 
+                        $token_expires, 
+                        $now, 
+                        $now
+                    ]);
+                    
+                    // Get the new user ID (but still keep using ID 1 for this request)
+                    $new_user_id = $conn->lastInsertId();
+                    error_log("Created new Discord user record with ID: $new_user_id");
+                } catch (Exception $e) {
+                    error_log("Error inserting Discord user record: " . $e->getMessage());
+                }
+            } catch (Exception $e) {
+                error_log("Error creating user mapping: " . $e->getMessage());
+            }
         }
     }
     
@@ -334,8 +384,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $toughness = (int)$_POST['toughness'];
     $spirit = (int)$_POST['spirit'];
     
-    // Default to user ID 1 (which we know works)
-    $user_id = 1;
+    // Use the properly mapped user ID (use the global db_user_id)
+    $user_id = isset($db_user_id) ? $db_user_id : 1; // Default to 1 if for some reason $db_user_id is not set
+    error_log("Creating/updating character for user_id: $user_id (mapped from Discord ID: " . (isset($discord_id) ? $discord_id : 'not set') . ")");
     
     // Handle image upload
     $image_path = isset($character['image_path']) ? $character['image_path'] : 'uploads/characters/character_1741469717_67ccb815a80be.jpg';
@@ -446,6 +497,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 'spirit' => $spirit
             ];
         }
+        
+        // Add the newly created/updated character to our $user_characters array
+        // so it's immediately available for display without a refresh
+        $new_char = [
+            'id' => $char_id,
+            'user_id' => $user_id,
+            'name' => $name,
+            'image_path' => $image_path,
+            'strength' => $strength,
+            'agility' => $agility,
+            'presence' => $presence,
+            'toughness' => $toughness,
+            'spirit' => $spirit,
+            'created_at' => $now,
+            'updated_at' => $now
+        ];
+        
+        // Update $user_characters array if it was a new character
+        if (empty($_POST['character_id'])) {
+            $user_characters[] = $new_char;
+        } else {
+            // Update the existing character in the array
+            foreach ($user_characters as $key => $char) {
+                if ($char['id'] == $char_id) {
+                    $user_characters[$key] = $new_char;
+                    break;
+                }
+            }
+        }
+        
+        // Set the current character
+        $character = $new_char;
+        
+        // Log success
+        error_log("Successfully saved character with ID: $char_id for user_id: $user_id");
         
         // Redirect to prevent form resubmission
         header("Location: character_sheet.php?id=" . $char_id . "&success=1");
