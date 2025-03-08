@@ -389,6 +389,258 @@ if (isset($_SESSION['discord_access_token'])) {
 }
 echo '</div>';
 
+// Add this after the "Discord Token Tests" section
+
+// Test 5: JWT Token Structure Analysis
+echo "<h3>Test 5: Token Structure Analysis</h3>";
+if (isset($_SESSION['discord_access_token'])) {
+    $token = $_SESSION['discord_access_token'];
+    echo "Token: " . htmlspecialchars(substr($token, 0, 15)) . "...<br>";
+    
+    // Check if it looks like a JWT token (should have 2 dots)
+    $parts = explode('.', $token);
+    echo "Number of token parts: " . count($parts) . " (JWT tokens typically have 3 parts)<br>";
+    
+    if (count($parts) == 3) {
+        echo "<p class='success'>Token has correct JWT structure <span class='check'>✓</span></p>";
+        
+        // Try to decode the middle part (payload)
+        try {
+            $payload = json_decode(base64_decode(str_replace(
+                ['-', '_'], 
+                ['+', '/'], 
+                $parts[1]
+            )), true);
+            
+            if ($payload) {
+                echo "Token payload:<br><pre>";
+                // Only show safe fields
+                foreach ($payload as $key => $value) {
+                    if (in_array($key, ['exp', 'iat', 'scope'])) {
+                        echo htmlspecialchars($key) . ": " . htmlspecialchars(print_r($value, true)) . "\n";
+                    } else {
+                        echo htmlspecialchars($key) . ": [REDACTED]\n";
+                    }
+                }
+                echo "</pre>";
+            } else {
+                echo "<p class='error'>Could not decode token payload</p>";
+            }
+        } catch (Exception $e) {
+            echo "<p class='error'>Error decoding token: " . $e->getMessage() . "</p>";
+        }
+    } else {
+        echo "<p class='warning'>Token does not have standard JWT structure</p>";
+        echo "Discord OAuth2 tokens should normally be JWT tokens with 3 parts separated by dots.<br>";
+        echo "Your token seems to be in a different format, which might be causing issues.<br>";
+    }
+} else {
+    echo "<p>No Discord token in session to analyze</p>";
+}
+
+// Test 6: OAuth Token Request Simulation
+echo "<h3>Test 6: OAuth Token Request Simulation</h3>";
+
+// Include discord config to get credentials
+if (file_exists('discord/discord-config.php')) {
+    require_once 'discord/discord-config.php';
+    
+    if (defined('DISCORD_CLIENT_ID') && defined('DISCORD_CLIENT_SECRET') && defined('DISCORD_REDIRECT_URI')) {
+        echo "Discord credentials found: <span class='success'>✓</span><br>";
+        
+        // Show masked credentials for verification
+        echo "Client ID: " . substr(DISCORD_CLIENT_ID, 0, 4) . "..." . substr(DISCORD_CLIENT_ID, -4) . "<br>";
+        echo "Client Secret: " . substr(DISCORD_CLIENT_SECRET, 0, 2) . "..." . substr(DISCORD_CLIENT_SECRET, -2) . "<br>";
+        echo "Redirect URI: " . htmlspecialchars(DISCORD_REDIRECT_URI) . "<br>";
+        
+        // Only show refresh token test if we have a refresh token
+        if (isset($_SESSION['discord_refresh_token'])) {
+            echo "<h4>Optional: Test token refresh</h4>";
+            echo "<p>This will attempt to refresh your Discord token using your current refresh token:</p>";
+            
+            echo "<form method='post' action=''>";
+            echo "<input type='hidden' name='action' value='refresh_token'>";
+            echo "<button type='submit' class='btn' style='background-color: #4CAF50;'>Test Token Refresh</button>";
+            echo "</form>";
+            
+            // Process token refresh if requested
+            if (isset($_POST['action']) && $_POST['action'] === 'refresh_token') {
+                echo "<h4>Refresh Token Results:</h4>";
+                echo "<pre>";
+                
+                $data = [
+                    'client_id' => DISCORD_CLIENT_ID,
+                    'client_secret' => DISCORD_CLIENT_SECRET,
+                    'grant_type' => 'refresh_token',
+                    'refresh_token' => $_SESSION['discord_refresh_token']
+                ];
+                
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, DISCORD_API_URL . '/oauth2/token');
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Content-Type: application/x-www-form-urlencoded'
+                ]);
+                
+                $response = curl_exec($ch);
+                $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $curl_error = curl_error($ch);
+                curl_close($ch);
+                
+                echo "HTTP Status: " . $http_code . "\n";
+                if ($curl_error) {
+                    echo "CURL Error: " . $curl_error . "\n";
+                }
+                
+                echo "Response:\n";
+                if ($response) {
+                    $json = json_decode($response, true);
+                    if ($json) {
+                        // Sanitize output
+                        if (isset($json['access_token'])) {
+                            $json['access_token'] = substr($json['access_token'], 0, 10) . '...';
+                        }
+                        if (isset($json['refresh_token'])) {
+                            $json['refresh_token'] = substr($json['refresh_token'], 0, 10) . '...';
+                        }
+                        echo json_encode($json, JSON_PRETTY_PRINT);
+                    } else {
+                        echo htmlspecialchars($response);
+                    }
+                } else {
+                    echo "No response received";
+                }
+                
+                echo "</pre>";
+            }
+        }
+    } else {
+        echo "<p class='error'>Discord OAuth2 credentials not fully defined in configuration</p>";
+    }
+} else {
+    echo "<p class='error'>Could not find discord-config.php</p>";
+}
+
+// Test 7: Network & DNS Test
+echo "<h3>Test 7: Network & DNS Tests</h3>";
+
+echo "<p>Testing connectivity to Discord API:</p>";
+
+$discord_endpoints = [
+    'Discord API' => 'discord.com',
+    'CDN' => 'cdn.discordapp.com'
+];
+
+echo "<table>";
+echo "<tr><th>Service</th><th>IP Resolution</th><th>Connection Test</th><th>HTTPS Test</th></tr>";
+
+foreach ($discord_endpoints as $name => $host) {
+    echo "<tr>";
+    echo "<td>" . htmlspecialchars($name) . "</td>";
+    
+    // DNS resolution
+    $ip = gethostbyname($host);
+    if ($ip != $host) {
+        echo "<td class='success'>" . htmlspecialchars($ip) . " ✓</td>";
+    } else {
+        echo "<td class='error'>Failed ✗</td>";
+    }
+    
+    // Connection test
+    $conn = @fsockopen($host, 443, $errno, $errstr, 5);
+    if ($conn) {
+        echo "<td class='success'>Success ✓</td>";
+        fclose($conn);
+    } else {
+        echo "<td class='error'>Failed (" . htmlspecialchars($errstr) . ") ✗</td>";
+    }
+    
+    // HTTPS request test
+    $ch = curl_init("https://" . $host);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_NOBODY, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    $result = curl_exec($ch);
+    $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpcode >= 200 && $httpcode < 400) {
+        echo "<td class='success'>HTTP " . $httpcode . " ✓</td>";
+    } else {
+        echo "<td class='error'>HTTP " . $httpcode . " ✗</td>";
+    }
+    
+    echo "</tr>";
+}
+
+echo "</table>";
+
+// Test 8: CURL Configuration
+echo "<h3>Test 8: CURL Configuration</h3>";
+
+if (function_exists('curl_version')) {
+    $curl_info = curl_version();
+    echo "<p>CURL Version: " . htmlspecialchars($curl_info['version']) . "</p>";
+    echo "<p>SSL Version: " . htmlspecialchars($curl_info['ssl_version']) . "</p>";
+    
+    echo "<p>CURL Protocols:</p>";
+    echo "<ul>";
+    foreach ($curl_info['protocols'] as $protocol) {
+        echo "<li>" . htmlspecialchars($protocol) . "</li>";
+    }
+    echo "</ul>";
+    
+    // Check if CURL allows redirects
+    echo "<p>Testing CURL redirect behavior:</p>";
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, "https://httpbin.org/redirect-to?url=https://httpbin.org/get");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    $result = curl_exec($ch);
+    $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $redirect_count = curl_getinfo($ch, CURLINFO_REDIRECT_COUNT);
+    curl_close($ch);
+    
+    if ($httpcode == 200 && $redirect_count > 0) {
+        echo "<p class='success'>CURL correctly follows redirects ✓</p>";
+    } else {
+        echo "<p class='error'>CURL does not follow redirects properly ✗</p>";
+        echo "<p>HTTP Code: " . $httpcode . ", Redirect Count: " . $redirect_count . "</p>";
+    }
+} else {
+    echo "<p class='error'>CURL is not available ✗</p>";
+}
+
+// Test 9: OAuth Standard Compliance Test
+echo "<h3>Test 9: OAuth Compliance Test</h3>";
+
+echo "<p>Testing if Discord's tokens match standard OAuth2 patterns:</p>";
+
+// Check token patterns
+if (isset($_SESSION['discord_access_token'])) {
+    $token = $_SESSION['discord_access_token'];
+    
+    // Standard pattern checks
+    $checks = [
+        'Length' => [
+            'test' => strlen($token) > 30,
+            'message' => 'OAuth2 tokens are typically long (30+ characters)'
+        ],
+        'Character Set' => [
+            'test' => preg_match('/^[A-Za-z0-9._-]+$/', $token),
+            'message' => 'Tokens typically consist of safe URL characters (letters, numbers, dots, underscores, hyphens)'
+        ],
+        'JWT Format' => [
+            'test' => substr_count($token, '.') == 2,
+            'message' => 'Many OAuth providers use JWT format (header.payload.signature)'
+        ],
+        'Bearer Prefix' => [
+            'test' => strpos($token, 'Bearer ') !== 0,
+            'message' => 'Token itself should not include "B
+
 // SECTION 5: Recommendations
 echo '<div class="section">';
 echo "<h2>5. Recommendations Based on Test Results</h2>";
