@@ -2,6 +2,17 @@
 // File: discord/webhooks.php
 // This file displays the webhook management interface
 
+
+// Check if user is logged in with Discord
+if (!is_discord_authenticated()) {
+    $_SESSION['discord_error'] = 'You need to log in with Discord first.';
+    header('Location: ../index.php');
+    exit;
+}
+
+// Force a token refresh to ensure fresh permissions
+force_discord_token_refresh();
+
 require_once 'discord-config.php';
 require_once '../config/db_connect.php';
 
