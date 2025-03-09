@@ -120,18 +120,18 @@
 }
 
 .stat-roll-icon {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    color: #5765F2FF; /* Discord blue with full opacity */
-    opacity: 1;
-    transition: all 0.2s ease;
-    font-size: 1.2rem;
-    z-index: 1;
-    cursor: pointer;
-    background-color: rgba(255, 255, 255, 0.5);
-    padding: 4px;
-    border-radius: 4px;
+    position: absolute !important;
+    top: 10px !important;
+    right: 10px !important;
+    color: #5765F2FF !important; /* Discord blue with full opacity */
+    opacity: 1 !important;
+    transition: all 0.2s ease !important;
+    font-size: 1.2rem !important;
+    z-index: 1 !important;
+    cursor: pointer !important;
+    background-color: rgba(255, 255, 255, 0.5) !important;
+    padding: 4px !important;
+    border-radius: 4px !important;
 }
 
 .stat-box:hover .stat-roll-icon {
@@ -605,17 +605,17 @@
 }
 
 .btn-discord {
-    background-color: #5765F2FF; /* Discord blue with full opacity */
-    border-color: #5765F2FF;
-    color: white;
-    font-weight: bold;
+    background-color: #5765F2FF !important; /* Discord blue with full opacity */
+    border-color: #5765F2FF !important;
+    color: white !important;
+    font-weight: bold !important;
 }
 
 .btn-discord:hover {
-    background-color: #4752c4;
-    border-color: #4752c4;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    background-color: #4752c4 !important;
+    border-color: #4752c4 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
 }
 
 /* Webhook Selector Overlay */
@@ -664,9 +664,29 @@
 }
 
 .webhook-option .fa-discord {
-    color: #5765F2FF; /* Discord blue with full opacity */
-    margin-right: 8px;
-    font-size: 1.1rem;
+    color: #5765F2FF !important; /* Discord blue with full opacity */
+    margin-right: 12px !important;
+    font-size: 1.3rem !important;
+}
+
+.webhook-option {
+    display: flex !important;
+    align-items: center !important;
+}
+
+.webhook-details {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.webhook-channel {
+    font-weight: bold !important;
+    color: #333 !important;
+}
+
+.webhook-guild {
+    font-size: 0.8rem !important;
+    color: #666 !important;
 }
 
 .webhook-actions {

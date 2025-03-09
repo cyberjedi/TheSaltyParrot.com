@@ -315,6 +315,10 @@ window.character_data = {
         spirit: <?php echo (int)$character['spirit']; ?>
     }
 };
+
+// Set base url for API requests
+window.base_url = "<?php echo isset($base_path) ? $base_path : './'; ?>";
+console.log("Base URL for requests:", window.base_url);
 </script>
 <!-- External character sheet JS -->
-<script src="/js/character_sheet.js"></script>
+<script src="/js/character_sheet.js?v=<?php echo time(); ?>"></script>

@@ -337,21 +337,37 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log('Creating webhook selector');
             
-            // Fetch webhooks from the server (use relative path)
-            fetch('discord/webhooks.php?action=get_webhooks&format=json')
-                .then(response => response.json())
+            // Get base URL from window object or use default
+            const baseUrl = window.base_url || './';
+            const webhookUrl = baseUrl + 'discord/webhooks.php?action=get_webhooks&format=json';
+            
+            // Fetch webhooks from the server with proper path
+            console.log('Fetching webhooks from:', webhookUrl);
+            
+            fetch(webhookUrl)
+                .then(response => {
+                    console.log('Webhook response status:', response.status);
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Webhook response data:', data);
                     if (data.status === 'success' && data.webhooks && data.webhooks.length > 0) {
-                        let webhookHTML = '<h4>Select Discord Channel</h4><div class="webhook-options">';
+                        let webhookHTML = '<h4 style="color:#5765F2FF;text-align:center;margin-bottom:15px;"><i class="fab fa-discord"></i> Select Discord Channel</h4><div class="webhook-options">';
                         data.webhooks.forEach(webhook => {
                             webhookHTML += `
                                 <div class="webhook-option" data-webhook-id="${webhook.id}">
-                                    <i class="fab fa-discord"></i> #${webhook.channel_name}
+                                    <i class="fab fa-discord"></i> 
+                                    <div class="webhook-details">
+                                        <span class="webhook-channel">#${webhook.channel_name}</span>
+                                        <span class="webhook-guild">${webhook.guild_name || 'Discord Server'}</span>
+                                    </div>
                                 </div>
                             `;
                         });
                         webhookHTML += '</div>';
-                        webhookHTML += '<div class="webhook-actions"><button id="cancel-webhook-btn" class="btn btn-secondary">Cancel</button></div>';
+                        webhookHTML += '<div class="webhook-actions">';
+                        webhookHTML += '<button id="cancel-webhook-btn" class="btn btn-secondary">Cancel</button>';
+                        webhookHTML += '</div>';
                         
                         selector.querySelector('.webhook-selector-content').innerHTML = webhookHTML;
                         
@@ -370,8 +386,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                 
                                 console.log('Sending to webhook ID:', webhookId);
                                 
-                                // Send content to webhook (use relative path)
-                                fetch('discord/send_to_webhook.php', {
+                                // Get base URL from window object or use default
+                                const baseUrl = window.base_url || './';
+                                const sendWebhookUrl = baseUrl + 'discord/send_to_webhook.php';
+                                
+                                console.log('Sending webhook to:', sendWebhookUrl);
+                                
+                                // Send content to webhook with proper path
+                                fetch(sendWebhookUrl, {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
