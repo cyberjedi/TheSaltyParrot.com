@@ -1,10 +1,18 @@
 <?php
+/**
+ * Character Sheet Page
+ * 
+ * This is the main entry point for the character sheet feature.
+ * It loads the character controller which handles data and logic,
+ * then includes the view to display the character information.
+ */
+
 // Start the session if not started
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Set the current page
+// Set the current page for sidebar highlighting
 $current_page = 'character_sheet';
 
 // Set base path for consistent loading
@@ -23,9 +31,11 @@ if (file_exists('discord/discord-config.php')) {
     }
 }
 
-// Initialize variables used in the character sheet component
-$user_characters = []; // Will be populated with the user's characters
+// Set Discord authentication status
 $discord_authenticated = function_exists('is_discord_authenticated') && is_discord_authenticated();
+
+// Load the character controller - handles data and logic
+require_once 'components/character_controller.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -49,7 +59,10 @@ $discord_authenticated = function_exists('is_discord_authenticated') && is_disco
         
         <!-- Main Content Area -->
         <main class="main-content">
-            <?php include 'components/character_sheet.php'; ?>
+            <?php 
+            // Include the character sheet view component
+            include 'components/character_sheet_view.php'; 
+            ?>
         </main>
     </div>
     
