@@ -47,6 +47,7 @@ require_once 'components/character_controller.php';
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/character_sheet.css">
     <?php if ($discord_enabled && file_exists('css/discord.css')): ?>
     <link rel="stylesheet" href="css/discord.css">
     <?php endif; ?>
