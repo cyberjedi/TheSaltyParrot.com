@@ -302,11 +302,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Send roll result to Discord
     if (sendRollDiscordBtn) {
-        sendRollDiscordBtn.addEventListener('click', function() {
+        console.log('Send to Discord button found:', sendRollDiscordBtn);
+        
+        sendRollDiscordBtn.addEventListener('click', function(event) {
+            console.log('Send to Discord button clicked');
+            event.preventDefault();
+            
             if (!isAuthenticated) {
+                console.log('User not authenticated with Discord');
                 alert('You must connect with Discord to send rolls to a webhook.');
                 return;
             }
+            
+            console.log('Preparing to send roll to Discord:', currentRoll);
             
             // Format content for Discord
             const rollContent = `
@@ -327,8 +335,10 @@ document.addEventListener('DOMContentLoaded', function() {
             selector.innerHTML = '<div class="webhook-selector-content">Loading webhooks...</div>';
             document.body.appendChild(selector);
             
-            // Fetch webhooks from the server
-            fetch('/discord/webhooks.php?action=get_webhooks&format=json')
+            console.log('Creating webhook selector');
+            
+            // Fetch webhooks from the server (use relative path)
+            fetch('discord/webhooks.php?action=get_webhooks&format=json')
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success' && data.webhooks && data.webhooks.length > 0) {
@@ -348,10 +358,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         // Add event listeners to webhook options
                         selector.querySelectorAll('.webhook-option').forEach(option => {
                             option.addEventListener('click', function() {
+                                // First remove selected class from all options
+                                selector.querySelectorAll('.webhook-option').forEach(opt => {
+                                    opt.classList.remove('selected');
+                                });
+                                
+                                // Add selected class to this option
+                                this.classList.add('selected');
+                                
                                 const webhookId = this.dataset.webhookId;
                                 
-                                // Send content to webhook
-                                fetch('/discord/send_to_webhook.php', {
+                                console.log('Sending to webhook ID:', webhookId);
+                                
+                                // Send content to webhook (use relative path)
+                                fetch('discord/send_to_webhook.php', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',

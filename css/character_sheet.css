@@ -123,8 +123,8 @@
     position: absolute;
     top: 10px;
     right: 10px;
-    color: #5765F2;
-    opacity: 0.9;
+    color: #5765F2FF; /* Discord blue with full opacity */
+    opacity: 1;
     transition: all 0.2s ease;
     font-size: 1.2rem;
     z-index: 1;
@@ -605,9 +605,10 @@
 }
 
 .btn-discord {
-    background-color: #5765F2;
-    border-color: #5765F2;
+    background-color: #5765F2FF; /* Discord blue with full opacity */
+    border-color: #5765F2FF;
     color: white;
+    font-weight: bold;
 }
 
 .btn-discord:hover {
@@ -655,14 +656,17 @@
     transition: all 0.2s ease;
 }
 
-.webhook-option:hover {
+.webhook-option:hover,
+.webhook-option.selected {
     background-color: #f0f0f0;
-    border-color: #5765F2;
+    border-color: #5765F2FF; /* Discord blue with full opacity */
+    box-shadow: 0 2px 5px rgba(87, 101, 242, 0.3);
 }
 
 .webhook-option .fa-discord {
-    color: #5765F2;
+    color: #5765F2FF; /* Discord blue with full opacity */
     margin-right: 8px;
+    font-size: 1.1rem;
 }
 
 .webhook-actions {

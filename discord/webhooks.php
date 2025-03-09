@@ -6,7 +6,52 @@
 require_once 'discord-config.php';
 require_once '../config/db_connect.php';
 
-// Check if user is logged in with Discord
+// Handle AJAX requests for webhooks
+if (isset($_GET['action']) && $_GET['action'] === 'get_webhooks' && isset($_GET['format']) && $_GET['format'] === 'json') {
+    // Check if user is logged in with Discord
+    if (!is_discord_authenticated()) {
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 'error', 'message' => 'Not authenticated with Discord']);
+        exit;
+    }
+    
+    // Get Discord user ID and fetch user from database
+    $discord_id = $_SESSION['discord_user']['id'];
+    
+    try {
+        // Get user ID from database
+        $stmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
+        $stmt->bindParam(':discord_id', $discord_id);
+        $stmt->execute();
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$user) {
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'error', 'message' => 'User not found']);
+            exit;
+        }
+        
+        $user_id = $user['id'];
+        
+        // Get user's webhooks
+        $stmt = $conn->prepare("SELECT id, webhook_name, channel_name, guild_name, is_default FROM discord_webhooks WHERE user_id = :user_id AND is_active = 1 ORDER BY is_default DESC, last_updated DESC");
+        $stmt->bindParam(':user_id', $user_id);
+        $stmt->execute();
+        $webhooks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 'success', 'webhooks' => $webhooks]);
+        exit;
+        
+    } catch (PDOException $e) {
+        error_log('Database error: ' . $e->getMessage());
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 'error', 'message' => 'Database error']);
+        exit;
+    }
+}
+
+// Check if user is logged in with Discord for regular page access
 if (!is_discord_authenticated()) {
     $_SESSION['discord_error'] = 'You need to log in with Discord first.';
     header('Location: ../index.php');

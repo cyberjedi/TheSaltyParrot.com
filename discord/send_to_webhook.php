@@ -67,6 +67,9 @@ try {
     // Send content to webhook
     $result = send_to_discord_webhook($conn, $data['webhook_id'], $data['content'], $generator_type);
     
+    // Log webhook usage for debugging
+    error_log('Webhook used: ID=' . $data['webhook_id'] . ', Type=' . $generator_type);
+    
     // Return result
     header('Content-Type: application/json');
     echo json_encode($result);
