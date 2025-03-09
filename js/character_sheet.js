@@ -155,4 +155,19 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }, 5000);
     }
+
+    // Fix character images that fail to load
+    const characterImages = document.querySelectorAll('.character-list-avatar img');
+    characterImages.forEach(img => {
+        img.onerror = function() {
+            this.src = 'assets/TSP_default_character.jpg';
+        };
+    });
+
+    // Properly constrain character list item dimensions
+    const characterListItems = document.querySelectorAll('.character-list-item');
+    characterListItems.forEach(item => {
+        item.style.maxWidth = '100%';
+        item.style.boxSizing = 'border-box';
+    });
 });
