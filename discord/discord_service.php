@@ -270,6 +270,35 @@ function send_to_discord_webhook($conn, $webhook_id, $content, $generator_type) 
                     }
                 }
                 break;
+            
+            case 'attribute_roll':
+                // Extract roll details
+                preg_match('/<h3>(.*?) - (.*?) Check<\/h3>/i', $content, $character_matches);
+                $character_name = isset($character_matches[1]) ? strip_tags($character_matches[1]) : 'Character';
+                $attribute_name = isset($character_matches[2]) ? strip_tags($character_matches[2]) : 'Attribute';
+                
+                // Extract roll values
+                preg_match('/Dice Roll: (\d+)/i', $content, $dice_matches);
+                preg_match('/' . $attribute_name . ' Bonus: ([+-]?\d+)/i', $content, $bonus_matches);
+                preg_match('/Total: (\d+)/i', $content, $total_matches);
+                
+                $dice_value = isset($dice_matches[1]) ? $dice_matches[1] : '?';
+                $attribute_bonus = isset($bonus_matches[1]) ? $bonus_matches[1] : '?';
+                $total_value = isset($total_matches[1]) ? $total_matches[1] : '?';
+                
+                // Create embed
+                $embeds[] = [
+                    'title' => '🎲 ' . $character_name . ' - ' . $attribute_name . ' Check',
+                    'description' => "**Dice Roll (d20):** " . $dice_value . "\n**" . $attribute_name . " Bonus:** " . $attribute_bonus . "\n**Total:** " . $total_value,
+                    'color' => 0x5765F2, // Discord blue color
+                    'footer' => [
+                        'text' => 'The Salty Parrot - Character Sheet'
+                    ],
+                    'timestamp' => date('c')
+                ];
+                
+                $content_summary = $character_name . " - " . $attribute_name . " Check: " . $total_value;
+                break;
                 
             default:
                 // Generic handling for other generator types

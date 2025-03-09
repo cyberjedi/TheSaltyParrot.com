@@ -95,6 +95,14 @@
     padding: 15px;
     text-align: center;
     background-color: #f9f5eb;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.stat-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .stat-label {
@@ -109,6 +117,20 @@
     font-size: 2rem;
     font-weight: bold;
     color: var(--primary);
+}
+
+.stat-roll-icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: #5765F2;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+}
+
+.stat-box:hover .stat-roll-icon {
+    opacity: 1;
+    transform: rotate(15deg);
 }
 
 .character-details {
@@ -520,6 +542,146 @@
     color: white;
 }
 
+/* Dice Roll Modal Styles */
+#dice-roll-modal .modal-content {
+    max-width: 400px;
+}
+
+#roll-title {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: var(--primary);
+}
+
+#roll-result-container {
+    background-color: #f9f5eb;
+    border: 2px solid var(--secondary);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.roll-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+.roll-label {
+    font-weight: bold;
+    color: #805d2c;
+}
+
+.roll-value {
+    font-weight: bold;
+}
+
+.total-row {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #ddd;
+    font-size: 1.3rem;
+}
+
+#total-value {
+    font-size: 1.5rem;
+    color: var(--primary);
+}
+
+.roll-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-discord {
+    background-color: #5765F2;
+    border-color: #5765F2;
+    color: white;
+}
+
+.btn-discord:hover {
+    background-color: #4752c4;
+    border-color: #4752c4;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Webhook Selector Overlay */
+.webhook-selector-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.webhook-selector-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.webhook-options {
+    max-height: 200px;
+    overflow-y: auto;
+    margin: 15px 0;
+}
+
+.webhook-option {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.webhook-option:hover {
+    background-color: #f0f0f0;
+    border-color: #5765F2;
+}
+
+.webhook-option .fa-discord {
+    color: #5765F2;
+    margin-right: 8px;
+}
+
+.webhook-actions {
+    margin-top: 15px;
+    text-align: right;
+}
+
+.webhook-error {
+    text-align: center;
+    padding: 15px 0;
+}
+
+.webhook-error p {
+    margin-bottom: 10px;
+}
+
+.webhook-error a {
+    color: #5765F2;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.webhook-error a:hover {
+    text-decoration: underline;
+}
+
 /* Print Styles */
 @media print {
     .character-sheet {
@@ -531,6 +693,7 @@
     .actions,
     .dashboard-header,
     .sidebar,
+    .stat-roll-icon,
     footer {
         display: none !important;
     }

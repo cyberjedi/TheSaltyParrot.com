@@ -150,25 +150,30 @@
             <!-- Character Stats -->
             <div class="character-stats">
                 <div class="stat-group">
-                    <div class="stat-box">
+                    <div class="stat-box" data-attribute="strength" data-value="<?php echo (int)$character['strength']; ?>">
                         <div class="stat-label">Strength</div>
                         <div class="stat-value"><?php echo (int)$character['strength']; ?></div>
+                        <div class="stat-roll-icon" title="Roll Strength check"><i class="fas fa-dice-d20"></i></div>
                     </div>
-                    <div class="stat-box">
+                    <div class="stat-box" data-attribute="agility" data-value="<?php echo (int)$character['agility']; ?>">
                         <div class="stat-label">Agility</div>
                         <div class="stat-value"><?php echo (int)$character['agility']; ?></div>
+                        <div class="stat-roll-icon" title="Roll Agility check"><i class="fas fa-dice-d20"></i></div>
                     </div>
-                    <div class="stat-box">
+                    <div class="stat-box" data-attribute="presence" data-value="<?php echo (int)$character['presence']; ?>">
                         <div class="stat-label">Presence</div>
                         <div class="stat-value"><?php echo (int)$character['presence']; ?></div>
+                        <div class="stat-roll-icon" title="Roll Presence check"><i class="fas fa-dice-d20"></i></div>
                     </div>
-                    <div class="stat-box">
+                    <div class="stat-box" data-attribute="toughness" data-value="<?php echo (int)$character['toughness']; ?>">
                         <div class="stat-label">Toughness</div>
                         <div class="stat-value"><?php echo (int)$character['toughness']; ?></div>
+                        <div class="stat-roll-icon" title="Roll Toughness check"><i class="fas fa-dice-d20"></i></div>
                     </div>
-                    <div class="stat-box">
+                    <div class="stat-box" data-attribute="spirit" data-value="<?php echo (int)$character['spirit']; ?>">
                         <div class="stat-label">Spirit</div>
                         <div class="stat-value"><?php echo (int)$character['spirit']; ?></div>
+                        <div class="stat-roll-icon" title="Roll Spirit check"><i class="fas fa-dice-d20"></i></div>
                     </div>
                 </div>
             </div>
@@ -259,12 +264,57 @@
     </div>
 </div>
 
+<!-- Dice Roll Modal -->
+<div id="dice-roll-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h3 id="roll-title">Attribute Check</h3>
+        <div id="roll-result-container">
+            <div id="roll-details">
+                <div class="roll-row">
+                    <span class="roll-label">Dice Roll (d20):</span>
+                    <span id="dice-value" class="roll-value">-</span>
+                </div>
+                <div class="roll-row">
+                    <span class="roll-label">Attribute Bonus:</span>
+                    <span id="attribute-value" class="roll-value">-</span>
+                </div>
+                <div class="roll-row total-row">
+                    <span class="roll-label">Total:</span>
+                    <span id="total-value" class="roll-value">-</span>
+                </div>
+            </div>
+        </div>
+        <div class="roll-actions">
+            <button id="copy-roll-btn" class="btn btn-secondary">
+                <i class="fas fa-copy"></i> Copy Result
+            </button>
+            <button id="send-roll-discord-btn" class="btn btn-discord">
+                <i class="fab fa-discord"></i> Send to Discord
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Character sheet styles are loaded from css/character_sheet.css -->
 
 <!-- Pass authentication status to JS -->
 <script>
 // Set authentication status for the character sheet JS
 window.discord_authenticated = <?php echo $discord_authenticated ? 'true' : 'false'; ?>;
+
+// Character data for reference in JS
+window.character_data = {
+    id: <?php echo (int)$character['id']; ?>,
+    name: "<?php echo htmlspecialchars($character['name']); ?>",
+    attributes: {
+        strength: <?php echo (int)$character['strength']; ?>,
+        agility: <?php echo (int)$character['agility']; ?>,
+        presence: <?php echo (int)$character['presence']; ?>,
+        toughness: <?php echo (int)$character['toughness']; ?>,
+        spirit: <?php echo (int)$character['spirit']; ?>
+    }
+};
 </script>
 <!-- External character sheet JS -->
 <script src="/js/character_sheet.js"></script>
