@@ -129,7 +129,7 @@
 }
 
 .modal-content {
-    background-color: #f9f5eb;
+    background-color: #fff;
     margin: 5% auto;
     padding: 25px;
     border: 1px solid var(--secondary);
@@ -140,6 +140,7 @@
     max-height: 90vh;
     overflow-y: auto;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    color: #333;
 }
 
 .close-modal, .close-modal-btn {
@@ -316,30 +317,12 @@
     gap: 10px;
 }
 
-/* Additional Character Features */
-.character-features {
-    margin-top: 30px;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+/* Character Switcher Modal Styles - FIXED */
+#character-switcher-modal .modal-content {
+    background-color: #fff;
+    color: #333;
 }
 
-.feature-box {
-    border: 1px solid var(--secondary);
-    border-radius: 8px;
-    padding: 15px;
-    background-color: #f9f5eb;
-}
-
-.feature-box h3 {
-    margin-top: 0;
-    color: #805d2c;
-    border-bottom: 1px solid var(--secondary);
-    padding-bottom: 5px;
-    margin-bottom: 10px;
-}
-
-/* Character Switcher Styles */
 .character-list {
     margin: 20px 0;
     max-height: 400px;
@@ -361,6 +344,8 @@
     transition: all 0.2s ease;
     background-color: #fff;
     color: #333;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .character-list-item:last-child {
@@ -371,6 +356,7 @@
     border-color: #bf9d61;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     transform: translateY(-2px);
+    background-color: #f9f9f9;
 }
 
 .character-list-item.active {
@@ -388,6 +374,7 @@
 .character-list-avatar {
     width: 60px;
     height: 60px;
+    min-width: 60px;
     border-radius: 50%;
     overflow: hidden;
     border: 3px solid #bf9d61;
@@ -499,6 +486,38 @@
 .character-debug-info small {
     color: #666;
     font-size: 0.8rem;
+}
+
+/* Additional Character Features */
+.character-features {
+    margin-top: 30px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.feature-box {
+    border: 1px solid var(--secondary);
+    border-radius: 8px;
+    padding: 15px;
+    background-color: #f9f5eb;
+}
+
+.feature-box h3 {
+    margin-top: 0;
+    color: #805d2c;
+    border-bottom: 1px solid var(--secondary);
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+/* Fix button text colors */
+.btn-primary {
+    color: white;
+}
+
+.btn-secondary {
+    color: white;
 }
 
 /* Print Styles */
