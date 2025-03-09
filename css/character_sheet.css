@@ -133,12 +133,13 @@
     margin: 5% auto;
     padding: 25px;
     border: 1px solid var(--secondary);
-    border-radius: 8px;
-    width: 80%;
-    max-width: 550px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
     position: relative;
     max-height: 90vh;
     overflow-y: auto;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
 .close-modal, .close-modal-btn {
@@ -265,12 +266,23 @@
 }
 
 /* Section Headers in Forms */
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--secondary);
+    color: #1a2639;
+    font-size: 1.6rem;
+    text-align: center;
+}
+
 .modal-content h4 {
     margin-top: 25px;
     margin-bottom: 15px;
     padding-bottom: 5px;
     border-bottom: 1px solid var(--secondary);
-    color: var(--primary);
+    color: #1a2639;
+    font-size: 1.2rem;
 }
 
 /* Alert Styles */
@@ -332,28 +344,39 @@
     margin: 20px 0;
     max-height: 400px;
     overflow-y: auto;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 5px;
 }
 
 .character-list-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px;
-    border: 1px solid #e0e0e0;
-    margin-bottom: 10px;
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    margin-bottom: 12px;
     border-radius: 8px;
     transition: all 0.2s ease;
     background-color: #fff;
+    color: #333;
+}
+
+.character-list-item:last-child {
+    margin-bottom: 0;
 }
 
 .character-list-item:hover {
     border-color: #bf9d61;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
 }
 
 .character-list-item.active {
     border-color: #bf9d61;
     background-color: #fcf7ee;
+    box-shadow: 0 2px 8px rgba(191, 157, 97, 0.3);
 }
 
 .character-list-info {
@@ -363,13 +386,15 @@
 }
 
 .character-list-avatar {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     overflow: hidden;
-    border: 2px solid #bf9d61;
+    border: 3px solid #bf9d61;
     margin-right: 15px;
     flex-shrink: 0;
+    background-color: #f5f5f5;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .character-list-avatar img {
@@ -384,53 +409,96 @@
 
 .character-name {
     font-weight: bold;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     color: #1a2639;
     display: block;
+    margin-bottom: 3px;
 }
 
 .character-user-id {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     color: #666;
     display: block;
     margin-top: 2px;
 }
 
+.character-debug {
+    font-size: 0.75rem !important;
+    color: #888 !important;
+    display: inline-block;
+    margin-top: 3px;
+}
+
 .character-list-actions {
-    margin-left: 10px;
+    margin-left: 12px;
+}
+
+.character-list-actions .btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.character-list-actions .btn-primary {
+    background-color: #bf9d61;
+    border-color: #bf9d61;
+    color: white;
+}
+
+.character-list-actions .btn-primary:hover {
+    background-color: #a58a54;
+    border-color: #a58a54;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .current-badge {
     display: inline-block;
     background-color: #e0f0e0;
     color: #2c8527;
-    font-size: 0.7rem;
-    padding: 2px 8px;
+    font-size: 0.75rem;
+    padding: 3px 10px;
     border-radius: 20px;
-    margin-top: 4px;
+    margin-top: 5px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     border: 1px solid #c0e0c0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    font-weight: bold;
 }
 
 .empty-characters {
     text-align: center;
-    padding: 30px 0;
+    padding: 40px 0;
     color: #666;
 }
 
 /* Character debug info */
 .character-debug-info {
     margin-bottom: 20px; 
-    padding: 10px; 
-    background: #f5f5f5; 
-    border-radius: 5px;
+    padding: 15px; 
+    background: #f8f8f8; 
+    border-radius: 8px;
     color: #333;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .character-debug-info p {
     margin: 5px 0;
     color: #333;
+    font-size: 0.9rem;
+}
+
+.character-debug-info strong {
+    color: #1a2639;
+}
+
+.character-debug-info small {
+    color: #666;
+    font-size: 0.8rem;
 }
 
 /* Print Styles */

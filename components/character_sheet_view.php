@@ -42,7 +42,7 @@
                                 <span class="character-user-id">(User ID: <?php echo isset($char['user_id']) ? $char['user_id'] : 'unknown'; ?>)</span>
                                 
                                 <!-- Add additional debug info -->
-                                <span class="character-debug" style="font-size: 0.7rem; color: #999;">
+                                <span class="character-debug">
                                     ID: <?php echo $char['id']; ?>, 
                                     <?php if (isset($char['strength'])): ?>STR: <?php echo $char['strength']; ?><?php endif; ?>
                                 </span>
