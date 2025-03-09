@@ -1,3 +1,229 @@
+<?php
+// components/character_sheet.php
+
+// Check if a character ID is provided in the URL
+$character_id = isset($_GET['id']) ? (int)$_GET['id'] : null;
+$character = null;
+$error_message = null;
+$user_characters = [];
+
+// Map Discord user to database user_id
+$user_id = null;
+$discord_id = null;
+$db_user_id = null;
+
+// Get Discord ID from session if authenticated
+if ($discord_authenticated && isset($_SESSION['discord_user']['id'])) {
+    $discord_id = $_SESSION['discord_user']['id'];
+    
+    // Get or create a database user_id for this Discord user
+    try {
+        require_once dirname(__DIR__) . '/config/db_connect.php';
+        
+        // First check if this Discord user already has a user_id
+        $stmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
+        $stmt->bindParam(':discord_id', $discord_id);
+        $stmt->execute();
+        
+        $discord_user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($discord_user && isset($discord_user['id'])) {
+            // Use the existing user ID
+            $user_id = $discord_user['id'];
+            $db_user_id = $user_id;
+        } else {
+            // Create a new user entry if needed
+            $stmt = $conn->prepare("INSERT INTO discord_users (discord_id, username, created_at, last_login) 
+                                    VALUES (:discord_id, :username, NOW(), NOW())");
+            $username = $_SESSION['discord_user']['username'] ?? 'Unknown User';
+            $stmt->bindParam(':discord_id', $discord_id);
+            $stmt->bindParam(':username', $username);
+            $stmt->execute();
+            
+            $user_id = $conn->lastInsertId();
+            $db_user_id = $user_id;
+        }
+        
+        error_log("Mapped Discord ID {$discord_id} to database user_id {$user_id}");
+    } catch (Exception $e) {
+        error_log("Error mapping Discord user to database user: " . $e->getMessage());
+        // Fallback to a generic user ID
+        $user_id = 1;
+        $db_user_id = 1;
+    }
+} else {
+    // Not authenticated, use default user_id
+    $user_id = 0;
+    $db_user_id = 0;
+}
+
+// Load the user's characters from the database
+try {
+    // Get database connection
+    if (!isset($conn)) {
+        require_once dirname(__DIR__) . '/config/db_connect.php';
+    }
+    
+    if ($user_id && isset($conn)) {
+        // Load all characters for this user
+        $stmt = $conn->prepare("SELECT * FROM characters WHERE user_id = :user_id ORDER BY updated_at DESC");
+        $stmt->bindParam(':user_id', $user_id);
+        $stmt->execute();
+        
+        $user_characters = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        error_log("Loaded " . count($user_characters) . " characters for user_id {$user_id}");
+    } else {
+        error_log("Cannot load characters: user_id is not set or database connection failed");
+    }
+} catch (Exception $e) {
+    error_log("Error loading user characters: " . $e->getMessage());
+}
+
+// If a character ID is provided, load the character from the database
+if ($character_id) {
+    try {
+        if (!isset($conn)) {
+            require_once dirname(__DIR__) . '/config/db_connect.php';
+        }
+        
+        // Make sure the character belongs to this user
+        $stmt = $conn->prepare("SELECT * FROM characters WHERE id = :id AND user_id = :user_id");
+        $stmt->bindParam(':id', $character_id);
+        $stmt->bindParam(':user_id', $user_id);
+        $stmt->execute();
+        
+        $character = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$character) {
+            $error_message = "Character not found or you don't have permission to view it.";
+        }
+    } catch (PDOException $e) {
+        $error_message = "Database error: " . $e->getMessage();
+    }
+} else {
+    // No character ID provided, load the most recent character
+    if (!empty($user_characters)) {
+        // Use the first character (already sorted by updated_at DESC)
+        $character = $user_characters[0];
+    } else {
+        // No characters found, create a default template
+        $default_image_path = 'assets/TSP_default_character.jpg';
+        
+        // Create parent directory if it doesn't exist
+        if (!file_exists('assets')) {
+            mkdir('assets', 0755, true);
+        }
+        
+        $character = [
+            'id' => null,
+            'name' => 'New Pirate',
+            'image_path' => $default_image_path,
+            'strength' => 0,
+            'agility' => 0,
+            'presence' => 0,
+            'toughness' => 0,
+            'spirit' => 0
+        ];
+    }
+}
+
+// Process form submission for editing character
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_character') {
+    // Get the posted character data
+    $char_id = isset($_POST['character_id']) ? $_POST['character_id'] : '';
+    $name = htmlspecialchars($_POST['name']);
+    $strength = (int)$_POST['strength'];
+    $agility = (int)$_POST['agility'];
+    $presence = (int)$_POST['presence'];
+    $toughness = (int)$_POST['toughness'];
+    $spirit = (int)$_POST['spirit'];
+    
+    // Use the properly mapped user ID
+    error_log("Creating/updating character for user_id: $user_id (mapped from Discord ID: " . (isset($discord_id) ? $discord_id : 'not set') . ")");
+    
+    // Handle image upload
+    $image_path = isset($character['image_path']) ? $character['image_path'] : 'uploads/characters/character_1741469717_67ccb815a80be.jpg';
+    
+    if (isset($_FILES['character_image']) && $_FILES['character_image']['error'] === UPLOAD_ERR_OK) {
+        // Create uploads directory if it doesn't exist
+        $upload_dir = 'uploads/characters/';
+        if (!file_exists($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+        
+        // Sanitize filename and generate a unique name
+        $file_extension = pathinfo($_FILES['character_image']['name'], PATHINFO_EXTENSION);
+        $new_filename = 'character_' . time() . '_' . uniqid() . '.' . $file_extension;
+        $target_path = $upload_dir . $new_filename;
+        
+        // Validate file type
+        $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
+        if (in_array(strtolower($file_extension), $allowed_types)) {
+            // Move uploaded file
+            if (move_uploaded_file($_FILES['character_image']['tmp_name'], $target_path)) {
+                $image_path = $target_path;
+            } else {
+                $error_message = "Failed to upload image.";
+            }
+        } else {
+            $error_message = "Invalid file type. Allowed types: jpg, jpeg, png, gif.";
+        }
+    }
+
+    // Use database connection
+    try {
+        if (!isset($conn)) {
+            require_once dirname(__DIR__) . '/config/db_connect.php';
+        }
+        
+        // Create date fields
+        $now = date('Y-m-d H:i:s');
+        
+        // If character_id is empty, this is a new character
+        if (empty($char_id)) {
+            // Use a minimal insert query
+            $query = "INSERT INTO characters (user_id, name, image_path, strength, agility, presence, toughness, spirit, created_at, updated_at) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            
+            $stmt = $conn->prepare($query);
+            $stmt->execute([$user_id, $name, $image_path, $strength, $agility, $presence, $toughness, $spirit, $now, $now]);
+            
+            // Get the new character ID
+            $char_id = $conn->lastInsertId();
+        } else {
+            // Simple update query - make sure it's this user's character
+            $query = "UPDATE characters SET name = ?, image_path = ?, strength = ?, agility = ?, 
+                    presence = ?, toughness = ?, spirit = ?, updated_at = ? WHERE id = ? AND user_id = ?";
+            
+            $stmt = $conn->prepare($query);
+            $stmt->execute([$name, $image_path, $strength, $agility, $presence, $toughness, $spirit, $now, $char_id, $user_id]);
+        }
+        
+        // Fetch the newly created/updated character
+        $stmt = $conn->prepare("SELECT * FROM characters WHERE id = ?");
+        $stmt->execute([$char_id]);
+        $character = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Log success
+        error_log("Successfully saved character with ID: $char_id for user_id: $user_id");
+        
+        // Reload the user's characters
+        $stmt = $conn->prepare("SELECT * FROM characters WHERE user_id = ? ORDER BY updated_at DESC");
+        $stmt->execute([$user_id]);
+        $user_characters = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Redirect to prevent form resubmission
+        header("Location: character_sheet.php?id=" . $char_id . "&success=1");
+        exit;
+        
+    } catch (Exception $e) {
+        error_log("Database error saving character: " . $e->getMessage());
+        $error_message = "Unable to save to database: " . $e->getMessage();
+    }
+}
+?>
+
 <!-- Character Switcher Modal -->
 <div id="character-switcher-modal" class="modal">
     <div class="modal-content">
@@ -5,7 +231,7 @@
         <h3>Character Selection</h3>
         
         <div class="character-debug-info" style="margin-bottom: 20px; padding: 10px; background: #f5f5f5; border-radius: 5px;">
-            <p><strong>Using Hardcoded Characters:</strong> Found <?php echo count($user_characters); ?> characters</p>
+            <p><strong>Using Database Characters:</strong> Found <?php echo count($user_characters); ?> characters</p>
             <?php if (isset($discord_id) && $discord_id): ?>
                 <p><small>Discord ID: <?php echo $discord_id; ?> → User ID: <?php echo isset($db_user_id) ? $db_user_id : 'not set'; ?></small></p>
                 <p><small>Discord User: <?php echo isset($_SESSION['discord_user']['username']) ? $_SESSION['discord_user']['username'] : 'unknown'; ?></small></p>
@@ -54,9 +280,6 @@
                 <i class="fas fa-user-slash" style="font-size: 3rem; color: var(--secondary); margin-bottom: 20px;"></i>
                 <p>You don't have any characters yet.</p>
                 <p>Create your first character to get started!</p>
-                <div style="margin-top: 15px; padding: 10px; background: #ffe; border: 1px solid #ddc; border-radius: 5px;">
-                    <p><strong>Note:</strong> The system cannot find any characters in the database. Please check the character table structure.</p>
-                </div>
             </div>
         <?php endif; ?>
         
@@ -69,424 +292,7 @@
             <?php endif; ?>
         </div>
     </div>
-</div><?php
-// components/character_sheet.php
-
-// Check if a character ID is provided in the URL
-$character_id = isset($_GET['id']) ? (int)$_GET['id'] : null;
-$character = null;
-$error_message = null;
-
-// If user is logged in, load their character
-// Get user ID from Discord session if authenticated
-$user_id = 1; // Default fallback
-
-// IMPORTANT: EMERGENCY FIX - Hardcode the characters for now
-// Based on our database diagnostic, we know there are 5 characters in the database
-
-// Direct solutions: Always use the hardcoded characters
-$user_characters = [
-    [
-        'id' => 1,
-        'user_id' => 1,
-        'name' => 'Test Pirate',
-        'image_path' => 'uploads/characters/character_1741469717_67ccb815a80be.jpg',
-        'strength' => 3,
-        'agility' => -2,
-        'presence' => 1,
-        'toughness' => 0,
-        'spirit' => 2
-    ],
-    [
-        'id' => 2,
-        'user_id' => 1,
-        'name' => 'Test Pirate 2',
-        'image_path' => 'uploads/characters/character_1741469717_67ccb815a80be.jpg',
-        'strength' => 1,
-        'agility' => 2,
-        'presence' => 3,
-        'toughness' => -1,
-        'spirit' => -1
-    ],
-    [
-        'id' => 3,
-        'user_id' => 1,
-        'name' => 'New Pirate 3',
-        'image_path' => 'uploads/characters/character_1741469717_67ccb815a80be.jpg',
-        'strength' => 1,
-        'agility' => 0,
-        'presence' => 1,
-        'toughness' => 0,
-        'spirit' => 0
-    ],
-    [
-        'id' => 4,
-        'user_id' => 1,
-        'name' => 'New Pirate',
-        'image_path' => 'uploads/characters/character_1741469717_67ccb815a80be.jpg',
-        'strength' => 0,
-        'agility' => 0,
-        'presence' => 0,
-        'toughness' => 0,
-        'spirit' => 0
-    ],
-    [
-        'id' => 5,
-        'user_id' => 1,
-        'name' => 'New Pirate',
-        'image_path' => 'uploads/characters/character_1741469717_67ccb815a80be.jpg',
-        'strength' => 0,
-        'agility' => 0,
-        'presence' => 0,
-        'toughness' => 0,
-        'spirit' => 0
-    ]
-];
-
-// Get Discord ID for display only
-$discord_id = null;
-$db_user_id = 1; // Always use user_id 1
-if ($discord_authenticated && isset($_SESSION['discord_user']['id'])) {
-    $discord_id = $_SESSION['discord_user']['id'];
-}
-
-// Try database connection only for log diagnostics
-try {
-    // We know these are the correct credentials from our diagnostic tool
-    $host = 'localhost';
-    $dbname = 'theshfmb_SPDB';
-    $username = 'theshfmb_db_admin';
-    
-    // Find config file with password
-    $password = '';
-    $config_paths = [
-        '/home/theshfmb/private/secure_variables.php',
-        dirname(__DIR__) . '/private/secure_variables.php',
-        $_SERVER['DOCUMENT_ROOT'] . '/private/secure_variables.php'
-    ];
-    
-    foreach ($config_paths as $path) {
-        if (file_exists($path)) {
-            $config = require($path);
-            if (isset($config['password'])) {
-                $password = $config['password'];
-                break;
-            }
-        }
-    }
-    
-    if (!empty($password)) {
-        // Create connection for diagnostic only
-        $conn = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
-        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        
-        // Just log what database we're connected to
-        $result = $conn->query("SELECT DATABASE()")->fetch(PDO::FETCH_NUM);
-        error_log("Diagnostic connection successful to database: " . $result[0]);
-        
-        // Log some basic info about what characters exist
-        $chars = $conn->query("SELECT COUNT(*) FROM characters")->fetchColumn();
-        error_log("Total characters in database: $chars");
-    }
-} catch (Exception $e) {
-    error_log("Diagnostic connection error: " . $e->getMessage());
-}
-
-// If we still have no characters, try an alternative approach
-if (empty($user_characters)) {
-    try {
-        // Hard-code the data we know exists
-        $user_characters = [
-            [
-                'id' => 1,
-                'user_id' => 1,
-                'name' => 'Test Pirate',
-                'image_path' => 'uploads/characters/character_1741469717_67ccb815a80be.jpg',
-                'strength' => 3,
-                'agility' => -2,
-                'presence' => 1,
-                'toughness' => 0,
-                'spirit' => 2
-            ],
-            [
-                'id' => 2,
-                'user_id' => 1,
-                'name' => 'Test Pirate 2',
-                'image_path' => 'uploads/characters/character_1741469717_67ccb815a80be.jpg',
-                'strength' => 1,
-                'agility' => 2,
-                'presence' => 3,
-                'toughness' => -1,
-                'spirit' => -1
-            ],
-            [
-                'id' => 3,
-                'user_id' => 1,
-                'name' => 'New Pirate 3',
-                'image_path' => 'uploads/characters/character_1741469717_67ccb815a80be.jpg',
-                'strength' => 1,
-                'agility' => 0,
-                'presence' => 1,
-                'toughness' => 0,
-                'spirit' => 0
-            ],
-            [
-                'id' => 4,
-                'user_id' => 1,
-                'name' => 'New Pirate',
-                'image_path' => 'uploads/characters/character_1741469717_67ccb815a80be.jpg',
-                'strength' => 0,
-                'agility' => 0,
-                'presence' => 0,
-                'toughness' => 0,
-                'spirit' => 0
-            ]
-        ];
-        error_log("Using hardcoded fallback data with " . count($user_characters) . " characters");
-    } catch (Exception $e) {
-        error_log("Error with fallback data: " . $e->getMessage());
-    }
-}
-
-// If a character ID is provided, load the character from the database
-if ($character_id) {
-    try {
-        require_once 'config/db_connect.php';
-        
-        $stmt = $conn->prepare("SELECT * FROM characters WHERE id = :id AND user_id = :user_id");
-        $stmt->bindParam(':id', $character_id);
-        $stmt->bindParam(':user_id', $user_id);
-        $stmt->execute();
-        
-        $character = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if (!$character) {
-            $error_message = "Character not found or you don't have permission to view it.";
-        }
-    } catch (PDOException $e) {
-        $error_message = "Database error: " . $e->getMessage();
-    }
-} else {
-    // No character ID provided, load the most recent character or create a default one
-    try {
-        require_once 'config/db_connect.php';
-        
-        $stmt = $conn->prepare("SELECT * FROM characters WHERE user_id = :user_id ORDER BY updated_at DESC LIMIT 1");
-        $stmt->bindParam(':user_id', $user_id);
-        $stmt->execute();
-        
-        $character = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        // Set default image path
-        $default_image_path = 'assets/TSP_default_character.jpg';
-        
-        // Create parent directory if it doesn't exist
-        if (!file_exists('assets')) {
-            mkdir('assets', 0755, true);
-        }
-        
-        if (!$character) {
-            // No characters found, create a default template
-            $character = [
-                'id' => null,
-                'name' => 'New Pirate',
-                'image_path' => $default_image_path,
-                'strength' => 0,
-                'agility' => 0,
-                'presence' => 0,
-                'toughness' => 0,
-                'spirit' => 0
-            ];
-        }
-    } catch (PDOException $e) {
-        $error_message = "Database error: " . $e->getMessage();
-    }
-}
-
-// Process form submission for editing character
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_character') {
-    // Get the posted character data
-    $char_id = isset($_POST['character_id']) ? $_POST['character_id'] : '';
-    $name = htmlspecialchars($_POST['name']);
-    $strength = (int)$_POST['strength'];
-    $agility = (int)$_POST['agility'];
-    $presence = (int)$_POST['presence'];
-    $toughness = (int)$_POST['toughness'];
-    $spirit = (int)$_POST['spirit'];
-    
-    // Use the properly mapped user ID (use the global db_user_id)
-    $user_id = isset($db_user_id) ? $db_user_id : 1; // Default to 1 if for some reason $db_user_id is not set
-    error_log("Creating/updating character for user_id: $user_id (mapped from Discord ID: " . (isset($discord_id) ? $discord_id : 'not set') . ")");
-    
-    // Handle image upload
-    $image_path = isset($character['image_path']) ? $character['image_path'] : 'uploads/characters/character_1741469717_67ccb815a80be.jpg';
-    
-    if (isset($_FILES['character_image']) && $_FILES['character_image']['error'] === UPLOAD_ERR_OK) {
-        // Create uploads directory if it doesn't exist
-        $upload_dir = 'uploads/characters/';
-        if (!file_exists($upload_dir)) {
-            mkdir($upload_dir, 0755, true);
-        }
-        
-        // Sanitize filename and generate a unique name
-        $file_extension = pathinfo($_FILES['character_image']['name'], PATHINFO_EXTENSION);
-        $new_filename = 'character_' . time() . '_' . uniqid() . '.' . $file_extension;
-        $target_path = $upload_dir . $new_filename;
-        
-        // Validate file type
-        $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
-        if (in_array(strtolower($file_extension), $allowed_types)) {
-            // Move uploaded file
-            if (move_uploaded_file($_FILES['character_image']['tmp_name'], $target_path)) {
-                $image_path = $target_path;
-            } else {
-                $error_message = "Failed to upload image.";
-            }
-        } else {
-            $error_message = "Invalid file type. Allowed types: jpg, jpeg, png, gif.";
-        }
-    }
-
-    // Use the same direct database connection approach
-    try {
-        // Instead of requiring db_connect.php, use the same direct connection approach
-        // with the correct credentials
-        
-        // We know from diagnostic that these are the correct connection details
-        $host = 'localhost';
-        $dbname = 'theshfmb_SPDB';
-        $username = 'theshfmb_db_admin'; // Correct username
-        
-        // Try to get password from config file
-        $password = '';
-        $config_paths = [
-            '/home/theshfmb/private/secure_variables.php', // Production
-            dirname(__DIR__) . '/private/secure_variables.php', // Relative path
-            $_SERVER['DOCUMENT_ROOT'] . '/private/secure_variables.php' // Document root
-        ];
-        
-        foreach ($config_paths as $path) {
-            if (file_exists($path)) {
-                $config = require($path);
-                if (isset($config['password'])) {
-                    $password = $config['password'];
-                    break;
-                }
-            }
-        }
-        
-        // If we couldn't get the password, throw an exception
-        if (empty($password)) {
-            throw new Exception("Could not retrieve database password from config");
-        }
-        
-        // Create a direct database connection
-        $direct_conn = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
-        $direct_conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        
-        // Create date fields
-        $now = date('Y-m-d H:i:s');
-        
-        // If character_id is empty, this is a new character
-        if (empty($char_id)) {
-            // Use a minimal insert query
-            $query = "INSERT INTO characters (user_id, name, image_path, strength, agility, presence, toughness, spirit, created_at, updated_at) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            
-            $stmt = $direct_conn->prepare($query);
-            $stmt->execute([$user_id, $name, $image_path, $strength, $agility, $presence, $toughness, $spirit, $now, $now]);
-            
-            // Get the new character ID
-            $char_id = $direct_conn->lastInsertId();
-        } else {
-            // Simple update query
-            $query = "UPDATE characters SET name = ?, image_path = ?, strength = ?, agility = ?, 
-                    presence = ?, toughness = ?, spirit = ?, updated_at = ? WHERE id = ?";
-            
-            $stmt = $direct_conn->prepare($query);
-            $stmt->execute([$name, $image_path, $strength, $agility, $presence, $toughness, $spirit, $now, $char_id]);
-        }
-        
-        // Add the character to our hardcoded array for display
-        if (empty($char_id)) {
-            // This would be an issue - use a dummy ID
-            $char_id = count($user_characters) + 1;
-        }
-        
-        // Add to our hardcoded array if it's a new character
-        if (!empty($char_id) && empty($_POST['character_id'])) {
-            $user_characters[] = [
-                'id' => $char_id,
-                'user_id' => $user_id,
-                'name' => $name,
-                'image_path' => $image_path,
-                'strength' => $strength,
-                'agility' => $agility,
-                'presence' => $presence,
-                'toughness' => $toughness,
-                'spirit' => $spirit
-            ];
-        }
-        
-        // Add the newly created/updated character to our $user_characters array
-        // so it's immediately available for display without a refresh
-        $new_char = [
-            'id' => $char_id,
-            'user_id' => $user_id,
-            'name' => $name,
-            'image_path' => $image_path,
-            'strength' => $strength,
-            'agility' => $agility,
-            'presence' => $presence,
-            'toughness' => $toughness,
-            'spirit' => $spirit,
-            'created_at' => $now,
-            'updated_at' => $now
-        ];
-        
-        // Update $user_characters array if it was a new character
-        if (empty($_POST['character_id'])) {
-            $user_characters[] = $new_char;
-        } else {
-            // Update the existing character in the array
-            foreach ($user_characters as $key => $char) {
-                if ($char['id'] == $char_id) {
-                    $user_characters[$key] = $new_char;
-                    break;
-                }
-            }
-        }
-        
-        // Set the current character
-        $character = $new_char;
-        
-        // Log success
-        error_log("Successfully saved character with ID: $char_id for user_id: $user_id");
-        
-        // Redirect to prevent form resubmission
-        header("Location: character_sheet.php?id=" . $char_id . "&success=1");
-        exit;
-        
-    } catch (Exception $e) {
-        error_log("Database error saving character: " . $e->getMessage());
-        $error_message = "Unable to save to database, but your character has been temporarily created.";
-        
-        // Add to our hardcoded array even if the database fails
-        $temp_id = count($user_characters) + 1;
-        $user_characters[] = [
-            'id' => $temp_id,
-            'user_id' => $user_id,
-            'name' => $name,
-            'image_path' => $image_path,
-            'strength' => $strength,
-            'agility' => $agility,
-            'presence' => $presence,
-            'toughness' => $toughness,
-            'spirit' => $spirit
-        ];
-    }
-}
-?>
+</div>
 
 <div class="dashboard-header">
     <div class="logo">
