@@ -35,7 +35,7 @@
                                 : 'assets/TSP_default_character.jpg';
                             ?>
                             <div class="character-list-avatar">
-                                <img src="<?php echo $charImage; ?>" alt="Character Portrait" onerror="this.src='assets/TSP_default_character.jpg'" style="width: 50px !important; height: 50px !important; max-width: 50px !important; max-height: 50px !important; object-fit: cover !important;">
+                                <img src="<?php echo $charImage; ?>" alt="Character Portrait" onerror="this.src='assets/TSP_default_character.jpg'">
                             </div>
                             <div class="character-list-details">
                                 <span class="character-name"><?php echo htmlspecialchars($char['name']); ?></span>
@@ -135,7 +135,7 @@
                         ? htmlspecialchars($mainImagePath) 
                         : 'assets/TSP_default_character.jpg';
                     ?>
-                    <img src="<?php echo $mainImage; ?>" alt="Character Portrait" onerror="this.src='assets/TSP_default_character.jpg'" style="width: 100px !important; height: 100px !important; max-width: 100px !important; max-height: 100px !important; object-fit: cover !important;">
+                    <img src="<?php echo $mainImage; ?>" alt="Character Portrait" onerror="this.src='assets/TSP_default_character.jpg'">
                 </div>
                 <div class="character-title">
                     <h2 id="character-name"><?php echo htmlspecialchars($character['name']); ?></h2>
