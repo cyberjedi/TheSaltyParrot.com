@@ -213,17 +213,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $stmt->execute([$user_id]);
         $user_characters = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Redirect to prevent form resubmission - use full path relative to site root
-        $redirect_path = dirname($_SERVER['PHP_SELF']);
-        if ($redirect_path == '/components') {
-            // If accessed directly from components folder (shouldn't happen but just in case)
-            $redirect_path = '/character_sheet.php';
-        } else {
-            // Normal case - we're included from the main character_sheet.php
-            $redirect_path = rtrim($redirect_path, '/') . '/character_sheet.php';
-        }
-        
-        header("Location: " . $redirect_path . "?id=" . $char_id . "&success=1");
+        // Redirect using a simple absolute path from web root
+        header("Location: /character_sheet.php?id=" . $char_id . "&success=1");
         exit;
         
     } catch (Exception $e) {
@@ -277,16 +268,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             </div>
                         </div>
                         <div class="character-list-actions">
-                            <?php
-                            // Calculate the correct character sheet path based on the current script
-                            $sheet_path = dirname($_SERVER['PHP_SELF']);
-                            if ($sheet_path == '/components') {
-                                $sheet_path = '/character_sheet.php';
-                            } else {
-                                $sheet_path = rtrim($sheet_path, '/') . '/character_sheet.php';
-                            }
-                            ?>
-                            <a href="<?php echo $sheet_path; ?>?id=<?php echo $char['id']; ?>" class="btn btn-primary btn-sm">
+                            <a href="/character_sheet.php?id=<?php echo $char['id']; ?>" class="btn btn-primary btn-sm">
                                 <i class="fas fa-user"></i> Select
                             </a>
                         </div>
