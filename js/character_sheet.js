@@ -186,36 +186,96 @@ document.addEventListener('DOMContentLoaded', function() {
         item.style.boxSizing = 'border-box';
     });
     
-    // Add click event listeners to stat boxes for dice rolls
-    if (statBoxes) {
-        statBoxes.forEach(box => {
-            box.addEventListener('click', function() {
-                // Get attribute data
-                const attributeName = this.dataset.attribute;
-                const attributeValue = parseInt(this.dataset.value);
-                
-                // Generate random d20 roll (1-20)
-                const diceValue = Math.floor(Math.random() * 20) + 1;
-                const totalValue = diceValue + attributeValue;
-                
-                // Store current roll data
-                currentRoll = {
-                    attributeName: attributeName.charAt(0).toUpperCase() + attributeName.slice(1),
-                    attributeValue: attributeValue,
-                    diceValue: diceValue,
-                    totalValue: totalValue
-                };
-                
-                // Update modal with roll results
-                document.getElementById('roll-title').textContent = `${currentRoll.attributeName} Check`;
-                document.getElementById('dice-value').textContent = currentRoll.diceValue;
-                document.getElementById('attribute-value').textContent = currentRoll.attributeValue >= 0 ? `+${currentRoll.attributeValue}` : currentRoll.attributeValue;
-                document.getElementById('total-value').textContent = currentRoll.totalValue;
-                
-                // Show the dice roll modal
-                diceRollModal.style.display = 'block';
+    // Add click event listeners for dice rolls
+    // First try the dice icons specifically
+    const diceIcons = document.querySelectorAll('.stat-roll-icon');
+    
+    if (diceIcons && diceIcons.length > 0) {
+        console.log('Found dice icons:', diceIcons.length);
+        
+        diceIcons.forEach(icon => {
+            icon.addEventListener('click', function(event) {
+                event.stopPropagation(); // Prevent the event from bubbling to the stat box
+                const parentBox = this.closest('.stat-box');
+                handleDiceRoll(parentBox);
             });
         });
+    }
+    
+    // Also attach to stat boxes as a fallback
+    if (statBoxes && statBoxes.length > 0) {
+        console.log('Found stat boxes:', statBoxes.length);
+        
+        statBoxes.forEach(box => {
+            box.addEventListener('click', function(event) {
+                // Only handle clicks directly on the box, not on children
+                if (event.target === this) {
+                    console.log('Stat box clicked:', this);
+                    handleDiceRoll(this);
+                }
+            });
+        });
+    } else {
+        console.error('No stat boxes found for dice rolling');
+    }
+    
+    // Function to handle dice rolling
+    function handleDiceRoll(statBox) {
+        if (!statBox) {
+            console.error('No stat box provided');
+            return;
+        }
+        
+        // Get attribute data from the stat box
+        const attributeName = statBox.dataset.attribute;
+        const attributeValue = parseInt(statBox.dataset.value || 0);
+        
+        console.log('Handling dice roll for:', attributeName, attributeValue);
+        
+        if (!attributeName) {
+            console.error('No attribute name found in data-attribute');
+            return;
+        }
+        
+        // Generate random d20 roll (1-20)
+        const diceValue = Math.floor(Math.random() * 20) + 1;
+        const totalValue = diceValue + attributeValue;
+        
+        // Store current roll data
+        currentRoll = {
+            attributeName: attributeName.charAt(0).toUpperCase() + attributeName.slice(1),
+            attributeValue: attributeValue,
+            diceValue: diceValue,
+            totalValue: totalValue
+        };
+        
+        console.log('Generated roll:', currentRoll);
+        
+        // Check if modal elements exist
+        const rollTitle = document.getElementById('roll-title');
+        const diceValueEl = document.getElementById('dice-value');
+        const attributeValueEl = document.getElementById('attribute-value');
+        const totalValueEl = document.getElementById('total-value');
+        
+        if (!rollTitle || !diceValueEl || !attributeValueEl || !totalValueEl) {
+            console.error('Missing modal elements');
+            alert(`You rolled a ${currentRoll.attributeName} check: ${currentRoll.diceValue} (d20) + ${currentRoll.attributeValue} = ${currentRoll.totalValue}`);
+            return;
+        }
+        
+        // Update modal with roll results
+        rollTitle.textContent = `${currentRoll.attributeName} Check`;
+        diceValueEl.textContent = currentRoll.diceValue;
+        attributeValueEl.textContent = currentRoll.attributeValue >= 0 ? `+${currentRoll.attributeValue}` : currentRoll.attributeValue;
+        totalValueEl.textContent = currentRoll.totalValue;
+        
+        // Show the dice roll modal if it exists
+        if (diceRollModal) {
+            diceRollModal.style.display = 'block';
+        } else {
+            console.error('Dice roll modal not found');
+            alert(`You rolled a ${currentRoll.attributeName} check: ${currentRoll.diceValue} (d20) + ${currentRoll.attributeValue} = ${currentRoll.totalValue}`);
+        }
     }
     
     // Copy roll result to clipboard
