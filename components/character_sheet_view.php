@@ -27,11 +27,15 @@
                     <div class="character-list-item <?php echo ($character && $character['id'] == $char['id']) ? 'active' : ''; ?>">
                         <div class="character-list-info">
                             <?php
-                            // Get character image
-                            $charImage = !empty($char['image_path']) ? htmlspecialchars($char['image_path']) : 'assets/TSP_default_character.jpg';
+                            // Get character image with validation
+                            $charImagePath = !empty($char['image_path']) ? $char['image_path'] : '';
+                            // Check if the image file actually exists, otherwise use default
+                            $charImage = (!empty($charImagePath) && file_exists($charImagePath)) 
+                                ? htmlspecialchars($charImagePath) 
+                                : 'assets/TSP_default_character.jpg';
                             ?>
                             <div class="character-list-avatar">
-                                <img src="<?php echo $charImage; ?>" alt="Character Portrait" onerror="this.src='assets/TSP_default_character.jpg'">
+                                <img src="<?php echo $charImage; ?>" alt="Character Portrait" onerror="this.src='assets/TSP_default_character.jpg'" style="width: 50px !important; height: 50px !important; max-width: 50px !important; max-height: 50px !important; object-fit: cover !important;">
                             </div>
                             <div class="character-list-details">
                                 <span class="character-name"><?php echo htmlspecialchars($char['name']); ?></span>
@@ -124,7 +128,14 @@
             <!-- Character Sheet Header -->
             <div class="character-header">
                 <div class="character-image">
-                    <img src="<?php echo htmlspecialchars($character['image_path']); ?>" alt="Character Portrait" onerror="this.src='assets/TSP_default_character.jpg'">
+                    <?php
+                    // Validate image path
+                    $mainImagePath = !empty($character['image_path']) ? $character['image_path'] : '';
+                    $mainImage = (!empty($mainImagePath) && file_exists($mainImagePath)) 
+                        ? htmlspecialchars($mainImagePath) 
+                        : 'assets/TSP_default_character.jpg';
+                    ?>
+                    <img src="<?php echo $mainImage; ?>" alt="Character Portrait" onerror="this.src='assets/TSP_default_character.jpg'" style="width: 100px !important; height: 100px !important; max-width: 100px !important; max-height: 100px !important; object-fit: cover !important;">
                 </div>
                 <div class="character-title">
                     <h2 id="character-name"><?php echo htmlspecialchars($character['name']); ?></h2>
@@ -190,7 +201,14 @@
                 <div class="image-upload-container">
                     <div class="image-preview-container">
                         <div class="current-image-wrapper">
-                            <img src="<?php echo htmlspecialchars($character['image_path']); ?>" alt="Current Image" id="image-preview">
+                            <?php
+                            // Validate modal image path
+                            $modalImagePath = !empty($character['image_path']) ? $character['image_path'] : '';
+                            $modalImage = (!empty($modalImagePath) && file_exists($modalImagePath)) 
+                                ? htmlspecialchars($modalImagePath) 
+                                : 'assets/TSP_default_character.jpg';
+                            ?>
+                            <img src="<?php echo $modalImage; ?>" alt="Current Image" id="image-preview">
                         </div>
                     </div>
                     <div class="file-input-wrapper">
