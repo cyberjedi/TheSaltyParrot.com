@@ -12,7 +12,7 @@
         <h3>Character Selection</h3>
         
         <div class="character-debug-info">
-            <p><strong>Using Database Characters:</strong> Found <?php echo count($user_characters); ?> characters</p>
+            <p><strong>Available Characters:</strong> Found <?php echo count($user_characters); ?> characters</p>
             <?php if (isset($discord_id) && $discord_id): ?>
                 <p><small>Discord ID: <?php echo $discord_id; ?> → User ID: <?php echo isset($db_user_id) ? $db_user_id : 'not set'; ?></small></p>
                 <p><small>Discord User: <?php echo isset($_SESSION['discord_user']['username']) ? $_SESSION['discord_user']['username'] : 'unknown'; ?></small></p>
@@ -39,10 +39,10 @@
                             </div>
                             <div class="character-list-details">
                                 <span class="character-name"><?php echo htmlspecialchars($char['name']); ?></span>
-                                <span class="character-user-id">(User ID: <?php echo isset($char['user_id']) ? $char['user_id'] : 'unknown'; ?>)</span>
+                                <span class="character-user-id">User ID: <?php echo isset($char['user_id']) ? $char['user_id'] : 'unknown'; ?></span>
                                 
-                                <!-- Add additional debug info -->
-                                <span class="character-debug">
+                                <!-- Debug info with explicit styling -->
+                                <span class="character-debug" style="font-size: 0.75rem; color: #777;">
                                     ID: <?php echo $char['id']; ?>, 
                                     <?php if (isset($char['strength'])): ?>STR: <?php echo $char['strength']; ?><?php endif; ?>
                                 </span>
@@ -54,7 +54,7 @@
                         </div>
                         <div class="character-list-actions">
                             <a href="/character_sheet.php?id=<?php echo $char['id']; ?>" class="btn btn-primary btn-sm">
-                                <i class="fas fa-user"></i> Select
+                                Select
                             </a>
                         </div>
                     </div>
@@ -63,8 +63,8 @@
         <?php else: ?>
             <div class="empty-characters">
                 <i class="fas fa-user-slash" style="font-size: 3rem; color: var(--secondary); margin-bottom: 20px;"></i>
-                <p>You don't have any characters yet.</p>
-                <p>Create your first character to get started!</p>
+                <p style="color: #333;">You don't have any characters yet.</p>
+                <p style="color: #333;">Create your first character to get started!</p>
             </div>
         <?php endif; ?>
         
@@ -72,7 +72,7 @@
             <button type="button" class="btn btn-secondary close-modal-btn">Close</button>
             <?php if ($discord_authenticated): ?>
             <button type="button" class="btn btn-primary" id="create-new-from-switcher">
-                <i class="fas fa-plus-circle"></i> Create New Character
+                Create New Character
             </button>
             <?php endif; ?>
         </div>
