@@ -46,7 +46,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'get_webhooks' && isset($_GET[
         error_log('Found user ID: ' . $user_id);
         
         // Get user's webhooks
-        $stmt = $conn->prepare("SELECT id, webhook_name, channel_name, guild_name, is_default FROM discord_webhooks WHERE user_id = :user_id AND is_active = 1 ORDER BY is_default DESC, last_updated DESC");
+        $stmt = $conn->prepare("SELECT id, webhook_name, channel_name, is_default FROM discord_webhooks WHERE user_id = :user_id AND is_active = 1 ORDER BY is_default DESC, last_updated DESC");
         $stmt->bindParam(':user_id', $user_id);
         $stmt->execute();
         $webhooks = $stmt->fetchAll(PDO::FETCH_ASSOC);

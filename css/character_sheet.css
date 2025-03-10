@@ -121,7 +121,7 @@
 
 .stat-roll-icon {
     position: absolute !important;
-    top: 10px !important;
+    bottom: 10px !important;
     right: 10px !important;
     color: #5765F2FF !important; /* Discord blue with full opacity */
     opacity: 1 !important;

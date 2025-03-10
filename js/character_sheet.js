@@ -351,6 +351,54 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .then(data => {
                     console.log('Webhook response data:', data);
+                    // Handle error cases first
+                    if (data.status === 'error') {
+                        console.error('Error from webhook API:', data.message);
+                        
+                        // Show error in selector
+                        selector.querySelector('.webhook-selector-content').innerHTML = `
+                            <div class="webhook-error">
+                                <h4 style="color:#ff3333;text-align:center;"><i class="fas fa-exclamation-triangle"></i> Error Loading Webhooks</h4>
+                                <p>${data.message}</p>
+                                <p>Please check your Discord configuration.</p>
+                                <div style="text-align:center;margin-top:15px;">
+                                    <a href="discord/webhooks.php" class="btn btn-discord">Configure Webhooks</a>
+                                    <button id="cancel-webhook-btn" class="btn btn-secondary">Close</button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Add cancel button event listener
+                        selector.querySelector('#cancel-webhook-btn').addEventListener('click', function() {
+                            document.body.removeChild(selector);
+                        });
+                        return;
+                    }
+                    
+                    // Success case but no webhooks
+                    if (!data.webhooks || data.webhooks.length === 0) {
+                        console.log('No webhooks found for user');
+                        
+                        selector.querySelector('.webhook-selector-content').innerHTML = `
+                            <div class="webhook-error">
+                                <h4 style="color:#5765F2FF;text-align:center;"><i class="fab fa-discord"></i> No Discord Webhooks</h4>
+                                <p>You don't have any Discord webhooks configured.</p>
+                                <p>Set up a webhook to share rolls with your Discord server.</p>
+                                <div style="text-align:center;margin-top:15px;">
+                                    <a href="discord/webhooks.php" class="btn btn-discord">Configure Webhooks</a>
+                                    <button id="cancel-webhook-btn" class="btn btn-secondary">Close</button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Add cancel button event listener
+                        selector.querySelector('#cancel-webhook-btn').addEventListener('click', function() {
+                            document.body.removeChild(selector);
+                        });
+                        return;
+                    }
+                    
+                    // Success case with webhooks
                     if (data.status === 'success' && data.webhooks && data.webhooks.length > 0) {
                         let webhookHTML = '<h4 style="color:#5765F2FF;text-align:center;margin-bottom:15px;"><i class="fab fa-discord"></i> Select Discord Channel</h4><div class="webhook-options">';
                         data.webhooks.forEach(webhook => {
@@ -358,8 +406,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="webhook-option" data-webhook-id="${webhook.id}">
                                     <i class="fab fa-discord"></i> 
                                     <div class="webhook-details">
-                                        <span class="webhook-channel">#${webhook.channel_name}</span>
-                                        <span class="webhook-guild">${webhook.guild_name || 'Discord Server'}</span>
+                                        <span class="webhook-channel">#${webhook.channel_name || 'discord-channel'}</span>
+                                        <span class="webhook-guild">${webhook.webhook_name || 'Discord Webhook'}</span>
                                     </div>
                                 </div>
                             `;
