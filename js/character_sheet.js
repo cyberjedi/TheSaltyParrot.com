@@ -186,37 +186,37 @@ document.addEventListener('DOMContentLoaded', function() {
         item.style.boxSizing = 'border-box';
     });
     
-    // Add click event listeners for dice rolls
-    // First try the dice icons specifically
-    const diceIcons = document.querySelectorAll('.stat-roll-icon');
+    // Add click event listeners for dice rolls in table layout
+    const diceButtons = document.querySelectorAll('.stat-roll-btn');
+    const statRows = document.querySelectorAll('.stat-row');
     
-    if (diceIcons && diceIcons.length > 0) {
-        console.log('Found dice icons:', diceIcons.length);
+    if (diceButtons && diceButtons.length > 0) {
+        console.log('Found dice buttons:', diceButtons.length);
         
-        diceIcons.forEach(icon => {
-            icon.addEventListener('click', function(event) {
-                event.stopPropagation(); // Prevent the event from bubbling to the stat box
-                const parentBox = this.closest('.stat-box');
-                handleDiceRoll(parentBox);
+        diceButtons.forEach(button => {
+            button.addEventListener('click', function(event) {
+                event.stopPropagation(); // Prevent the event from bubbling
+                const parentRow = this.closest('.stat-row');
+                handleDiceRoll(parentRow);
             });
         });
     }
     
-    // Also attach to stat boxes as a fallback
-    if (statBoxes && statBoxes.length > 0) {
-        console.log('Found stat boxes:', statBoxes.length);
+    // Also attach to stat rows as a fallback
+    if (statRows && statRows.length > 0) {
+        console.log('Found stat rows:', statRows.length);
         
-        statBoxes.forEach(box => {
-            box.addEventListener('click', function(event) {
-                // Only handle clicks directly on the box, not on children
-                if (event.target === this) {
-                    console.log('Stat box clicked:', this);
+        statRows.forEach(row => {
+            row.addEventListener('click', function(event) {
+                // Only handle clicks directly on the row, not on buttons or other interactive elements
+                if (event.target.tagName !== 'BUTTON' && !event.target.closest('button')) {
+                    console.log('Stat row clicked:', this);
                     handleDiceRoll(this);
                 }
             });
         });
     } else {
-        console.error('No stat boxes found for dice rolling');
+        console.error('No stat rows found for dice rolling');
     }
     
     // Function to handle dice rolling

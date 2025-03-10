@@ -149,33 +149,68 @@
             
             <!-- Character Stats -->
             <div class="character-stats">
-                <div class="stat-group">
-                    <div class="stat-box" data-attribute="strength" data-value="<?php echo (int)$character['strength']; ?>">
-                        <div class="stat-label">Strength</div>
-                        <div class="stat-value"><?php echo (int)$character['strength']; ?></div>
-                        <div class="stat-roll-icon" title="Roll Strength check"><i class="fas fa-dice-d20"></i></div>
-                    </div>
-                    <div class="stat-box" data-attribute="agility" data-value="<?php echo (int)$character['agility']; ?>">
-                        <div class="stat-label">Agility</div>
-                        <div class="stat-value"><?php echo (int)$character['agility']; ?></div>
-                        <div class="stat-roll-icon" title="Roll Agility check"><i class="fas fa-dice-d20"></i></div>
-                    </div>
-                    <div class="stat-box" data-attribute="presence" data-value="<?php echo (int)$character['presence']; ?>">
-                        <div class="stat-label">Presence</div>
-                        <div class="stat-value"><?php echo (int)$character['presence']; ?></div>
-                        <div class="stat-roll-icon" title="Roll Presence check"><i class="fas fa-dice-d20"></i></div>
-                    </div>
-                    <div class="stat-box" data-attribute="toughness" data-value="<?php echo (int)$character['toughness']; ?>">
-                        <div class="stat-label">Toughness</div>
-                        <div class="stat-value"><?php echo (int)$character['toughness']; ?></div>
-                        <div class="stat-roll-icon" title="Roll Toughness check"><i class="fas fa-dice-d20"></i></div>
-                    </div>
-                    <div class="stat-box" data-attribute="spirit" data-value="<?php echo (int)$character['spirit']; ?>">
-                        <div class="stat-label">Spirit</div>
-                        <div class="stat-value"><?php echo (int)$character['spirit']; ?></div>
-                        <div class="stat-roll-icon" title="Roll Spirit check"><i class="fas fa-dice-d20"></i></div>
-                    </div>
-                </div>
+                <h3 class="stats-header">Attributes</h3>
+                <table class="stats-table">
+                    <thead>
+                        <tr>
+                            <th class="stat-name-col">Attribute</th>
+                            <th class="stat-value-col">Value</th>
+                            <th class="stat-roll-col">Roll</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Strength -->
+                        <tr class="stat-row" data-attribute="strength" data-value="<?php echo (int)$character['strength']; ?>">
+                            <td class="stat-name">Strength</td>
+                            <td class="stat-value"><?php echo (int)$character['strength']; ?></td>
+                            <td class="stat-roll-cell">
+                                <button class="stat-roll-btn" title="Roll Strength check">
+                                    <i class="fas fa-dice-d20"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <!-- Agility -->
+                        <tr class="stat-row" data-attribute="agility" data-value="<?php echo (int)$character['agility']; ?>">
+                            <td class="stat-name">Agility</td>
+                            <td class="stat-value"><?php echo (int)$character['agility']; ?></td>
+                            <td class="stat-roll-cell">
+                                <button class="stat-roll-btn" title="Roll Agility check">
+                                    <i class="fas fa-dice-d20"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <!-- Presence -->
+                        <tr class="stat-row" data-attribute="presence" data-value="<?php echo (int)$character['presence']; ?>">
+                            <td class="stat-name">Presence</td>
+                            <td class="stat-value"><?php echo (int)$character['presence']; ?></td>
+                            <td class="stat-roll-cell">
+                                <button class="stat-roll-btn" title="Roll Presence check">
+                                    <i class="fas fa-dice-d20"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <!-- Toughness -->
+                        <tr class="stat-row" data-attribute="toughness" data-value="<?php echo (int)$character['toughness']; ?>">
+                            <td class="stat-name">Toughness</td>
+                            <td class="stat-value"><?php echo (int)$character['toughness']; ?></td>
+                            <td class="stat-roll-cell">
+                                <button class="stat-roll-btn" title="Roll Toughness check">
+                                    <i class="fas fa-dice-d20"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <!-- Spirit -->
+                        <tr class="stat-row" data-attribute="spirit" data-value="<?php echo (int)$character['spirit']; ?>">
+                            <td class="stat-name">Spirit</td>
+                            <td class="stat-value"><?php echo (int)$character['spirit']; ?></td>
+                            <td class="stat-roll-cell">
+                                <button class="stat-roll-btn" title="Roll Spirit check">
+                                    <i class="fas fa-dice-d20"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
             
             <!-- Additional character information can be added here in future updates -->

@@ -80,66 +80,102 @@
     margin-bottom: 30px;
 }
 
-.stat-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    justify-content: space-between;
+.stats-header {
+    color: var(--primary);
+    font-size: 1.4rem;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--secondary);
 }
 
-.stat-box {
-    flex: 1;
-    min-width: 100px;
+.stats-table {
+    width: 100%;
+    border-collapse: collapse;
     border: 2px solid var(--secondary);
     border-radius: 8px;
-    padding: 15px;
-    text-align: center;
+    overflow: hidden;
+    background-color: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.stats-table thead {
+    background-color: var(--secondary);
+    color: white;
+}
+
+.stats-table th {
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+
+.stats-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.stat-row {
+    transition: background-color 0.2s;
+}
+
+.stat-row:hover {
     background-color: #f9f5eb;
-    position: relative;
-    cursor: pointer;
-    transition: all 0.2s ease;
 }
 
-.stat-box:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+.stat-row:last-child td {
+    border-bottom: none;
 }
 
-.stat-label {
+.stat-name {
     font-weight: bold;
     color: #805d2c;
-    margin-bottom: 10px;
-    font-size: 1rem;
     text-transform: uppercase;
 }
 
 .stat-value {
-    font-size: 2rem;
+    font-size: 1.6rem;
     font-weight: bold;
     color: var(--primary);
+    text-align: center;
 }
 
-.stat-roll-icon {
-    position: absolute !important;
-    bottom: 10px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    color: #5765F2FF !important; /* Discord blue with full opacity */
-    opacity: 1 !important;
-    transition: all 0.2s ease !important;
-    font-size: 1.2rem !important;
-    z-index: 1 !important;
-    cursor: pointer !important;
-    background-color: rgba(255, 255, 255, 0.5) !important;
-    padding: 4px !important;
-    border-radius: 4px !important;
-    margin-top: 10px !important;
+.stat-roll-cell {
+    text-align: center;
+    width: 80px;
 }
 
-.stat-box:hover .stat-roll-icon {
-    opacity: 1 !important;
-    transform: translateX(-50%) rotate(15deg) !important;
-    background-color: rgba(255, 255, 255, 0.8) !important;
+.stat-roll-btn {
+    background-color: #5765F2FF; /* Discord blue */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: all 0.2s;
+}
+
+.stat-roll-btn:hover {
+    background-color: #4752c4;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.stat-name-col {
+    width: 40%;
+}
+
+.stat-value-col {
+    width: 30%;
+    text-align: center;
+}
+
+.stat-roll-col {
+    width: 30%;
+    text-align: center;
 }
 
 .character-details {
@@ -757,8 +793,22 @@
         margin-top: 15px;
     }
     
-    .stat-group {
-        flex-direction: column;
+    .stats-table {
+        font-size: 0.95rem;
+    }
+    
+    .stats-table th,
+    .stats-table td {
+        padding: 10px 8px;
+    }
+    
+    .stat-value {
+        font-size: 1.4rem;
+    }
+    
+    .stat-roll-btn {
+        padding: 6px 8px;
+        font-size: 1rem;
     }
     
     .form-row {
@@ -768,5 +818,38 @@
     
     .character-features {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+    .stats-table {
+        font-size: 0.9rem;
+    }
+    
+    .stats-table th,
+    .stats-table td {
+        padding: 8px 5px;
+    }
+    
+    .stat-name-col {
+        width: 40%;
+    }
+    
+    .stat-value-col {
+        width: 30%;
+    }
+    
+    .stat-roll-col {
+        width: 30%;
+    }
+    
+    .stat-value {
+        font-size: 1.2rem;
+    }
+    
+    .stat-roll-btn {
+        padding: 5px 7px;
+        font-size: 0.9rem;
     }
 }
