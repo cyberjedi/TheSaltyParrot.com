@@ -122,7 +122,8 @@
 .stat-roll-icon {
     position: absolute !important;
     bottom: 10px !important;
-    right: 10px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
     color: #5765F2FF !important; /* Discord blue with full opacity */
     opacity: 1 !important;
     transition: all 0.2s ease !important;
@@ -132,12 +133,13 @@
     background-color: rgba(255, 255, 255, 0.5) !important;
     padding: 4px !important;
     border-radius: 4px !important;
+    margin-top: 10px !important;
 }
 
 .stat-box:hover .stat-roll-icon {
-    opacity: 1;
-    transform: rotate(15deg);
-    background-color: rgba(255, 255, 255, 0.8);
+    opacity: 1 !important;
+    transform: translateX(-50%) rotate(15deg) !important;
+    background-color: rgba(255, 255, 255, 0.8) !important;
 }
 
 .character-details {

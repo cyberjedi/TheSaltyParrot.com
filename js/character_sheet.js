@@ -328,21 +328,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
             
-            // Render webhook selector
-            // Open a small modal or dropdown to select from available webhooks
-            const selector = document.createElement('div');
-            selector.className = 'webhook-selector-overlay';
-            selector.innerHTML = '<div class="webhook-selector-content">Loading webhooks...</div>';
-            document.body.appendChild(selector);
-            
-            console.log('Creating webhook selector');
+            // Show loading indicator on the button
+            const originalButtonContent = sendRollDiscordBtn.innerHTML;
+            sendRollDiscordBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            sendRollDiscordBtn.disabled = true;
             
             // Get base URL from window object or use default
             const baseUrl = window.base_url || './';
-            const webhookUrl = baseUrl + 'discord/webhooks.php?action=get_webhooks&format=json';
+            const webhookUrl = baseUrl + 'discord/webhooks.php?action=get_default_webhook&format=json';
             
-            // Fetch webhooks from the server with proper path
-            console.log('Fetching webhooks from:', webhookUrl);
+            // Fetch default webhook from the server
+            console.log('Fetching default webhook');
             
             fetch(webhookUrl)
                 .then(response => {
@@ -351,162 +347,70 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .then(data => {
                     console.log('Webhook response data:', data);
-                    // Handle error cases first
-                    if (data.status === 'error') {
-                        console.error('Error from webhook API:', data.message);
+                    
+                    // Handle error cases
+                    if (data.status === 'error' || !data.webhook) {
+                        console.error('Error fetching default webhook:', data.message || 'No default webhook found');
+                        sendRollDiscordBtn.innerHTML = originalButtonContent;
+                        sendRollDiscordBtn.disabled = false;
                         
-                        // Show error in selector
-                        selector.querySelector('.webhook-selector-content').innerHTML = `
-                            <div class="webhook-error">
-                                <h4 style="color:#ff3333;text-align:center;"><i class="fas fa-exclamation-triangle"></i> Error Loading Webhooks</h4>
-                                <p>${data.message}</p>
-                                <p>Please check your Discord configuration.</p>
-                                <div style="text-align:center;margin-top:15px;">
-                                    <a href="discord/webhooks.php" class="btn btn-discord">Configure Webhooks</a>
-                                    <button id="cancel-webhook-btn" class="btn btn-secondary">Close</button>
-                                </div>
-                            </div>
-                        `;
-                        
-                        // Add cancel button event listener
-                        selector.querySelector('#cancel-webhook-btn').addEventListener('click', function() {
-                            document.body.removeChild(selector);
-                        });
+                        // Show error alert
+                        alert('Error: ' + (data.message || 'No default webhook found. Please configure a webhook in Discord settings.'));
                         return;
                     }
                     
-                    // Success case but no webhooks
-                    if (!data.webhooks || data.webhooks.length === 0) {
-                        console.log('No webhooks found for user');
-                        
-                        selector.querySelector('.webhook-selector-content').innerHTML = `
-                            <div class="webhook-error">
-                                <h4 style="color:#5765F2FF;text-align:center;"><i class="fab fa-discord"></i> No Discord Webhooks</h4>
-                                <p>You don't have any Discord webhooks configured.</p>
-                                <p>Set up a webhook to share rolls with your Discord server.</p>
-                                <div style="text-align:center;margin-top:15px;">
-                                    <a href="discord/webhooks.php" class="btn btn-discord">Configure Webhooks</a>
-                                    <button id="cancel-webhook-btn" class="btn btn-secondary">Close</button>
-                                </div>
-                            </div>
-                        `;
-                        
-                        // Add cancel button event listener
-                        selector.querySelector('#cancel-webhook-btn').addEventListener('click', function() {
-                            document.body.removeChild(selector);
-                        });
-                        return;
-                    }
+                    // Get the default webhook ID
+                    const webhookId = data.webhook.id;
+                                
+                    console.log('Sending to webhook ID:', webhookId);
                     
-                    // Success case with webhooks
-                    if (data.status === 'success' && data.webhooks && data.webhooks.length > 0) {
-                        let webhookHTML = '<h4 style="color:#5765F2FF;text-align:center;margin-bottom:15px;"><i class="fab fa-discord"></i> Select Discord Channel</h4><div class="webhook-options">';
-                        data.webhooks.forEach(webhook => {
-                            webhookHTML += `
-                                <div class="webhook-option" data-webhook-id="${webhook.id}">
-                                    <i class="fab fa-discord"></i> 
-                                    <div class="webhook-details">
-                                        <span class="webhook-channel">#${webhook.channel_name || 'discord-channel'}</span>
-                                        <span class="webhook-guild">${webhook.webhook_name || 'Discord Webhook'}</span>
-                                    </div>
-                                </div>
-                            `;
-                        });
-                        webhookHTML += '</div>';
-                        webhookHTML += '<div class="webhook-actions">';
-                        webhookHTML += '<button id="cancel-webhook-btn" class="btn btn-secondary">Cancel</button>';
-                        webhookHTML += '</div>';
-                        
-                        selector.querySelector('.webhook-selector-content').innerHTML = webhookHTML;
-                        
-                        // Add event listeners to webhook options
-                        selector.querySelectorAll('.webhook-option').forEach(option => {
-                            option.addEventListener('click', function() {
-                                // First remove selected class from all options
-                                selector.querySelectorAll('.webhook-option').forEach(opt => {
-                                    opt.classList.remove('selected');
-                                });
-                                
-                                // Add selected class to this option
-                                this.classList.add('selected');
-                                
-                                const webhookId = this.dataset.webhookId;
-                                
-                                console.log('Sending to webhook ID:', webhookId);
-                                
-                                // Get base URL from window object or use default
-                                const baseUrl = window.base_url || './';
-                                const sendWebhookUrl = baseUrl + 'discord/send_to_webhook.php';
-                                
-                                console.log('Sending webhook to:', sendWebhookUrl);
-                                
-                                // Send content to webhook with proper path
-                                fetch(sendWebhookUrl, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({
-                                        webhook_id: webhookId,
-                                        content: rollContent,
-                                        generator_type: 'attribute_roll'
-                                    })
-                                })
-                                .then(response => response.json())
-                                .then(result => {
-                                    if (result.status === 'success') {
-                                        // Remove selector overlay
-                                        document.body.removeChild(selector);
-                                        
-                                        // Show success feedback
-                                        const originalText = sendRollDiscordBtn.innerHTML;
-                                        sendRollDiscordBtn.innerHTML = '<i class="fas fa-check"></i> Sent!';
-                                        setTimeout(() => {
-                                            sendRollDiscordBtn.innerHTML = originalText;
-                                        }, 2000);
-                                    } else {
-                                        alert('Error sending to Discord: ' + result.message);
-                                    }
-                                })
-                                .catch(error => {
-                                    console.error('Error:', error);
-                                    alert('Error sending to Discord. Check console for details.');
-                                });
-                            });
-                        });
-                        
-                        // Add cancel button event listener
-                        selector.querySelector('#cancel-webhook-btn').addEventListener('click', function() {
-                            document.body.removeChild(selector);
-                        });
-                    } else {
-                        selector.querySelector('.webhook-selector-content').innerHTML = `
-                            <div class="webhook-error">
-                                <p>You have no Discord webhooks set up.</p>
-                                <p><a href="/discord/webhooks.php">Configure webhooks</a> to send rolls to Discord.</p>
-                                <button id="cancel-webhook-btn" class="btn btn-secondary">Close</button>
-                            </div>
-                        `;
-                        
-                        // Add cancel button event listener
-                        selector.querySelector('#cancel-webhook-btn').addEventListener('click', function() {
-                            document.body.removeChild(selector);
-                        });
-                    }
+                    // Get send webhook URL
+                    const sendWebhookUrl = baseUrl + 'discord/send_to_webhook.php';
+                    
+                    console.log('Sending webhook to:', sendWebhookUrl);
+                    
+                    // Send content to webhook with proper path
+                    fetch(sendWebhookUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            webhook_id: webhookId,
+                            content: rollContent,
+                            generator_type: 'attribute_roll'
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.status === 'success') {
+                            // Show success feedback
+                            sendRollDiscordBtn.innerHTML = '<i class="fas fa-check"></i> Sent!';
+                            sendRollDiscordBtn.disabled = false;
+                            
+                            setTimeout(() => {
+                                sendRollDiscordBtn.innerHTML = originalButtonContent;
+                            }, 2000);
+                        } else {
+                            // Show error
+                            console.error('Error sending to Discord:', result.message);
+                            sendRollDiscordBtn.innerHTML = originalButtonContent;
+                            sendRollDiscordBtn.disabled = false;
+                            alert('Error sending to Discord: ' + result.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        sendRollDiscordBtn.innerHTML = originalButtonContent;
+                        sendRollDiscordBtn.disabled = false;
+                        alert('Error sending to Discord. Check console for details.');
+                    });
                 })
                 .catch(error => {
-                    console.error('Error fetching webhooks:', error);
-                    selector.querySelector('.webhook-selector-content').innerHTML = `
-                        <div class="webhook-error">
-                            <p>Error fetching webhooks. Please try again.</p>
-                            <button id="cancel-webhook-btn" class="btn btn-secondary">Close</button>
-                        </div>
-                    `;
-                    
-                    // Add cancel button event listener
-                    selector.querySelector('#cancel-webhook-btn').addEventListener('click', function() {
-                        document.body.removeChild(selector);
-                    });
+                    console.error('Error fetching default webhook:', error);
+                    sendRollDiscordBtn.innerHTML = originalButtonContent;
+                    sendRollDiscordBtn.disabled = false;
+                    alert('Error connecting to Discord. Please try again later.');
                 });
         });
     }
