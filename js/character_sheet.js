@@ -343,7 +343,13 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch(webhookUrl)
                 .then(response => {
                     console.log('Webhook response status:', response.status);
-                    return response.json();
+                    if (!response.ok) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+                    return response.json().catch(error => {
+                        console.error('Error parsing JSON response:', error);
+                        throw new Error('Invalid response from server. Try again later.');
+                    });
                 })
                 .then(data => {
                     console.log('Webhook response data:', data);
@@ -410,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error('Error fetching default webhook:', error);
                     sendRollDiscordBtn.innerHTML = originalButtonContent;
                     sendRollDiscordBtn.disabled = false;
-                    alert('Error connecting to Discord. Please try again later.');
+                    alert('Could not retrieve your Discord webhook configuration. Please check your Discord settings and try again.');
                 });
         });
     }

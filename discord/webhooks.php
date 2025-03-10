@@ -83,61 +83,62 @@ if (isset($_GET['action']) && isset($_GET['format']) && $_GET['format'] === 'jso
     
     // Get all webhooks endpoint
     if ($_GET['action'] === 'get_webhooks') {
-    header('Content-Type: application/json');
-    
-    // Enable CORS for Ajax requests
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Methods: GET');
-    header('Access-Control-Allow-Headers: Content-Type');
-    
-    // Log request for debugging
-    error_log('Webhook API request received: ' . $_SERVER['REQUEST_URI']);
-    
-    // Check if user is logged in with Discord
-    if (!is_discord_authenticated()) {
-        error_log('User not authenticated with Discord for webhook request');
-        echo json_encode(['status' => 'error', 'message' => 'Not authenticated with Discord']);
-        exit;
-    }
-    
-    // Get Discord user ID and fetch user from database
-    $discord_id = $_SESSION['discord_user']['id'];
-    error_log('Processing webhook request for Discord ID: ' . $discord_id);
-    
-    try {
-        // Get user ID from database
-        $stmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
-        $stmt->bindParam(':discord_id', $discord_id);
-        $stmt->execute();
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        header('Content-Type: application/json');
         
-        if (!$user) {
-            error_log('User not found in database for Discord ID: ' . $discord_id);
-            echo json_encode(['status' => 'error', 'message' => 'User not found']);
+        // Enable CORS for Ajax requests
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET');
+        header('Access-Control-Allow-Headers: Content-Type');
+    
+        // Log request for debugging
+        error_log('Webhook API request received: ' . $_SERVER['REQUEST_URI']);
+        
+        // Check if user is logged in with Discord
+        if (!is_discord_authenticated()) {
+            error_log('User not authenticated with Discord for webhook request');
+            echo json_encode(['status' => 'error', 'message' => 'Not authenticated with Discord']);
             exit;
         }
         
-        $user_id = $user['id'];
-        error_log('Found user ID: ' . $user_id);
+        // Get Discord user ID and fetch user from database
+        $discord_id = $_SESSION['discord_user']['id'];
+        error_log('Processing webhook request for Discord ID: ' . $discord_id);
         
-        // Get user's webhooks
-        $stmt = $conn->prepare("SELECT id, webhook_name, channel_name, is_default FROM discord_webhooks WHERE user_id = :user_id AND is_active = 1 ORDER BY is_default DESC, last_updated DESC");
-        $stmt->bindParam(':user_id', $user_id);
-        $stmt->execute();
-        $webhooks = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        error_log('Found ' . count($webhooks) . ' webhooks for user');
-        echo json_encode(['status' => 'success', 'webhooks' => $webhooks]);
-        exit;
-        
-    } catch (PDOException $e) {
-        error_log('Database error in webhook API: ' . $e->getMessage());
-        echo json_encode(['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()]);
-        exit;
-    } catch (Exception $e) {
-        error_log('General error in webhook API: ' . $e->getMessage());
-        echo json_encode(['status' => 'error', 'message' => 'Unexpected error: ' . $e->getMessage()]);
-        exit;
+        try {
+            // Get user ID from database
+            $stmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
+            $stmt->bindParam(':discord_id', $discord_id);
+            $stmt->execute();
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$user) {
+                error_log('User not found in database for Discord ID: ' . $discord_id);
+                echo json_encode(['status' => 'error', 'message' => 'User not found']);
+                exit;
+            }
+            
+            $user_id = $user['id'];
+            error_log('Found user ID: ' . $user_id);
+            
+            // Get user's webhooks
+            $stmt = $conn->prepare("SELECT id, webhook_name, channel_name, is_default FROM discord_webhooks WHERE user_id = :user_id AND is_active = 1 ORDER BY is_default DESC, last_updated DESC");
+            $stmt->bindParam(':user_id', $user_id);
+            $stmt->execute();
+            $webhooks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            error_log('Found ' . count($webhooks) . ' webhooks for user');
+            echo json_encode(['status' => 'success', 'webhooks' => $webhooks]);
+            exit;
+            
+        } catch (PDOException $e) {
+            error_log('Database error in webhook API: ' . $e->getMessage());
+            echo json_encode(['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()]);
+            exit;
+        } catch (Exception $e) {
+            error_log('General error in webhook API: ' . $e->getMessage());
+            echo json_encode(['status' => 'error', 'message' => 'Unexpected error: ' . $e->getMessage()]);
+            exit;
+        }
     }
 }
 
