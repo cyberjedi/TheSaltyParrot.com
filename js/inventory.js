@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentItemId = null;
     let currentMapId = null;
     let currentItemName = null;
+    let currentContainerId = null; // Added for container functionality
     
     // Character data from PHP
     const characterData = window.character_data || {};

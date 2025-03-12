@@ -863,3 +863,112 @@
         font-size: 0.85rem;
     }
 }
+
+/* Inventory Container System Styles */
+.container-item {
+    position: relative;
+}
+
+.container-toggle {
+    background: none;
+    border: none;
+    color: #7289da;
+    cursor: pointer;
+    margin-right: 5px;
+    padding: 2px;
+    transition: transform 0.2s ease;
+}
+
+.container-toggle:hover {
+    color: #5a6cbd;
+}
+
+.container-contents {
+    display: none;
+}
+
+.container-contents.expanded {
+    display: table-row;
+}
+
+.container-contents-cell {
+    padding: 0 !important;
+    background-color: rgba(114, 137, 218, 0.05);
+}
+
+.container-items-dropzone {
+    padding: 10px;
+    border-left: 2px solid #7289da;
+    margin-left: 20px;
+}
+
+.container-items-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.empty-container {
+    padding: 10px;
+    color: #999;
+    font-style: italic;
+    text-align: center;
+}
+
+.nested-container-notice {
+    padding: 10px;
+    color: #666;
+    font-style: italic;
+    text-align: center;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    margin: 5px 0;
+}
+
+/* Drag and Drop styles */
+.inventory-item[draggable="true"] {
+    cursor: grab;
+}
+
+.inventory-item.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.inventory-dropzone,
+.container-items-dropzone {
+    position: relative;
+}
+
+.inventory-dropzone.drag-over,
+.container-items-dropzone.drag-over {
+    background-color: rgba(114, 137, 218, 0.1);
+    border: 2px dashed #7289da;
+}
+
+.inventory-loading {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 5px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.inventory-error {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #d32f2f;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 5px;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    display: none;
+}

@@ -73,7 +73,21 @@ require_once 'components/character_controller.php';
         <p>&copy; 2025 The Salty Parrot</p>
     </footer>
 
-    <!-- Load inventory JS after character sheet JS -->
+    <!-- Make character data and authentication status available to JavaScript -->
+    <script>
+        // Pass character data to JavaScript
+        window.character_data = <?php echo json_encode($character ?? []); ?>;
+        
+        // Pass Discord authentication status to JavaScript
+        window.discord_authenticated = <?php echo $discord_authenticated ? 'true' : 'false'; ?>;
+        
+        // Pass base URL for API calls
+        window.base_url = '<?php echo $base_path; ?>';
+    </script>
+    
+    <!-- Load JavaScript files -->
+    <script src="js/character_sheet.js?v=<?php echo time(); ?>"></script>
     <script src="js/inventory.js?v=<?php echo time(); ?>"></script>
+    <script src="js/inventory_containers.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>
