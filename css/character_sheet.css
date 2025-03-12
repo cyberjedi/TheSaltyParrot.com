@@ -88,6 +88,11 @@
     border-bottom: 2px solid var(--secondary);
 }
 
+.inventory-header-container {
+    position: relative;
+    margin-bottom: 15px;
+}
+
 .stats-table {
     width: 100%;
     border-collapse: collapse;

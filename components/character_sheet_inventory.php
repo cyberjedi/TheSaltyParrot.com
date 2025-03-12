@@ -72,9 +72,9 @@ try {
 
 <!-- Character Inventory Section -->
 <div class="character-inventory">
-    <div class="section-header">
-        <h3>Inventory</h3>
-        <button id="add-inventory-item-btn" class="btn-icon" title="Add Item">
+    <div class="inventory-header-container">
+        <h3 class="stats-header">Inventory</h3>
+        <button id="add-inventory-item-btn" class="btn-icon" title="Add Item" style="float: right; margin-top: -35px;">
             <i class="fas fa-plus"></i>
         </button>
     </div>
