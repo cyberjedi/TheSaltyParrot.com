@@ -91,12 +91,12 @@
 .inventory-header-container {
     position: relative;
     margin-bottom: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
 }
 
 .inventory-add-btn {
+    position: absolute;
+    right: 0;
+    top: -5px;
     background: none;
     border: none;
     color: var(--secondary);
@@ -104,7 +104,6 @@
     font-size: 1.2rem;
     padding: 5px;
     transition: color 0.2s, transform 0.2s;
-    margin-bottom: 8px; /* Adjust to avoid overlapping the border */
 }
 
 .inventory-add-btn:hover {
