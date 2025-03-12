@@ -281,14 +281,17 @@ function send_to_discord_webhook($conn, $webhook_id, $content, $generator_type, 
                 
                 // Create embed
                 $embed = [
-                    'title' => '🎲 ' . $character_name . ' - ' . $attribute_name . ' Check',
+                    'title' => '🎲 ' . $attribute_name . ' Check',
                     'description' => "**Dice Roll (d20):** " . $dice_value . "\n**" . $attribute_name . " Bonus:** " . $attribute_bonus . "\n**Total:** " . $total_value,
                     'color' => 0x5765F2 // Discord blue color
                 ];
                 
-                // Add character image if provided
+                // Add character image if provided - use author with icon_url for left-side image
                 if ($character_image && filter_var($character_image, FILTER_VALIDATE_URL)) {
-                    $embed['thumbnail'] = ['url' => $character_image];
+                    $embed['author'] = [
+                        'name' => $character_name,
+                        'icon_url' => $character_image
+                    ];
                 }
                 
                 $embeds[] = $embed;
@@ -313,14 +316,17 @@ function send_to_discord_webhook($conn, $webhook_id, $content, $generator_type, 
                 
                 // Create embed
                 $embed = [
-                    'title' => '✋ ' . $character_name . ' uses ' . $item_name,
+                    'title' => '✋ Using: ' . $item_name,
                     'description' => "**Item:** " . $item_name . $notes,
                     'color' => 0x7289DA // Discord blurple color
                 ];
                 
-                // Add character image if provided
+                // Add character image if provided - use author with icon_url for left-side image
                 if ($character_image && filter_var($character_image, FILTER_VALIDATE_URL)) {
-                    $embed['thumbnail'] = ['url' => $character_image];
+                    $embed['author'] = [
+                        'name' => $character_name,
+                        'icon_url' => $character_image
+                    ];
                 }
                 
                 $embeds[] = $embed;
