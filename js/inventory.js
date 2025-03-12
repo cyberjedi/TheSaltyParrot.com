@@ -9,16 +9,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const addInventoryModal = document.getElementById('add-inventory-modal');
     const itemDetailsModal = document.getElementById('item-details-modal');
     const removeItemModal = document.getElementById('remove-item-confirm-modal');
+    const useItemModal = document.getElementById('use-item-modal');
     const typeFilter = document.getElementById('item-type-filter');
     const searchInput = document.getElementById('item-search');
     const availableItemsList = document.querySelector('.available-items-list');
     const closeBtns = document.querySelectorAll('.close-modal');
     const closeFormBtns = document.querySelectorAll('.close-modal-btn');
+    const sendItemUseDiscordBtn = document.getElementById('send-item-use-discord');
     
     // State
     let availableItems = [];
     let currentItemId = null;
     let currentMapId = null;
+    let currentItemName = null;
     
     // Character data from PHP
     const characterData = window.character_data || {};
@@ -55,7 +58,8 @@ document.addEventListener('DOMContentLoaded', function() {
         window.addEventListener('click', function(event) {
             if (event.target === addInventoryModal || 
                 event.target === itemDetailsModal || 
-                event.target === removeItemModal) {
+                event.target === removeItemModal ||
+                event.target === useItemModal) {
                 closeAllModals();
             }
         });
@@ -75,10 +79,18 @@ document.addEventListener('DOMContentLoaded', function() {
         // Item info buttons
         setupItemInfoButtons();
         
+        // Item use buttons
+        setupItemUseButtons();
+        
         // Confirm remove item button
         const confirmRemoveBtn = document.getElementById('confirm-remove-item');
         if (confirmRemoveBtn) {
             confirmRemoveBtn.addEventListener('click', removeInventoryItem);
+        }
+        
+        // Send to Discord button for item use
+        if (sendItemUseDiscordBtn) {
+            sendItemUseDiscordBtn.addEventListener('click', sendItemUseToDiscord);
         }
     }
     
@@ -121,6 +133,37 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    function setupItemUseButtons() {
+        const useButtons = document.querySelectorAll('.item-use-btn');
+        useButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const itemId = this.getAttribute('data-item-id');
+                const itemName = this.getAttribute('data-item-name');
+                showUseItemModal(itemId, itemName);
+            });
+        });
+    }
+    
+    function showUseItemModal(itemId, itemName) {
+        if (!isAuthenticated) {
+            alert('You must connect with Discord to use items and share to Discord.');
+            return;
+        }
+        
+        // Update current item ID and name
+        currentItemId = itemId;
+        currentItemName = itemName;
+        
+        // Update the modal with item details
+        document.getElementById('use-item-name').textContent = itemName;
+        
+        // Clear any previous notes
+        document.getElementById('use-item-notes').value = '';
+        
+        // Show the modal
+        useItemModal.style.display = 'block';
+    }
+    
     function openAddItemModal() {
         if (!isAuthenticated) {
             alert('You must connect with Discord to manage inventory.');
@@ -154,6 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (addInventoryModal) addInventoryModal.style.display = 'none';
         if (itemDetailsModal) itemDetailsModal.style.display = 'none';
         if (removeItemModal) removeItemModal.style.display = 'none';
+        if (useItemModal) useItemModal.style.display = 'none';
     }
     
     function loadAvailableItems() {
@@ -474,5 +518,96 @@ document.addEventListener('DOMContentLoaded', function() {
             // Re-enable button
             if (confirmBtn) confirmBtn.disabled = false;
         });
+    }
+    
+    function sendItemUseToDiscord() {
+        if (!isAuthenticated) {
+            alert('You must connect with Discord to share to a webhook.');
+            return;
+        }
+        
+        if (!currentItemId || !currentItemName) {
+            console.error('Missing item information for Discord sharing');
+            return;
+        }
+        
+        // Get user notes if any
+        const notes = document.getElementById('use-item-notes').value.trim();
+        
+        // Show loading indicator on the button
+        const originalButtonContent = sendItemUseDiscordBtn.innerHTML;
+        sendItemUseDiscordBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        sendItemUseDiscordBtn.disabled = true;
+        
+        // Get base URL from window object or use default
+        const baseUrl = window.base_url || './';
+        const webhookUrl = baseUrl + 'discord/webhooks.php?action=get_default_webhook&format=json';
+        
+        // Fetch default webhook from the server
+        fetch(webhookUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Handle error cases
+                if (data.status === 'error' || !data.webhook) {
+                    throw new Error(data.message || 'No default webhook found');
+                }
+                
+                // Get the default webhook ID
+                const webhookId = data.webhook.id;
+                
+                // Format content for Discord
+                const itemContent = `
+                    <div class="item-use">
+                        <h3>${characterData.name} uses an item</h3>
+                        <div class="item-use-details">
+                            <p><strong>Item:</strong> ${currentItemName}</p>
+                            ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ''}
+                        </div>
+                    </div>
+                `;
+                
+                // Get send webhook URL
+                const sendWebhookUrl = baseUrl + 'discord/send_to_webhook.php';
+                
+                // Send content to webhook
+                return fetch(sendWebhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        webhook_id: webhookId,
+                        content: itemContent,
+                        generator_type: 'item_use'
+                    })
+                });
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    // Show success feedback
+                    sendItemUseDiscordBtn.innerHTML = '<i class="fas fa-check"></i> Sent!';
+                    
+                    setTimeout(() => {
+                        closeAllModals();
+                        sendItemUseDiscordBtn.innerHTML = originalButtonContent;
+                        sendItemUseDiscordBtn.disabled = false;
+                    }, 1500);
+                } else {
+                    // Show error
+                    throw new Error(result.message || 'Failed to send to Discord');
+                }
+            })
+            .catch(error => {
+                console.error('Error sending to Discord:', error);
+                sendItemUseDiscordBtn.innerHTML = originalButtonContent;
+                sendItemUseDiscordBtn.disabled = false;
+                alert('Error sending to Discord: ' + error.message);
+            });
     }
 });

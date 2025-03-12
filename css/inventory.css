@@ -116,16 +116,33 @@
     text-align: center;
 }
 
-.item-info-btn {
+.item-action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.item-info-btn, .item-use-btn {
     background: none;
     border: none;
-    color: #bf9d61;
     cursor: pointer;
     font-size: 1.1rem;
+    padding: 3px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.item-info-btn {
+    color: #bf9d61;
 }
 
 .item-info-btn:hover {
     color: #805d2c;
+    background-color: rgba(191, 157, 97, 0.1);
+}
+
+.item-use-btn:hover {
+    background-color: rgba(114, 137, 218, 0.2);
 }
 
 /* Item Search Controls */
@@ -234,6 +251,31 @@
 .remove-item-name {
     font-weight: bold;
     margin: 20px 0;
+}
+
+/* Use Item Modal */
+.use-item-content {
+    margin: 20px 0;
+}
+
+.use-item-info {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+}
+
+.item-highlight {
+    font-weight: bold;
+    color: #7289da;
+}
+
+.btn-discord {
+    background-color: #7289da;
+    color: white;
+    border: none;
+}
+
+.btn-discord:hover {
+    background-color: #5e77d4;
 }
 
 /* Responsive Adjustments */

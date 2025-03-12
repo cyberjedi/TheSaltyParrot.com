@@ -95,9 +95,14 @@ try {
                         </div>
                     </td>
                     <td class="item-actions">
-                        <button class="item-info-btn" title="View Details" data-item-id="<?php echo $item['item_id']; ?>">
-                            <i class="fas fa-info-circle"></i>
-                        </button>
+                        <div class="item-action-buttons">
+                            <button class="item-info-btn" title="View Details" data-item-id="<?php echo $item['item_id']; ?>">
+                                <i class="fas fa-info-circle"></i>
+                            </button>
+                            <button class="item-use-btn" title="Use Item" data-item-id="<?php echo $item['item_id']; ?>" data-item-name="<?php echo htmlspecialchars($item['item_name']); ?>">
+                                <i class="fas fa-hand-paper" style="color: #7289da;"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -180,6 +185,30 @@ try {
         <div class="form-buttons">
             <button type="button" class="btn btn-danger" id="confirm-remove-item">Remove</button>
             <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Use Item Modal -->
+<div id="use-item-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h3>Use Item</h3>
+        
+        <div class="use-item-content">
+            <p class="use-item-info">Your character is using <span id="use-item-name" class="item-highlight">-</span></p>
+            
+            <div class="form-group">
+                <label for="use-item-notes">Add notes about how you're using this item:</label>
+                <textarea id="use-item-notes" rows="3" placeholder="Optional notes about how you're using this item..."></textarea>
+            </div>
+        </div>
+        
+        <div class="form-buttons">
+            <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
+            <button type="button" class="btn btn-discord" id="send-item-use-discord">
+                <i class="fab fa-discord"></i> Share to Discord
+            </button>
         </div>
     </div>
 </div>
