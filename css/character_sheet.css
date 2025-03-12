@@ -912,23 +912,49 @@
     padding: 6px 15px;
 }
 
+/* Remove specific width settings for container items */
 .container-items-table .item-name {
-    width: 40%;
     padding-left: 25px;  /* Add indentation for items inside containers */
 }
 
 .container-items-table .item-type {
-    width: 20%;
+    text-align: left;
 }
 
 .container-items-table .item-quantity {
-    width: 20%;
     text-align: center;
 }
 
 .container-items-table .item-actions {
-    width: 20%;
     text-align: center;
+}
+
+/* Match column widths from the main inventory table */
+.container-items-table .item-name-col {
+    width: 40%;
+}
+
+.container-items-table .item-type-col {
+    width: 20%;
+}
+
+.container-items-table .item-qty-col {
+    width: 20%;
+}
+
+.container-items-table .item-actions-col {
+    width: 20%;
+}
+
+/* Additional styling for nested container tables */
+.nested-container-table {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    border-left: 2px solid #b5bfe6;
+}
+
+.nested-container-table .item-name {
+    padding-left: 35px !important; /* More indentation for deeper nesting */
 }
 
 .empty-container {

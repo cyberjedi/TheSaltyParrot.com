@@ -87,6 +87,12 @@ try {
         <?php else: ?>
         <div class="inventory-dropzone" data-container-id="root">
             <table class="inventory-table">
+                <colgroup>
+                    <col class="item-name-col">
+                    <col class="item-type-col">
+                    <col class="item-qty-col">
+                    <col class="item-actions-col">
+                </colgroup>
                 <thead>
                     <tr>
                         <th class="item-name-col">Item</th>
@@ -148,6 +154,12 @@ try {
                             <div class="container-items-dropzone" data-container-id="<?php echo $containerId; ?>">
                                 <?php if ($hasContents): ?>
                                 <table class="container-items-table">
+                                    <colgroup>
+                                        <col class="item-name-col">
+                                        <col class="item-type-col">
+                                        <col class="item-qty-col">
+                                        <col class="item-actions-col">
+                                    </colgroup>
                                     <tbody>
                                         <?php foreach ($container_items[$containerId] as $containerItem): 
                                             $isNestedContainer = ($containerItem['item_type'] === 'Container');
@@ -197,10 +209,53 @@ try {
                                             <td colspan="4" class="container-contents-cell">
                                                 <div class="container-items-dropzone" data-container-id="<?php echo $nestedContainerId; ?>">
                                                     <?php if ($hasNestedContents): ?>
-                                                    <!-- Nested container contents would go here - we limit to 2 levels for simplicity -->
-                                                    <div class="nested-container-notice">
-                                                        <i class="fas fa-box-open"></i> Contains <?php echo count($container_items[$nestedContainerId]); ?> items
-                                                    </div>
+                                                    <!-- Nested container contents -->
+                                                    <table class="container-items-table nested-container-table">
+                                                        <colgroup>
+                                                            <col class="item-name-col">
+                                                            <col class="item-type-col">
+                                                            <col class="item-qty-col">
+                                                            <col class="item-actions-col">
+                                                        </colgroup>
+                                                        <tbody>
+                                                            <?php foreach ($container_items[$nestedContainerId] as $nestedItem): ?>
+                                                            <tr class="inventory-item" 
+                                                                data-item-id="<?php echo $nestedItem['item_id']; ?>" 
+                                                                data-map-id="<?php echo $nestedItem['map_id']; ?>"
+                                                                data-item-type="<?php echo htmlspecialchars($nestedItem['item_type']); ?>"
+                                                                data-container-id="<?php echo $nestedContainerId; ?>"
+                                                                draggable="true">
+                                                                <td class="item-name">
+                                                                    <span class="item-name-text" title="<?php echo htmlspecialchars($nestedItem['item_description'] ?? ''); ?>">
+                                                                        <?php echo htmlspecialchars($nestedItem['item_name']); ?>
+                                                                    </span>
+                                                                </td>
+                                                                <td class="item-type"><?php echo htmlspecialchars($nestedItem['item_type']); ?></td>
+                                                                <td class="item-quantity">
+                                                                    <div class="quantity-control">
+                                                                        <button class="quantity-btn decrease-btn" data-map-id="<?php echo $nestedItem['map_id']; ?>">
+                                                                            <i class="fas fa-minus"></i>
+                                                                        </button>
+                                                                        <span class="quantity-value"><?php echo (int)$nestedItem['map_quantity']; ?></span>
+                                                                        <button class="quantity-btn increase-btn" data-map-id="<?php echo $nestedItem['map_id']; ?>">
+                                                                            <i class="fas fa-plus"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                                <td class="item-actions">
+                                                                    <div class="item-action-buttons">
+                                                                        <button class="item-info-btn" title="View Details" data-item-id="<?php echo $nestedItem['item_id']; ?>">
+                                                                            <i class="fas fa-info-circle"></i>
+                                                                        </button>
+                                                                        <button class="item-use-btn" title="Use Item" data-item-id="<?php echo $nestedItem['item_id']; ?>" data-item-name="<?php echo htmlspecialchars($nestedItem['item_name']); ?>">
+                                                                            <i class="fas fa-hand-paper" style="color: #7289da;"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                            <?php endforeach; ?>
+                                                        </tbody>
+                                                    </table>
                                                     <?php else: ?>
                                                     <div class="empty-container">
                                                         <i class="fas fa-box-open"></i> Empty container
