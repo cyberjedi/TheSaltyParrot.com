@@ -29,39 +29,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Set up container toggle buttons
-        setupContainerToggles();
-        
         // Set up drag and drop
         setupDragAndDrop();
-    }
-    
-    function setupContainerToggles() {
-        containerToggles.forEach(toggle => {
-            toggle.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                const containerItem = this.closest('.inventory-item');
-                const containerId = containerItem.dataset.mapId;
-                const containerContents = document.querySelector(`.container-contents[data-container-id="${containerId}"]`);
-                
-                // Toggle icon
-                const icon = this.querySelector('i');
-                if (icon.classList.contains('fa-chevron-right')) {
-                    icon.classList.remove('fa-chevron-right');
-                    icon.classList.add('fa-chevron-down');
-                } else {
-                    icon.classList.remove('fa-chevron-down');
-                    icon.classList.add('fa-chevron-right');
-                }
-                
-                // Toggle visibility
-                if (containerContents) {
-                    containerContents.classList.toggle('expanded');
-                }
-            });
-        });
     }
     
     function setupDragAndDrop() {

@@ -111,11 +111,6 @@ try {
                         data-container-id="<?php echo $item['container_id'] ?? 'root'; ?>"
                         draggable="true">
                         <td class="item-name">
-                            <?php if ($isContainer): ?>
-                            <button class="container-toggle" title="Toggle Container Contents">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
-                            <?php endif; ?>
                             <span class="item-name-text" title="<?php echo htmlspecialchars($item['item_description'] ?? ''); ?>">
                                 <?php if ($isContainer): ?>
                                 <i class="fas fa-box" style="margin-right: 5px;"></i>
@@ -147,8 +142,8 @@ try {
                         </td>
                     </tr>
                     <?php if ($isContainer): ?>
-                    <!-- Container contents section - initially hidden -->
-                    <tr class="container-contents" data-container-id="<?php echo $containerId; ?>">
+                    <!-- Container contents section - always visible -->
+                    <tr class="container-contents expanded" data-container-id="<?php echo $containerId; ?>">
                         <td colspan="4" class="container-contents-cell">
                             <div class="container-items-dropzone" data-container-id="<?php echo $containerId; ?>">
                                 <?php if ($hasContents): ?>
@@ -166,11 +161,6 @@ try {
                                             data-container-id="<?php echo $containerId; ?>"
                                             draggable="true">
                                             <td class="item-name">
-                                                <?php if ($isNestedContainer): ?>
-                                                <button class="container-toggle" title="Toggle Container Contents">
-                                                    <i class="fas fa-chevron-right"></i>
-                                                </button>
-                                                <?php endif; ?>
                                                 <span class="item-name-text" title="<?php echo htmlspecialchars($containerItem['item_description'] ?? ''); ?>">
                                                     <?php if ($isNestedContainer): ?>
                                                     <i class="fas fa-box" style="margin-right: 5px;"></i>
@@ -203,7 +193,7 @@ try {
                                         </tr>
                                         <?php if ($isNestedContainer): ?>
                                         <!-- Recursively render nested container contents -->
-                                        <tr class="container-contents" data-container-id="<?php echo $nestedContainerId; ?>">
+                                        <tr class="container-contents expanded" data-container-id="<?php echo $nestedContainerId; ?>">
                                             <td colspan="4" class="container-contents-cell">
                                                 <div class="container-items-dropzone" data-container-id="<?php echo $nestedContainerId; ?>">
                                                     <?php if ($hasNestedContents): ?>
