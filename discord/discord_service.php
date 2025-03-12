@@ -212,11 +212,7 @@ function send_to_discord_webhook($conn, $webhook_id, $content, $generator_type) 
                 $embeds[] = [
                     'title' => '🚢 ' . $ship_name,
                     'description' => $details . $cargo . $plot_twist,
-                    'color' => 0xbf9d61, // The Salty Parrot gold
-                    'footer' => [
-                        'text' => 'The Salty Parrot - Ship Generator'
-                    ],
-                    'timestamp' => date('c')
+                    'color' => 0xbf9d61 // The Salty Parrot gold
                 ];
                 
                 $content_summary = "Ship: $ship_name";
@@ -256,11 +252,7 @@ function send_to_discord_webhook($conn, $webhook_id, $content, $generator_type) 
                         $embeds[] = [
                             'title' => '💰 ' . $title,
                             'description' => "**Roll:** $roll\n\n$desc\n\n**Category:** $category",
-                            'color' => $index === 0 ? 0xbf9d61 : 0x805d2c, // Different color for additional rolls
-                            'footer' => [
-                                'text' => 'The Salty Parrot - Loot Generator'
-                            ],
-                            'timestamp' => date('c')
+                            'color' => $index === 0 ? 0xbf9d61 : 0x805d2c // Different color for additional rolls
                         ];
                         
                         // Add to content summary
@@ -290,14 +282,35 @@ function send_to_discord_webhook($conn, $webhook_id, $content, $generator_type) 
                 $embeds[] = [
                     'title' => '🎲 ' . $character_name . ' - ' . $attribute_name . ' Check',
                     'description' => "**Dice Roll (d20):** " . $dice_value . "\n**" . $attribute_name . " Bonus:** " . $attribute_bonus . "\n**Total:** " . $total_value,
-                    'color' => 0x5765F2, // Discord blue color
-                    'footer' => [
-                        'text' => 'The Salty Parrot - Character Sheet'
-                    ],
-                    'timestamp' => date('c')
+                    'color' => 0x5765F2 // Discord blue color
                 ];
                 
                 $content_summary = $character_name . " - " . $attribute_name . " Check: " . $total_value;
+                break;
+                
+            case 'item_use':
+                // Extract item usage details
+                preg_match('/<h3>(.*?) uses an item<\/h3>/i', $content, $character_matches);
+                $character_name = isset($character_matches[1]) ? strip_tags($character_matches[1]) : 'Character';
+                
+                // Extract item name
+                preg_match('/<strong>Item:<\/strong>\s*(.*?)<\/p>/i', $content, $item_matches);
+                $item_name = isset($item_matches[1]) ? strip_tags($item_matches[1]) : 'Unknown Item';
+                
+                // Extract notes if any
+                $notes = '';
+                if (preg_match('/<strong>Notes:<\/strong>\s*(.*?)<\/p>/i', $content, $notes_matches)) {
+                    $notes = "\n\n**Notes:** " . strip_tags($notes_matches[1]);
+                }
+                
+                // Create embed
+                $embeds[] = [
+                    'title' => '✋ ' . $character_name . ' uses ' . $item_name,
+                    'description' => "**Item:** " . $item_name . $notes,
+                    'color' => 0x7289DA // Discord blurple color
+                ];
+                
+                $content_summary = $character_name . " uses " . $item_name;
                 break;
                 
             default:
@@ -305,11 +318,7 @@ function send_to_discord_webhook($conn, $webhook_id, $content, $generator_type) 
                 $embeds[] = [
                     'title' => '🏴‍☠️ The Salty Parrot - Generated Content',
                     'description' => 'Content generated with The Salty Parrot. Visit the app to see the full details!',
-                    'color' => 0xbf9d61,
-                    'footer' => [
-                        'text' => 'The Salty Parrot - A Pirate Borg Toolbox'
-                    ],
-                    'timestamp' => date('c')
+                    'color' => 0xbf9d61
                 ];
                 
                 $content_summary = "Content from " . ucfirst($generator_type) . " generator";

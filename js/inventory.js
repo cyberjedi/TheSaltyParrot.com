@@ -560,7 +560,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Get the default webhook ID
                 const webhookId = data.webhook.id;
                 
-                // Format content for Discord
+                // Format content for Discord - make sure to match the expected format in discord_service.php
                 const itemContent = `
                     <div class="item-use">
                         <h3>${characterData.name} uses an item</h3>
