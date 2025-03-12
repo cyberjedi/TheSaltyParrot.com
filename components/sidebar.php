@@ -93,7 +93,7 @@ if (file_exists($base_path . 'discord/discord-config.php')) {
                     if (!empty($default_webhook_name)) {
                         echo '<div class="active-webhook">
                             <span class="webhook-indicator"><i class="fas fa-link"></i></span>
-                            ' . htmlspecialchars($default_webhook_name) . ' 
+                            ' . htmlspecialchars($default_webhook_name) . '<br>
                             <span class="channel-name">#' . htmlspecialchars($default_channel_name) . '</span>
                         </div>';
                     }
