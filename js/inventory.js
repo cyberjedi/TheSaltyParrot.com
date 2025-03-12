@@ -83,6 +83,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Item use buttons
         setupItemUseButtons();
         
+        // Container delete buttons
+        setupContainerDeleteButtons();
+        
         // Confirm remove item button
         const confirmRemoveBtn = document.getElementById('confirm-remove-item');
         if (confirmRemoveBtn) {
@@ -93,6 +96,21 @@ document.addEventListener('DOMContentLoaded', function() {
         if (sendItemUseDiscordBtn) {
             sendItemUseDiscordBtn.addEventListener('click', sendItemUseToDiscord);
         }
+    }
+    
+    function setupContainerDeleteButtons() {
+        const containerDeleteButtons = document.querySelectorAll('.container-delete-btn');
+        containerDeleteButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const mapId = this.getAttribute('data-map-id');
+                const containerName = this.getAttribute('data-item-name');
+                
+                // Show confirmation dialog for container removal
+                document.getElementById('remove-item-name').textContent = containerName + ' (Container)';
+                currentMapId = mapId;
+                removeItemModal.style.display = 'block';
+            });
+        });
     }
     
     function setupQuantityControls() {

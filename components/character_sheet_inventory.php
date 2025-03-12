@@ -118,11 +118,35 @@ try {
                         data-item-type="<?php echo htmlspecialchars($item['item_type']); ?>"
                         data-container-id="<?php echo $container_id; ?>"
                         draggable="true">
+                        <?php if ($isContainer): ?>
+                        <!-- Container row with just name and delete option -->
+                        <td class="item-name container-name" colspan="3">
+                            <span class="item-name-text" title="<?php echo htmlspecialchars($item['item_description'] ?? ''); ?>">
+                                <i class="fas fa-box" style="margin-right: 5px;"></i>
+                                <?php echo htmlspecialchars($item['item_name']); ?>
+                            </span>
+                        </td>
+                        <td class="item-actions">
+                            <div class="item-action-buttons">
+                                <?php if (!$hasContents): ?>
+                                <!-- Only show trash for empty containers -->
+                                <button class="container-delete-btn" title="Remove Empty Container" 
+                                        data-map-id="<?php echo $item['map_id']; ?>"
+                                        data-item-name="<?php echo htmlspecialchars($item['item_name']); ?>">
+                                    <i class="fas fa-trash-alt" style="color: #d32f2f;"></i>
+                                </button>
+                                <?php else: ?>
+                                <!-- Show a "locked" trash can for containers with items -->
+                                <button class="container-locked-btn" title="Container must be empty before removal" disabled>
+                                    <i class="fas fa-lock" style="color: #aaa;"></i>
+                                </button>
+                                <?php endif; ?>
+                            </div>
+                        </td>
+                        <?php else: ?>
+                        <!-- Regular item row with all columns -->
                         <td class="item-name">
                             <span class="item-name-text" <?php echo $indentStyle; ?> title="<?php echo htmlspecialchars($item['item_description'] ?? ''); ?>">
-                                <?php if ($isContainer): ?>
-                                <i class="fas fa-box" style="margin-right: 5px;"></i>
-                                <?php endif; ?>
                                 <?php echo htmlspecialchars($item['item_name']); ?>
                             </span>
                         </td>
@@ -148,6 +172,7 @@ try {
                                 </button>
                             </div>
                         </td>
+                        <?php endif; ?>
                     </tr>
                     <?php
                         // Render container contents if this is a container
