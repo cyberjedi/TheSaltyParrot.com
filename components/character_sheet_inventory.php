@@ -86,12 +86,12 @@ try {
         </div>
         <?php else: ?>
         <div class="inventory-dropzone" data-container-id="root">
-            <table class="inventory-table">
+            <table class="inventory-table" style="table-layout: fixed; width: 100%;">
                 <colgroup>
-                    <col class="item-name-col">
-                    <col class="item-type-col">
-                    <col class="item-qty-col">
-                    <col class="item-actions-col">
+                    <col class="item-name-col" style="width: 40%;">
+                    <col class="item-type-col" style="width: 20%;">
+                    <col class="item-qty-col" style="width: 20%;">
+                    <col class="item-actions-col" style="width: 20%;">
                 </colgroup>
                 <thead>
                     <tr>
@@ -153,12 +153,12 @@ try {
                         <td colspan="4" class="container-contents-cell">
                             <div class="container-items-dropzone" data-container-id="<?php echo $containerId; ?>">
                                 <?php if ($hasContents): ?>
-                                <table class="container-items-table">
+                                <table class="container-items-table" style="table-layout: fixed; width: 100%;">
                                     <colgroup>
-                                        <col class="item-name-col">
-                                        <col class="item-type-col">
-                                        <col class="item-qty-col">
-                                        <col class="item-actions-col">
+                                        <col class="item-name-col" style="width: 40%;">
+                                        <col class="item-type-col" style="width: 20%;">
+                                        <col class="item-qty-col" style="width: 20%;">
+                                        <col class="item-actions-col" style="width: 20%;">
                                     </colgroup>
                                     <tbody>
                                         <?php foreach ($container_items[$containerId] as $containerItem): 
@@ -210,12 +210,12 @@ try {
                                                 <div class="container-items-dropzone" data-container-id="<?php echo $nestedContainerId; ?>">
                                                     <?php if ($hasNestedContents): ?>
                                                     <!-- Nested container contents -->
-                                                    <table class="container-items-table nested-container-table">
+                                                    <table class="container-items-table nested-container-table" style="table-layout: fixed; width: 100%;">
                                                         <colgroup>
-                                                            <col class="item-name-col">
-                                                            <col class="item-type-col">
-                                                            <col class="item-qty-col">
-                                                            <col class="item-actions-col">
+                                                            <col class="item-name-col" style="width: 40%;">
+                                                            <col class="item-type-col" style="width: 20%;">
+                                                            <col class="item-qty-col" style="width: 20%;">
+                                                            <col class="item-actions-col" style="width: 20%;">
                                                         </colgroup>
                                                         <tbody>
                                                             <?php foreach ($container_items[$nestedContainerId] as $nestedItem): ?>

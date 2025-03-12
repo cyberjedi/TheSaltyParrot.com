@@ -897,10 +897,11 @@
 }
 
 .container-items-dropzone {
-    padding: 10px;
+    padding: 0;
     border-left: 3px solid #7289da;
-    margin-left: 20px;
+    margin-left: 0;
     background-color: rgba(114, 137, 218, 0.03);
+    width: 100%;
 }
 
 .container-items-table {
@@ -910,40 +911,59 @@
 
 .container-items-table tr td {
     padding: 6px 15px;
+    vertical-align: middle;
 }
 
-/* Remove specific width settings for container items */
-.container-items-table .item-name {
-    padding-left: 25px;  /* Add indentation for items inside containers */
+/* Force same padding on both tables */
+.inventory-table td,
+.container-items-table td {
+    padding: 6px 15px !important;
+    box-sizing: border-box;
 }
 
-.container-items-table .item-type {
-    text-align: left;
+/* Fix column alignment across all tables */
+.inventory-table,
+.container-items-table {
+    table-layout: fixed; /* Force tables to respect column widths */
+    width: 100%;
 }
 
-.container-items-table .item-quantity {
-    text-align: center;
-}
-
-.container-items-table .item-actions {
-    text-align: center;
-}
-
-/* Match column widths from the main inventory table */
-.container-items-table .item-name-col {
+/* Define global column widths */
+.item-name-col {
     width: 40%;
 }
 
-.container-items-table .item-type-col {
+.item-type-col {
     width: 20%;
 }
 
-.container-items-table .item-qty-col {
+.item-qty-col {
     width: 20%;
 }
 
-.container-items-table .item-actions-col {
+.item-actions-col {
     width: 20%;
+}
+
+/* Styling for cells */
+.container-items-table .item-name-text {
+    padding-left: 20px; /* Add indentation for items inside containers */
+    display: inline-block;
+}
+
+.container-items-table .item-type,
+.inventory-table .item-type {
+    text-align: left;
+}
+
+.container-items-table .item-quantity,
+.inventory-table .item-quantity {
+    text-align: center;
+}
+
+.container-items-table .item-actions,
+.inventory-table .item-actions {
+    text-align: center;
 }
 
 /* Additional styling for nested container tables */
@@ -953,8 +973,9 @@
     border-left: 2px solid #b5bfe6;
 }
 
-.nested-container-table .item-name {
-    padding-left: 35px !important; /* More indentation for deeper nesting */
+.nested-container-table .item-name-text {
+    padding-left: 30px !important; /* More indentation for deeper nesting */
+    display: inline-block;
 }
 
 .empty-container {
