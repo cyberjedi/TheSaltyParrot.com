@@ -74,7 +74,7 @@ try {
 <div class="character-inventory">
     <div class="inventory-header-container">
         <h3 class="stats-header">Inventory</h3>
-        <button id="add-inventory-item-btn" class="btn-icon" title="Add Item" style="float: right; margin-top: -35px;">
+        <button id="add-inventory-item-btn" class="inventory-add-btn" title="Add Item">
             <i class="fas fa-plus"></i>
         </button>
     </div>
