@@ -48,6 +48,7 @@ require_once 'components/character_controller.php';
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/character_sheet.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="css/inventory.css?v=<?php echo time(); ?>">
     <?php if ($discord_enabled && file_exists('css/discord.css')): ?>
     <link rel="stylesheet" href="css/discord.css">
     <?php endif; ?>
@@ -71,5 +72,8 @@ require_once 'components/character_controller.php';
         <p>The Salty Parrot is an independent production by Stuart Greenwell. It is not affiliated with Limithron LLC. It is published under the PIRATE BORG Third Party License. PIRATE BORG is ©2022 Limithron LLC.</p>
         <p>&copy; 2025 The Salty Parrot</p>
     </footer>
+
+    <!-- Load inventory JS after character sheet JS -->
+    <script src="js/inventory.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

@@ -213,9 +213,10 @@
                 </table>
             </div>
             
-            <!-- Additional character information can be added here in future updates -->
+            <!-- Additional character information sections -->
             <div class="character-details">
-                <!-- Placeholder for additional character details -->
+                <!-- Include Inventory Section -->
+                <?php include_once dirname(__FILE__) . '/character_sheet_inventory.php'; ?>
             </div>
         </div>
     </div>

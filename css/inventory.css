@@ -1,0 +1,271 @@
+/**
+ * Character Sheet Inventory Styles
+ */
+
+/* Inventory Section Styles */
+.character-inventory {
+    margin-top: 30px;
+    border-top: 2px solid #bf9d61;
+    padding-top: 20px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.section-header h3 {
+    margin: 0;
+    color: #1a2639;
+    font-size: 1.5rem;
+}
+
+.inventory-container {
+    width: 100%;
+    background-color: #f9f5eb;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    overflow: hidden;
+}
+
+.empty-inventory {
+    padding: 20px;
+    text-align: center;
+    color: #777;
+}
+
+.inventory-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.inventory-table th {
+    background-color: #e0d0b0;
+    color: #805d2c;
+    font-weight: bold;
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #d0c0a0;
+}
+
+.inventory-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.inventory-item:hover {
+    background-color: #f0e8d0;
+}
+
+.item-name-col {
+    width: 50%;
+}
+
+.item-type-col {
+    width: 20%;
+}
+
+.item-qty-col {
+    width: 15%;
+}
+
+.item-actions-col {
+    width: 15%;
+    text-align: center;
+}
+
+.item-name-text {
+    font-weight: 500;
+    cursor: help;
+}
+
+.quantity-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 80px;
+}
+
+.quantity-btn {
+    background: none;
+    border: 1px solid #bf9d61;
+    color: #805d2c;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quantity-btn:hover {
+    background-color: #bf9d61;
+    color: white;
+}
+
+.quantity-value {
+    font-weight: bold;
+    width: 30px;
+    text-align: center;
+}
+
+.item-actions {
+    text-align: center;
+}
+
+.item-info-btn {
+    background: none;
+    border: none;
+    color: #bf9d61;
+    cursor: pointer;
+    font-size: 1.1rem;
+}
+
+.item-info-btn:hover {
+    color: #805d2c;
+}
+
+/* Item Search Controls */
+.item-search-controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.item-search-controls .form-group {
+    flex: 1;
+}
+
+/* Available Items List */
+.available-items-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background-color: #fff;
+    margin-bottom: 20px;
+}
+
+.available-items-list {
+    padding: 10px;
+}
+
+.available-item {
+    padding: 10px;
+    border-bottom: 1px solid #e0e0e0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.available-item:hover {
+    background-color: #f0e8d0;
+}
+
+.available-item-name {
+    font-weight: bold;
+    color: #1a2639;
+}
+
+.available-item-type {
+    font-size: 0.85rem;
+    color: #805d2c;
+    margin-top: 3px;
+}
+
+.available-item-desc {
+    font-size: 0.9rem;
+    color: #555;
+    margin-top: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.loading-items {
+    padding: 20px;
+    text-align: center;
+    color: #777;
+}
+
+/* Item Details Modal */
+.item-details-content {
+    margin: 20px 0;
+}
+
+.item-detail-row {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.item-detail-label {
+    width: 100px;
+    font-weight: bold;
+    color: #805d2c;
+}
+
+.item-detail-value {
+    flex: 1;
+}
+
+.item-description-container {
+    margin-top: 20px;
+}
+
+.item-description-container h4 {
+    color: #805d2c;
+    margin-bottom: 10px;
+}
+
+.item-description {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 15px;
+    min-height: 100px;
+    white-space: pre-line;
+}
+
+/* Remove Item Confirmation */
+.remove-item-name {
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .item-search-controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .quantity-control {
+        width: 70px;
+    }
+    
+    .inventory-table th,
+    .inventory-table td {
+        padding: 8px 5px;
+    }
+    
+    .item-type-col,
+    .item-type {
+        display: none;
+    }
+    
+    .item-name-col {
+        width: 60%;
+    }
+    
+    .item-qty-col {
+        width: 25%;
+    }
+    
+    .item-actions-col {
+        width: 15%;
+    }
+}
