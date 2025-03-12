@@ -24,6 +24,9 @@ if (!isset($data['webhook_id']) || empty($data['webhook_id']) || !isset($data['c
     exit;
 }
 
+// Get optional character image
+$character_image = isset($data['character_image']) ? $data['character_image'] : null;
+
 // Check if user is logged in
 if (!is_discord_authenticated()) {
     header('Content-Type: application/json');
@@ -65,7 +68,7 @@ try {
     }
     
     // Send content to webhook
-    $result = send_to_discord_webhook($conn, $data['webhook_id'], $data['content'], $generator_type);
+    $result = send_to_discord_webhook($conn, $data['webhook_id'], $data['content'], $generator_type, $character_image);
     
     // Log webhook usage for debugging
     error_log('Webhook used: ID=' . $data['webhook_id'] . ', Type=' . $generator_type . ', Content: ' . substr($data['content'], 0, 100) . '...');

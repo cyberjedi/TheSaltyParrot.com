@@ -145,9 +145,10 @@ function render_webhook_selector($webhooks, $generator_type = '') {
  * @param int $webhook_id Webhook ID
  * @param string $content HTML content to send
  * @param string $generator_type Generator type (ship, loot, etc.)
+ * @param string $character_image Optional URL of character image
  * @return array Status and message
  */
-function send_to_discord_webhook($conn, $webhook_id, $content, $generator_type) {
+function send_to_discord_webhook($conn, $webhook_id, $content, $generator_type, $character_image = null) {
     // Initialize response
     $response = [
         'status' => 'error',
@@ -279,11 +280,18 @@ function send_to_discord_webhook($conn, $webhook_id, $content, $generator_type) 
                 $total_value = isset($total_matches[1]) ? $total_matches[1] : '?';
                 
                 // Create embed
-                $embeds[] = [
+                $embed = [
                     'title' => '🎲 ' . $character_name . ' - ' . $attribute_name . ' Check',
                     'description' => "**Dice Roll (d20):** " . $dice_value . "\n**" . $attribute_name . " Bonus:** " . $attribute_bonus . "\n**Total:** " . $total_value,
                     'color' => 0x5765F2 // Discord blue color
                 ];
+                
+                // Add character image if provided
+                if ($character_image && filter_var($character_image, FILTER_VALIDATE_URL)) {
+                    $embed['thumbnail'] = ['url' => $character_image];
+                }
+                
+                $embeds[] = $embed;
                 
                 $content_summary = $character_name . " - " . $attribute_name . " Check: " . $total_value;
                 break;
@@ -304,11 +312,18 @@ function send_to_discord_webhook($conn, $webhook_id, $content, $generator_type) 
                 }
                 
                 // Create embed
-                $embeds[] = [
+                $embed = [
                     'title' => '✋ ' . $character_name . ' uses ' . $item_name,
                     'description' => "**Item:** " . $item_name . $notes,
                     'color' => 0x7289DA // Discord blurple color
                 ];
+                
+                // Add character image if provided
+                if ($character_image && filter_var($character_image, FILTER_VALIDATE_URL)) {
+                    $embed['thumbnail'] = ['url' => $character_image];
+                }
+                
+                $embeds[] = $embed;
                 
                 $content_summary = $character_name . " uses " . $item_name;
                 break;

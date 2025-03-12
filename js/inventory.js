@@ -574,6 +574,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Get send webhook URL
                 const sendWebhookUrl = baseUrl + 'discord/send_to_webhook.php';
                 
+                // Get character image URL if available
+                const characterImage = document.querySelector('.character-image img').src || '';
+                
                 // Send content to webhook
                 return fetch(sendWebhookUrl, {
                     method: 'POST',
@@ -583,7 +586,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     body: JSON.stringify({
                         webhook_id: webhookId,
                         content: itemContent,
-                        generator_type: 'item_use'
+                        generator_type: 'item_use',
+                        character_image: characterImage
                     })
                 });
             })

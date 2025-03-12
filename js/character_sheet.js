@@ -375,6 +375,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     console.log('Sending webhook to:', sendWebhookUrl);
                     
+                    // Get character image URL if available
+                    const characterImage = document.querySelector('.character-image img').src || '';
+                    
                     // Send content to webhook with proper path
                     fetch(sendWebhookUrl, {
                         method: 'POST',
@@ -384,7 +387,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         body: JSON.stringify({
                             webhook_id: webhookId,
                             content: rollContent,
-                            generator_type: 'attribute_roll'
+                            generator_type: 'attribute_roll',
+                            character_image: characterImage
                         })
                     })
                     .then(response => response.json())
