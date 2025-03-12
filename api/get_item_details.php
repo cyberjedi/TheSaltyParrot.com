@@ -13,7 +13,12 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Check if user is authenticated
-$is_authenticated = isset($_SESSION['discord_authenticated']) && $_SESSION['discord_authenticated'] === true;
+// Load Discord configuration if not already loaded
+if (!function_exists('is_discord_authenticated')) {
+    require_once dirname(__DIR__) . '/discord/discord-config.php';
+}
+
+$is_authenticated = function_exists('is_discord_authenticated') && is_discord_authenticated();
 
 if (!$is_authenticated) {
     echo json_encode([
