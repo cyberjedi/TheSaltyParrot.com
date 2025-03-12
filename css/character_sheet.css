@@ -893,13 +893,13 @@
     text-align: left;
 }
 
-/* Styling for container borders */
-.container-level-1 td {
-    border-left: 3px solid #7289da;
+/* Styling for container items - no vertical lines */
+.container-level-1 {
+    background-color: rgba(114, 137, 218, 0.05);
 }
 
-.container-level-2 td {
-    border-left: 3px solid #b5bfe6;
+.container-level-2 {
+    background-color: rgba(114, 137, 218, 0.08);
 }
 
 /* Quantity controls and action buttons */
@@ -915,7 +915,6 @@
     font-style: italic;
     text-align: center;
     background-color: rgba(114, 137, 218, 0.03);
-    border-left: 3px solid #7289da;
 }
 
 /* Drag and drop styles */

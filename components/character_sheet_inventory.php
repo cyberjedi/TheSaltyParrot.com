@@ -109,7 +109,8 @@ try {
                         $itemId = $item['map_id'];
                         $hasContents = isset($container_items[$itemId]) && !empty($container_items[$itemId]);
                         $indentClass = $containerLevel > 0 ? "container-level-" . $containerLevel : "";
-                        $indentStyle = $containerLevel > 0 ? "style='padding-left:" . ($containerLevel * 20) . "px;'" : "";
+                        // Only add indentation to non-container items
+                        $indentStyle = ($containerLevel > 0 && $item['item_type'] !== 'Container') ? "style='padding-left:" . ($containerLevel * 20) . "px;'" : "";
                     ?>
                     <tr class="inventory-item <?php echo $isContainer ? 'container-item' : ''; ?> <?php echo $hasContents ? 'has-contents' : ''; ?> <?php echo $indentClass; ?>" 
                         data-item-id="<?php echo $item['item_id']; ?>" 
