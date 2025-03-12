@@ -931,9 +931,15 @@
     position: relative;
 }
 
-.inventory-dropzone.drag-over {
+/* Highlight styles for drag targets */
+.inventory-table.drag-over {
+    outline: 2px dashed #7289da;
     background-color: rgba(114, 137, 218, 0.1);
-    border: 2px dashed #7289da;
+}
+
+.inventory-item.container-item.drag-over {
+    background-color: rgba(114, 137, 218, 0.2);
+    outline: 2px dashed #7289da;
 }
 
 /* Loading indicator and error message */

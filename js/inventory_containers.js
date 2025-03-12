@@ -6,9 +6,8 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Elements
     const inventoryContainer = document.querySelector('.inventory-container');
-    const dropzones = document.querySelectorAll('.inventory-dropzone');
+    const inventoryTable = document.querySelector('.inventory-table');
     const draggableItems = document.querySelectorAll('.inventory-item[draggable="true"]');
-    const containerToggles = document.querySelectorAll('.container-toggle');
     
     // Character data from PHP
     const characterData = window.character_data || {};
@@ -40,13 +39,22 @@ document.addEventListener('DOMContentLoaded', function() {
             item.addEventListener('dragend', handleDragEnd);
         });
         
-        // Add drop zone event listeners
-        dropzones.forEach(dropzone => {
-            dropzone.addEventListener('dragover', handleDragOver);
-            dropzone.addEventListener('dragenter', handleDragEnter);
-            dropzone.addEventListener('dragleave', handleDragLeave);
-            dropzone.addEventListener('drop', handleDrop);
+        // Make container items droppable
+        const containerItems = document.querySelectorAll('.inventory-item.container-item');
+        containerItems.forEach(container => {
+            container.addEventListener('dragover', handleDragOver);
+            container.addEventListener('dragenter', handleDragEnter);
+            container.addEventListener('dragleave', handleDragLeave);
+            container.addEventListener('drop', handleDrop);
         });
+        
+        // Make root inventory table droppable
+        if (inventoryTable) {
+            inventoryTable.addEventListener('dragover', handleDragOver);
+            inventoryTable.addEventListener('dragenter', handleDragEnter);
+            inventoryTable.addEventListener('dragleave', handleDragLeave);
+            inventoryTable.addEventListener('drop', handleDrop);
+        }
     }
     
     function handleDragStart(e) {
@@ -112,7 +120,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const itemMapId = draggedItem.dataset.mapId;
         const itemType = draggedItem.dataset.itemType;
         const currentContainerId = draggedItem.dataset.containerId;
-        const targetContainerId = this.dataset.containerId;
+        
+        // Determine target container ID
+        let targetContainerId;
+        
+        // If dropped on a container item
+        if (this.classList.contains('container-item')) {
+            targetContainerId = this.dataset.mapId;
+        } 
+        // If dropped on the root inventory table
+        else if (this === inventoryTable) {
+            targetContainerId = 'root';
+        }
+        // Default fallback case
+        else {
+            console.log('Unknown drop target');
+            return;
+        }
+        
+        console.log(`Dropping item ${itemMapId} into container ${targetContainerId}`);
         
         // Prevent dropping container into itself
         if (itemType === 'Container' && itemMapId === targetContainerId) {
