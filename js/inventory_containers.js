@@ -6,7 +6,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Elements
     const inventoryContainer = document.querySelector('.inventory-container');
-    const dropzones = document.querySelectorAll('.inventory-dropzone, .container-items-dropzone');
+    const dropzones = document.querySelectorAll('.inventory-dropzone');
     const draggableItems = document.querySelectorAll('.inventory-item[draggable="true"]');
     const containerToggles = document.querySelectorAll('.container-toggle');
     

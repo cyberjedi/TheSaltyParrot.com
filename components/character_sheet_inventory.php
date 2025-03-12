@@ -86,38 +86,39 @@ try {
         </div>
         <?php else: ?>
         <div class="inventory-dropzone" data-container-id="root">
-            <table class="inventory-table" style="table-layout: fixed; width: 100%;">
+            <table class="inventory-table" style="width:100%; table-layout:fixed; border-collapse:collapse;">
                 <colgroup>
-                    <col class="item-name-col" style="width: 40%;">
-                    <col class="item-type-col" style="width: 20%;">
-                    <col class="item-qty-col" style="width: 20%;">
-                    <col class="item-actions-col" style="width: 20%;">
+                    <col style="width:40%;">
+                    <col style="width:20%;">
+                    <col style="width:20%;">
+                    <col style="width:20%;">
                 </colgroup>
                 <thead>
                     <tr>
-                        <th class="item-name-col">Item</th>
-                        <th class="item-type-col">Type</th>
-                        <th class="item-qty-col">Qty</th>
-                        <th class="item-actions-col">Actions</th>
+                        <th class="item-name-col" style="text-align:left;">Item</th>
+                        <th class="item-type-col" style="text-align:left;">Type</th>
+                        <th class="item-qty-col" style="text-align:left;">Qty</th>
+                        <th class="item-actions-col" style="text-align:left;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php 
-                    // Display root level items (not in any container)
-                    $rootItems = $container_items['root'] ?? [];
-                    foreach ($rootItems as $item): 
+                    // Function to render an item row
+                    function renderItemRow($item, $containerLevel = 0, $container_id = 'root', $container_items = []) {
                         $isContainer = ($item['item_type'] === 'Container');
-                        $containerId = $item['map_id'];
-                        $hasContents = isset($container_items[$containerId]) && !empty($container_items[$containerId]);
+                        $itemId = $item['map_id'];
+                        $hasContents = isset($container_items[$itemId]) && !empty($container_items[$itemId]);
+                        $indentClass = $containerLevel > 0 ? "container-level-" . $containerLevel : "";
+                        $indentStyle = $containerLevel > 0 ? "style='padding-left:" . ($containerLevel * 20) . "px;'" : "";
                     ?>
-                    <tr class="inventory-item <?php echo $isContainer ? 'container-item' : ''; ?> <?php echo $hasContents ? 'has-contents' : ''; ?>" 
+                    <tr class="inventory-item <?php echo $isContainer ? 'container-item' : ''; ?> <?php echo $hasContents ? 'has-contents' : ''; ?> <?php echo $indentClass; ?>" 
                         data-item-id="<?php echo $item['item_id']; ?>" 
                         data-map-id="<?php echo $item['map_id']; ?>"
                         data-item-type="<?php echo htmlspecialchars($item['item_type']); ?>"
-                        data-container-id="<?php echo $item['container_id'] ?? 'root'; ?>"
+                        data-container-id="<?php echo $container_id; ?>"
                         draggable="true">
                         <td class="item-name">
-                            <span class="item-name-text" title="<?php echo htmlspecialchars($item['item_description'] ?? ''); ?>">
+                            <span class="item-name-text" <?php echo $indentStyle; ?> title="<?php echo htmlspecialchars($item['item_description'] ?? ''); ?>">
                                 <?php if ($isContainer): ?>
                                 <i class="fas fa-box" style="margin-right: 5px;"></i>
                                 <?php endif; ?>
@@ -147,137 +148,23 @@ try {
                             </div>
                         </td>
                     </tr>
-                    <?php if ($isContainer): ?>
-                    <!-- Container contents section - always visible -->
-                    <tr class="container-contents expanded" data-container-id="<?php echo $containerId; ?>">
-                        <td colspan="4" class="container-contents-cell">
-                            <div class="container-items-dropzone" data-container-id="<?php echo $containerId; ?>">
-                                <?php if ($hasContents): ?>
-                                <table class="container-items-table" style="table-layout: fixed; width: 100%;">
-                                    <colgroup>
-                                        <col class="item-name-col" style="width: 40%;">
-                                        <col class="item-type-col" style="width: 20%;">
-                                        <col class="item-qty-col" style="width: 20%;">
-                                        <col class="item-actions-col" style="width: 20%;">
-                                    </colgroup>
-                                    <tbody>
-                                        <?php foreach ($container_items[$containerId] as $containerItem): 
-                                            $isNestedContainer = ($containerItem['item_type'] === 'Container');
-                                            $nestedContainerId = $containerItem['map_id'];
-                                            $hasNestedContents = isset($container_items[$nestedContainerId]) && !empty($container_items[$nestedContainerId]);
-                                        ?>
-                                        <tr class="inventory-item <?php echo $isNestedContainer ? 'container-item' : ''; ?> <?php echo $hasNestedContents ? 'has-contents' : ''; ?>" 
-                                            data-item-id="<?php echo $containerItem['item_id']; ?>" 
-                                            data-map-id="<?php echo $containerItem['map_id']; ?>"
-                                            data-item-type="<?php echo htmlspecialchars($containerItem['item_type']); ?>"
-                                            data-container-id="<?php echo $containerId; ?>"
-                                            draggable="true">
-                                            <td class="item-name">
-                                                <span class="item-name-text" title="<?php echo htmlspecialchars($containerItem['item_description'] ?? ''); ?>">
-                                                    <?php if ($isNestedContainer): ?>
-                                                    <i class="fas fa-box" style="margin-right: 5px;"></i>
-                                                    <?php endif; ?>
-                                                    <?php echo htmlspecialchars($containerItem['item_name']); ?>
-                                                </span>
-                                            </td>
-                                            <td class="item-type"><?php echo htmlspecialchars($containerItem['item_type']); ?></td>
-                                            <td class="item-quantity">
-                                                <div class="quantity-control">
-                                                    <button class="quantity-btn decrease-btn" data-map-id="<?php echo $containerItem['map_id']; ?>">
-                                                        <i class="fas fa-minus"></i>
-                                                    </button>
-                                                    <span class="quantity-value"><?php echo (int)$containerItem['map_quantity']; ?></span>
-                                                    <button class="quantity-btn increase-btn" data-map-id="<?php echo $containerItem['map_id']; ?>">
-                                                        <i class="fas fa-plus"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                            <td class="item-actions">
-                                                <div class="item-action-buttons">
-                                                    <button class="item-info-btn" title="View Details" data-item-id="<?php echo $containerItem['item_id']; ?>">
-                                                        <i class="fas fa-info-circle"></i>
-                                                    </button>
-                                                    <button class="item-use-btn" title="Use Item" data-item-id="<?php echo $containerItem['item_id']; ?>" data-item-name="<?php echo htmlspecialchars($containerItem['item_name']); ?>">
-                                                        <i class="fas fa-hand-paper" style="color: #7289da;"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <?php if ($isNestedContainer): ?>
-                                        <!-- Recursively render nested container contents -->
-                                        <tr class="container-contents expanded" data-container-id="<?php echo $nestedContainerId; ?>">
-                                            <td colspan="4" class="container-contents-cell">
-                                                <div class="container-items-dropzone" data-container-id="<?php echo $nestedContainerId; ?>">
-                                                    <?php if ($hasNestedContents): ?>
-                                                    <!-- Nested container contents -->
-                                                    <table class="container-items-table nested-container-table" style="table-layout: fixed; width: 100%;">
-                                                        <colgroup>
-                                                            <col class="item-name-col" style="width: 40%;">
-                                                            <col class="item-type-col" style="width: 20%;">
-                                                            <col class="item-qty-col" style="width: 20%;">
-                                                            <col class="item-actions-col" style="width: 20%;">
-                                                        </colgroup>
-                                                        <tbody>
-                                                            <?php foreach ($container_items[$nestedContainerId] as $nestedItem): ?>
-                                                            <tr class="inventory-item" 
-                                                                data-item-id="<?php echo $nestedItem['item_id']; ?>" 
-                                                                data-map-id="<?php echo $nestedItem['map_id']; ?>"
-                                                                data-item-type="<?php echo htmlspecialchars($nestedItem['item_type']); ?>"
-                                                                data-container-id="<?php echo $nestedContainerId; ?>"
-                                                                draggable="true">
-                                                                <td class="item-name">
-                                                                    <span class="item-name-text" title="<?php echo htmlspecialchars($nestedItem['item_description'] ?? ''); ?>">
-                                                                        <?php echo htmlspecialchars($nestedItem['item_name']); ?>
-                                                                    </span>
-                                                                </td>
-                                                                <td class="item-type"><?php echo htmlspecialchars($nestedItem['item_type']); ?></td>
-                                                                <td class="item-quantity">
-                                                                    <div class="quantity-control">
-                                                                        <button class="quantity-btn decrease-btn" data-map-id="<?php echo $nestedItem['map_id']; ?>">
-                                                                            <i class="fas fa-minus"></i>
-                                                                        </button>
-                                                                        <span class="quantity-value"><?php echo (int)$nestedItem['map_quantity']; ?></span>
-                                                                        <button class="quantity-btn increase-btn" data-map-id="<?php echo $nestedItem['map_id']; ?>">
-                                                                            <i class="fas fa-plus"></i>
-                                                                        </button>
-                                                                    </div>
-                                                                </td>
-                                                                <td class="item-actions">
-                                                                    <div class="item-action-buttons">
-                                                                        <button class="item-info-btn" title="View Details" data-item-id="<?php echo $nestedItem['item_id']; ?>">
-                                                                            <i class="fas fa-info-circle"></i>
-                                                                        </button>
-                                                                        <button class="item-use-btn" title="Use Item" data-item-id="<?php echo $nestedItem['item_id']; ?>" data-item-name="<?php echo htmlspecialchars($nestedItem['item_name']); ?>">
-                                                                            <i class="fas fa-hand-paper" style="color: #7289da;"></i>
-                                                                        </button>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                            <?php endforeach; ?>
-                                                        </tbody>
-                                                    </table>
-                                                    <?php else: ?>
-                                                    <div class="empty-container">
-                                                        <i class="fas fa-box-open"></i> Empty container
-                                                    </div>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <?php endif; ?>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                                <?php else: ?>
-                                <div class="empty-container">
-                                    <i class="fas fa-box-open"></i> Empty container
-                                </div>
-                                <?php endif; ?>
-                            </div>
-                        </td>
-                    </tr>
-                    <?php endif; ?>
-                    <?php endforeach; ?>
+                    <?php
+                        // Render container contents if this is a container
+                        if ($isContainer && $hasContents) {
+                            // For each item in this container
+                            foreach ($container_items[$itemId] as $containerItem) {
+                                // Render the container item
+                                renderItemRow($containerItem, $containerLevel + 1, $itemId, $container_items);
+                            }
+                        }
+                    }
+                    
+                    // Display root level items (not in any container)
+                    $rootItems = $container_items['root'] ?? [];
+                    foreach ($rootItems as $item) {
+                        renderItemRow($item, 0, 'root', $container_items);
+                    }
+                    ?>
                 </tbody>
             </table>
         </div>

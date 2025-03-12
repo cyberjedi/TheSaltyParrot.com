@@ -869,119 +869,102 @@
     position: relative;
 }
 
-.container-toggle {
-    background: none;
-    border: none;
-    color: #7289da;
-    cursor: pointer;
-    margin-right: 5px;
-    padding: 2px;
-    transition: transform 0.2s ease;
-}
-
-.container-toggle:hover {
-    color: #5a6cbd;
-}
-
-.container-contents {
-    display: none;
-}
-
-.container-contents.expanded {
-    display: table-row;
-}
-
-.container-contents-cell {
-    padding: 0 !important;
+/* Styling for container items */
+.inventory-item.container-level-1 {
     background-color: rgba(114, 137, 218, 0.05);
 }
 
-.container-items-dropzone {
-    padding: 0;
-    border-left: 3px solid #7289da;
-    margin-left: 0;
-    background-color: rgba(114, 137, 218, 0.03);
-    width: 100%;
+.inventory-item.container-level-2 {
+    background-color: rgba(114, 137, 218, 0.1);
 }
 
-.container-items-table {
+/* Global table styles */
+.inventory-table {
     width: 100%;
+    table-layout: fixed; 
     border-collapse: collapse;
 }
 
-.container-items-table tr td {
-    padding: 6px 15px;
-    vertical-align: middle;
-}
-
-/* Force same padding on both tables */
-.inventory-table td,
-.container-items-table td {
+.inventory-table th,
+.inventory-table td {
     padding: 6px 15px !important;
     box-sizing: border-box;
-}
-
-/* Fix column alignment across all tables */
-.inventory-table,
-.container-items-table {
-    table-layout: fixed; /* Force tables to respect column widths */
-    width: 100%;
-}
-
-/* Define global column widths */
-.item-name-col {
-    width: 40%;
-}
-
-.item-type-col {
-    width: 20%;
-}
-
-.item-qty-col {
-    width: 20%;
-}
-
-.item-actions-col {
-    width: 20%;
-}
-
-/* Styling for cells */
-.container-items-table .item-name-text {
-    padding-left: 20px; /* Add indentation for items inside containers */
-    display: inline-block;
-}
-
-.container-items-table .item-type,
-.inventory-table .item-type {
+    vertical-align: middle;
     text-align: left;
 }
 
-.container-items-table .item-quantity,
-.inventory-table .item-quantity {
-    text-align: center;
+/* Styling for container borders */
+.container-level-1 td {
+    border-left: 3px solid #7289da;
 }
 
-.container-items-table .item-actions,
-.inventory-table .item-actions {
-    text-align: center;
+.container-level-2 td {
+    border-left: 3px solid #b5bfe6;
 }
 
-/* Additional styling for nested container tables */
-.nested-container-table {
-    margin-top: 5px;
-    margin-bottom: 5px;
-    border-left: 2px solid #b5bfe6;
+/* Quantity controls and action buttons */
+.quantity-control,
+.item-action-buttons {
+    text-align: left;
 }
 
-.nested-container-table .item-name-text {
-    padding-left: 30px !important; /* More indentation for deeper nesting */
-    display: inline-block;
-}
-
+/* Empty container styling */
 .empty-container {
     padding: 10px;
     color: #999;
     font-style: italic;
+    text-align: center;
+    background-color: rgba(114, 137, 218, 0.03);
+    border-left: 3px solid #7289da;
+}
+
+/* Drag and drop styles */
+.inventory-item[draggable="true"] {
+    cursor: grab;
+}
+
+.inventory-item.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.inventory-dropzone {
+    position: relative;
+}
+
+.inventory-dropzone.drag-over {
+    background-color: rgba(114, 137, 218, 0.1);
+    border: 2px dashed #7289da;
+}
+
+/* Loading indicator and error message */
+.inventory-loading {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 5px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.inventory-error {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #d32f2f;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 5px;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    display: none;
+}
     text-align: center;
 }
 
