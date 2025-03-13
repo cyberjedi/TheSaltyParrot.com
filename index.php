@@ -4,17 +4,22 @@ $current_page = 'dashboard';
 
 // Discord integration - safely load if available
 $discord_enabled = false;
+$discord_authenticated = false;
+$user_webhooks = [];
+
 if (file_exists('discord/discord-config.php')) {
     // Try to include the Discord configuration
     try {
         require_once 'discord/discord-config.php';
         $discord_enabled = true;
         
+        // Check if user is authenticated with Discord
+        if (function_exists('is_discord_authenticated')) {
+            $discord_authenticated = is_discord_authenticated();
+        }
+        
         // Get user ID and webhooks if authenticated
-        $user_webhooks = [];
-        if (function_exists('is_discord_authenticated') && is_discord_authenticated() && 
-            isset($conn)) {
-            
+        if ($discord_authenticated && isset($conn)) {
             try {
                 // Get user ID
                 $discord_id = $_SESSION['discord_user']['id'];
@@ -30,7 +35,13 @@ if (file_exists('discord/discord-config.php')) {
                     // Include the discord_service.php file to get the get_user_webhooks function
                     if (file_exists('discord/discord_service.php')) {
                         require_once 'discord/discord_service.php';
-                        $user_webhooks = get_user_webhooks($conn, $user_id);
+                        if (function_exists('get_user_webhooks')) {
+                            $user_webhooks = get_user_webhooks($conn, $user_id);
+                        } else {
+                            error_log('get_user_webhooks function not found');
+                        }
+                    } else {
+                        error_log('discord_service.php file not found');
                     }
                 }
             } catch (Exception $e) {
@@ -245,10 +256,28 @@ if (file_exists('discord/discord-config.php')) {
                         </div>
                     </div>
                     
-                    <?php if ($discord_enabled && function_exists('is_discord_authenticated') && is_discord_authenticated() && 
-                             function_exists('render_webhook_selector') && !empty($user_webhooks)): ?>
+                    <?php 
+                    // Add debug info for Discord integration status
+                    if (isset($_GET['debug']) && $_GET['debug'] == 1): ?>
+                        <div style="margin-top: 20px; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid #333; font-size: 12px;">
+                            <p>Discord enabled: <?php echo $discord_enabled ? 'Yes' : 'No'; ?></p>
+                            <p>Discord authenticated: <?php echo $discord_authenticated ? 'Yes' : 'No'; ?></p>
+                            <p>Webhook selector function: <?php echo function_exists('render_webhook_selector') ? 'Yes' : 'No'; ?></p>
+                            <p>User webhooks count: <?php echo count($user_webhooks); ?></p>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if ($discord_enabled && $discord_authenticated && function_exists('render_webhook_selector') && !empty($user_webhooks)): ?>
                         <div id="webhook-selector-container" style="display: none;">
                             <?php render_webhook_selector($user_webhooks, ''); ?>
+                        </div>
+                    <?php elseif ($discord_enabled && $discord_authenticated): ?>
+                        <div id="webhook-not-configured" style="display: none; margin-top: 20px; text-align: center; padding: 15px; background: rgba(255,100,100,0.1); border: 1px solid #d66;">
+                            <p>You need to set up a Discord webhook to send content. <a href="discord/webhooks.php" style="color: #7289DA;">Configure webhooks</a></p>
+                        </div>
+                    <?php else: ?>
+                        <div id="discord-not-connected" style="display: none; margin-top: 20px; text-align: center; padding: 15px; background: rgba(255,100,100,0.1); border: 1px solid #d66;">
+                            <p>You need to connect your Discord account to send content to Discord.</p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -274,6 +303,8 @@ if (file_exists('discord/discord-config.php')) {
             const saveOutputBtn = document.getElementById('save-output-btn');
             const sendDiscordBtn = document.getElementById('send-discord-btn');
             const webhookSelectorContainer = document.getElementById('webhook-selector-container');
+            const webhookNotConfigured = document.getElementById('webhook-not-configured');
+            const discordNotConnected = document.getElementById('discord-not-connected');
             
             // Generator buttons
             const shipGeneratorBtn = document.getElementById('ship-generator-btn');
@@ -305,9 +336,15 @@ if (file_exists('discord/discord-config.php')) {
                         </div>
                     `;
                     
-                    // Hide webhook selector if visible
+                    // Hide all Discord-related containers
                     if (webhookSelectorContainer) {
                         webhookSelectorContainer.style.display = 'none';
+                    }
+                    if (webhookNotConfigured) {
+                        webhookNotConfigured.style.display = 'none';
+                    }
+                    if (discordNotConnected) {
+                        discordNotConnected.style.display = 'none';
                     }
                     
                     // Disable Discord send button
@@ -358,9 +395,23 @@ if (file_exists('discord/discord-config.php')) {
                         return;
                     }
                     
-                    // Show webhook selector if available
+                    console.log("Webhook selector:", webhookSelectorContainer);
+                    console.log("Webhook not configured:", webhookNotConfigured);
+                    console.log("Discord not connected:", discordNotConnected);
+                    
+                    // Show appropriate panel based on Discord status
                     if (webhookSelectorContainer) {
                         webhookSelectorContainer.style.display = 'block';
+                        if (webhookNotConfigured) webhookNotConfigured.style.display = 'none';
+                        if (discordNotConnected) discordNotConnected.style.display = 'none';
+                    } else if (webhookNotConfigured) {
+                        webhookNotConfigured.style.display = 'block';
+                        if (webhookSelectorContainer) webhookSelectorContainer.style.display = 'none';
+                        if (discordNotConnected) discordNotConnected.style.display = 'none';
+                    } else if (discordNotConnected) {
+                        discordNotConnected.style.display = 'block';
+                        if (webhookSelectorContainer) webhookSelectorContainer.style.display = 'none';
+                        if (webhookNotConfigured) webhookNotConfigured.style.display = 'none';
                     } else {
                         alert("Discord connection required to send content.");
                     }
