@@ -57,6 +57,132 @@ if (file_exists('discord/discord-config.php')) {
     <link rel="stylesheet" href="css/discord.css">
     <?php endif; ?>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        /* New Generator Page Styles */
+        .generators-container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 20px;
+            height: calc(100vh - 180px);
+        }
+        
+        .generators-sidebar {
+            background-color: var(--dark);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid rgba(191, 157, 97, 0.3);
+            overflow-y: auto;
+        }
+        
+        .generator-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .generator-btn {
+            background-color: rgba(0, 0, 0, 0.3);
+            color: var(--secondary);
+            border: 1px solid var(--secondary);
+            border-radius: 6px;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .generator-btn:hover, .generator-btn.active {
+            background-color: rgba(191, 157, 97, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .generator-btn i {
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .output-box {
+            grid-column: 2;
+            background-color: var(--dark);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid rgba(191, 157, 97, 0.3);
+            overflow: auto;
+            height: 100%;
+        }
+        
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(191, 157, 97, 0.3);
+            padding-bottom: 10px;
+        }
+        
+        .output-title {
+            color: var(--secondary);
+            margin: 0;
+            font-size: 1.3rem;
+        }
+        
+        .output-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .output-action-btn {
+            background: none;
+            border: none;
+            color: var(--secondary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 5px;
+            transition: all 0.2s;
+        }
+        
+        .output-action-btn:hover {
+            color: #fff;
+            transform: translateY(-2px);
+        }
+        
+        .discord-send-btn {
+            color: #7289DA; /* Discord blue */
+        }
+        
+        @media (max-width: 1000px) {
+            .generators-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+            
+            .generators-sidebar {
+                grid-row: 1;
+                max-height: 200px;
+            }
+            
+            .generator-buttons {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            
+            .generator-btn {
+                flex: 1 0 auto;
+                min-width: 150px;
+            }
+            
+            .output-box {
+                grid-column: 1;
+                grid-row: 2;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -65,61 +191,57 @@ if (file_exists('discord/discord-config.php')) {
         
         <!-- Main Content Area -->
         <main class="main-content">
-            <div class="dashboard-container">
-                <!-- Modified dashboard to remove Discord box from the top -->                
-                <!-- Character Display Box -->
-                <div class="character-box">
-                    <h3 class="box-title">
-                        Current Character
-                        <div class="actions">
-                            <button id="edit-character-btn" title="Edit Character"><i class="fas fa-edit"></i></button>
-                            <button id="character-menu-btn" title="Character Menu"><i class="fas fa-ellipsis-v"></i></button>
-                        </div>
-                    </h3>
-                    
-                    <div id="character-display" class="placeholder-display">
-                        <i class="fas fa-user-slash"></i>
-                        <p>No active character selected</p>
-                        <button class="btn btn-outline" id="create-character-btn">
-                            <i class="fas fa-plus"></i> Create Character
+            <div class="generators-container">
+                <!-- Generator Buttons Sidebar -->
+                <div class="generators-sidebar">
+                    <div class="generator-buttons">
+                        <button id="ship-generator-btn" class="generator-btn">
+                            <i class="fas fa-ship"></i>
+                            <span>Ship Generator</span>
+                        </button>
+                        <button id="loot-generator-btn" class="generator-btn">
+                            <i class="fas fa-coins"></i>
+                            <span>Loot Generator</span>
+                        </button>
+                        <button id="dice-generator-btn" class="generator-btn">
+                            <i class="fas fa-dice-d20"></i>
+                            <span>Dice Roller</span>
+                        </button>
+                        <button id="npc-generator-btn" class="generator-btn">
+                            <i class="fas fa-user-friends"></i>
+                            <span>NPC Generator</span>
+                        </button>
+                        <button id="treasure-generator-btn" class="generator-btn">
+                            <i class="fas fa-gem"></i>
+                            <span>Treasure Generator</span>
                         </button>
                     </div>
                 </div>
                 
-                <!-- Ship Display Box -->
-                <div class="ship-box">
-                    <h3 class="box-title">
-                        Current Ship
-                        <div class="actions">
-                            <button id="edit-ship-btn" title="Edit Ship"><i class="fas fa-edit"></i></button>
-                            <button id="ship-menu-btn" title="Ship Menu"><i class="fas fa-ellipsis-v"></i></button>
-                        </div>
-                    </h3>
-                    
-                    <div id="ship-display" class="placeholder-display">
-                        <i class="fas fa-ship"></i>
-                        <p>No active ship selected</p>
-                        <button class="btn btn-outline" id="create-ship-btn">
-                            <i class="fas fa-plus"></i> Create Ship
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Output Box (Right Side) -->
+                <!-- Output Box -->
                 <div class="output-box">
-                    <h3 class="box-title">
-                        Output
-                        <div class="actions">
-                            <button id="save-output-btn" title="Save Output"><i class="fas fa-save"></i></button>
-                            <button id="print-output-btn" title="Print Output"><i class="fas fa-print"></i></button>
-                            <button id="clear-output-btn" title="Clear Output"><i class="fas fa-trash"></i></button>
+                    <div class="output-header">
+                        <h3 class="output-title">Output</h3>
+                        <div class="output-actions">
+                            <button id="send-discord-btn" class="output-action-btn discord-send-btn" title="Send to Discord">
+                                <i class="fas fa-hand-paper"></i>
+                            </button>
+                            <button id="save-output-btn" class="output-action-btn" title="Save Output">
+                                <i class="fas fa-save"></i>
+                            </button>
+                            <button id="print-output-btn" class="output-action-btn" title="Print Output">
+                                <i class="fas fa-print"></i>
+                            </button>
+                            <button id="clear-output-btn" class="output-action-btn" title="Clear Output">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
-                    </h3>
+                    </div>
                     
                     <div id="output-display">
                         <div class="placeholder-display">
                             <i class="fas fa-dice"></i>
-                            <p>Use the sidebar tools to generate content<br>Results will appear here</p>
+                            <p>Click on a generator button to the left<br>Results will appear here</p>
                         </div>
                     </div>
                     
@@ -144,15 +266,34 @@ if (file_exists('discord/discord-config.php')) {
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            console.log("Dashboard loaded");
+            console.log("Generators page loaded");
             
             const outputDisplay = document.getElementById('output-display');
             const clearOutputBtn = document.getElementById('clear-output-btn');
             const printOutputBtn = document.getElementById('print-output-btn');
             const saveOutputBtn = document.getElementById('save-output-btn');
-            const createCharacterBtn = document.getElementById('create-character-btn');
-            const createShipBtn = document.getElementById('create-ship-btn');
+            const sendDiscordBtn = document.getElementById('send-discord-btn');
             const webhookSelectorContainer = document.getElementById('webhook-selector-container');
+            
+            // Generator buttons
+            const shipGeneratorBtn = document.getElementById('ship-generator-btn');
+            const lootGeneratorBtn = document.getElementById('loot-generator-btn');
+            const diceGeneratorBtn = document.getElementById('dice-generator-btn');
+            const npcGeneratorBtn = document.getElementById('npc-generator-btn');
+            const treasureGeneratorBtn = document.getElementById('treasure-generator-btn');
+            
+            // Make discord send button initially disabled
+            if (sendDiscordBtn) {
+                sendDiscordBtn.style.opacity = '0.5';
+                sendDiscordBtn.disabled = true;
+            }
+            
+            // Function to clear active state from all buttons
+            function clearActiveButtons() {
+                document.querySelectorAll('.generator-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+            }
             
             // Clear output button
             if (clearOutputBtn) {
@@ -160,13 +301,19 @@ if (file_exists('discord/discord-config.php')) {
                     outputDisplay.innerHTML = `
                         <div class="placeholder-display">
                             <i class="fas fa-dice"></i>
-                            <p>Use the sidebar tools to generate content<br>Results will appear here</p>
+                            <p>Click on a generator button to the left<br>Results will appear here</p>
                         </div>
                     `;
                     
                     // Hide webhook selector if visible
                     if (webhookSelectorContainer) {
                         webhookSelectorContainer.style.display = 'none';
+                    }
+                    
+                    // Disable Discord send button
+                    if (sendDiscordBtn) {
+                        sendDiscordBtn.style.opacity = '0.5';
+                        sendDiscordBtn.disabled = true;
                     }
                 });
             }
@@ -202,17 +349,62 @@ if (file_exists('discord/discord-config.php')) {
                 });
             }
             
-            // Create Character button
-            if (createCharacterBtn) {
-                createCharacterBtn.addEventListener('click', function() {
-                    alert("Character creation is coming soon!");
+            // Discord send button
+            if (sendDiscordBtn) {
+                sendDiscordBtn.addEventListener('click', function() {
+                    // Check if there's content to send
+                    if (outputDisplay.querySelector('.placeholder-display')) {
+                        alert("Nothing to send yet. Generate some content first!");
+                        return;
+                    }
+                    
+                    // Show webhook selector if available
+                    if (webhookSelectorContainer) {
+                        webhookSelectorContainer.style.display = 'block';
+                    } else {
+                        alert("Discord connection required to send content.");
+                    }
                 });
             }
             
-            // Create Ship button
-            if (createShipBtn) {
-                createShipBtn.addEventListener('click', function() {
-                    alert("Ship creation is coming soon!");
+            // Generator button event listeners
+            if (shipGeneratorBtn) {
+                shipGeneratorBtn.addEventListener('click', function() {
+                    clearActiveButtons();
+                    this.classList.add('active');
+                    Generators.generateShip();
+                });
+            }
+            
+            if (lootGeneratorBtn) {
+                lootGeneratorBtn.addEventListener('click', function() {
+                    clearActiveButtons();
+                    this.classList.add('active');
+                    Generators.generateLoot();
+                });
+            }
+            
+            if (diceGeneratorBtn) {
+                diceGeneratorBtn.addEventListener('click', function() {
+                    clearActiveButtons();
+                    this.classList.add('active');
+                    Generators.diceRoller();
+                });
+            }
+            
+            if (npcGeneratorBtn) {
+                npcGeneratorBtn.addEventListener('click', function() {
+                    clearActiveButtons();
+                    this.classList.add('active');
+                    Generators.npcGenerator();
+                });
+            }
+            
+            if (treasureGeneratorBtn) {
+                treasureGeneratorBtn.addEventListener('click', function() {
+                    clearActiveButtons();
+                    this.classList.add('active');
+                    Generators.treasureGenerator();
                 });
             }
             
@@ -272,15 +464,11 @@ if (file_exists('discord/discord-config.php')) {
                                 // Update output display
                                 outputDisplay.innerHTML = shipHtml;
                                 
-                                // Show webhook selector if available
-                                if (webhookSelectorContainer) {
-                                    webhookSelectorContainer.style.display = 'block';
-                                    
-                                    // Update generator type for webhook send
-                                    const sendButton = document.getElementById('send-to-discord-btn');
-                                    if (sendButton) {
-                                        sendButton.setAttribute('data-generator-type', 'ship');
-                                    }
+                                // Enable Discord send button
+                                if (sendDiscordBtn) {
+                                    sendDiscordBtn.style.opacity = '1';
+                                    sendDiscordBtn.disabled = false;
+                                    sendDiscordBtn.setAttribute('data-generator-type', 'ship');
                                 }
                                 
                                 // Log to console
@@ -393,15 +581,11 @@ if (file_exists('discord/discord-config.php')) {
                                 // Update output display
                                 outputDisplay.innerHTML = lootHtml;
                                 
-                                // Show webhook selector if available
-                                if (webhookSelectorContainer) {
-                                    webhookSelectorContainer.style.display = 'block';
-                                    
-                                    // Update generator type for webhook send
-                                    const sendButton = document.getElementById('send-to-discord-btn');
-                                    if (sendButton) {
-                                        sendButton.setAttribute('data-generator-type', 'loot');
-                                    }
+                                // Enable Discord send button
+                                if (sendDiscordBtn) {
+                                    sendDiscordBtn.style.opacity = '1';
+                                    sendDiscordBtn.disabled = false;
+                                    sendDiscordBtn.setAttribute('data-generator-type', 'loot');
                                 }
                                 
                                 // Log to console
@@ -444,7 +628,7 @@ if (file_exists('discord/discord-config.php')) {
                 }
             };
         });
-  
+        
         // Check for URL parameters to run generators on page load
         const urlParams = new URLSearchParams(window.location.search);
         const generator = urlParams.get('generator');
@@ -452,6 +636,15 @@ if (file_exists('discord/discord-config.php')) {
         if (generator) {
             // Wait a moment for the page to fully load
             setTimeout(() => {
+                // Find the corresponding button to highlight
+                const buttonToHighlight = document.getElementById(`${generator}-generator-btn`);
+                if (buttonToHighlight) {
+                    document.querySelectorAll('.generator-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    buttonToHighlight.classList.add('active');
+                }
+                
                 // Run the appropriate generator based on the URL parameter
                 switch(generator) {
                     case 'ship':

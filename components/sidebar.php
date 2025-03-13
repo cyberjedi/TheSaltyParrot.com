@@ -177,97 +177,9 @@ if (file_exists($base_path . 'discord/discord-config.php')) {
         </a>
     </div>
     
-    <div class="sidebar-section">
-        <h3>Generators</h3>
-        <button id="ship-generator-btn" class="sidebar-btn">
-            <i class="fas fa-ship"></i> Ship Generator
-        </button>
-        <button id="loot-generator-btn" class="sidebar-btn">
-            <i class="fas fa-coins"></i> Loot Generator
-        </button>
-        <button id="dice-roller-btn" class="sidebar-btn">
-            <i class="fas fa-dice-d20"></i> Dice Roller
-        </button>
-        <button id="npc-generator-btn" class="sidebar-btn">
-            <i class="fas fa-user-friends"></i> NPC Generator
-        </button>
-        <button id="treasure-generator-btn" class="sidebar-btn">
-            <i class="fas fa-gem"></i> Treasure Generator
-        </button>
-    </div>
+    <!-- Generators section removed as requested -->
     
-
 
 </aside>
 
-<script>
-    // Add event listeners for sidebar generator buttons
-    document.addEventListener('DOMContentLoaded', function() {
-        // Check if we're on the index/dashboard page where the window.Generators object exists
-        const isMainPage = window.location.pathname.endsWith('index.php') || 
-                         window.location.pathname.endsWith('/') || 
-                         window.location.pathname.endsWith('dashboard.php');
-        
-        // Ship Generator
-        const shipGeneratorBtn = document.getElementById('ship-generator-btn');
-        if (shipGeneratorBtn) {
-            shipGeneratorBtn.addEventListener('click', function() {
-                if (isMainPage && window.Generators) {
-                    window.Generators.generateShip();
-                } else {
-                    window.location.href = '<?php echo $base_path; ?>index.php?generator=ship';
-                }
-            });
-        }
-        
-        // Loot Generator
-        const lootGeneratorBtn = document.getElementById('loot-generator-btn');
-        if (lootGeneratorBtn) {
-            lootGeneratorBtn.addEventListener('click', function() {
-                if (isMainPage && window.Generators) {
-                    window.Generators.generateLoot();
-                } else {
-                    window.location.href = '<?php echo $base_path; ?>index.php?generator=loot';
-                }
-            });
-        }
-        
-        // Dice Roller
-        const diceRollerBtn = document.getElementById('dice-roller-btn');
-        if (diceRollerBtn) {
-            diceRollerBtn.addEventListener('click', function() {
-                if (isMainPage && window.Generators) {
-                    window.Generators.diceRoller();
-                } else {
-                    window.location.href = '<?php echo $base_path; ?>index.php?generator=dice';
-                }
-            });
-        }
-        
-        // NPC Generator
-        const npcGeneratorBtn = document.getElementById('npc-generator-btn');
-        if (npcGeneratorBtn) {
-            npcGeneratorBtn.addEventListener('click', function() {
-                if (isMainPage && window.Generators) {
-                    window.Generators.npcGenerator();
-                } else {
-                    window.location.href = '<?php echo $base_path; ?>index.php?generator=npc';
-                }
-            });
-        }
-        
-        // Treasure Generator
-        const treasureGeneratorBtn = document.getElementById('treasure-generator-btn');
-        if (treasureGeneratorBtn) {
-            treasureGeneratorBtn.addEventListener('click', function() {
-                if (isMainPage && window.Generators) {
-                    window.Generators.treasureGenerator();
-                } else {
-                    window.location.href = '<?php echo $base_path; ?>index.php?generator=treasure';
-                }
-            });
-        }
-        
-        // No more character creator/list buttons
-    });
-</script>
+<!-- Generator button event listeners removed as they're now handled in the main page -->
