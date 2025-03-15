@@ -22,13 +22,20 @@ window.DiscordIntegration = {
     
     // Set up event handlers for Discord integration
     setupEventHandlers: function() {
-        // Use event delegation for the send button to handle dynamically created elements
-        document.addEventListener('click', function(event) {
-            // Check if the clicked element or any of its parents has the ID 'send-roll-discord-btn'
-            const sendBtn = event.target.closest('#send-roll-discord-btn');
-            if (sendBtn) {
-                console.log('Discord send button clicked via delegation');
-                event.preventDefault();
+        // CRITICAL FIX: Only attach to specific Discord buttons, not the entire document
+        // This avoids interfering with all other buttons on the page
+        
+        // Find the specific Discord send button
+        const sendToDiscordBtn = document.getElementById('send-roll-discord-btn');
+        if (sendToDiscordBtn) {
+            console.log('Found Discord send button in dice roll modal');
+            
+            // Attach handler directly to only this specific button
+            sendToDiscordBtn.addEventListener('click', function(event) {
+                console.log('Discord send button clicked directly');
+                
+                // Don't call preventDefault() on the entire document!
+                // Only stop propagation for this specific event
                 event.stopPropagation();
                 
                 // Close the dice roll modal
@@ -37,7 +44,7 @@ window.DiscordIntegration = {
                     diceRollModal.style.display = 'none';
                 }
                 
-                // Use a longer timeout to ensure all event handling is complete
+                // Use a timeout to ensure clean event handling
                 setTimeout(function() {
                     // Get the Discord webhook modal button and click it
                     const webhookModalBtn = document.getElementById('open-discord-modal');
@@ -49,19 +56,19 @@ window.DiscordIntegration = {
                         alert('Discord webhook not properly configured. Please refresh the page and try again.');
                     }
                 }, 50);
-            }
-        });
-        
-        // Also attach directly to the button for older browsers
-        const sendToDiscordBtn = document.getElementById('send-roll-discord-btn');
-        if (sendToDiscordBtn) {
-            console.log('Found Discord send button in dice roll modal');
-            sendToDiscordBtn.addEventListener('click', function(event) {
-                // Event is handled by the delegation above
-                console.log('Direct button handler - deferring to delegation');
             });
         } else {
             console.warn('Discord send button not found in dice roll modal during init');
+            
+            // Only if the button isn't found yet, set up a one-time check for it
+            // This is safer than a permanent document-level handler
+            setTimeout(function() {
+                const lateLoadedBtn = document.getElementById('send-roll-discord-btn');
+                if (lateLoadedBtn) {
+                    console.log('Found late-loaded Discord send button');
+                    window.DiscordIntegration.setupEventHandlers();
+                }
+            }, 1000);
         }
     }
 };
