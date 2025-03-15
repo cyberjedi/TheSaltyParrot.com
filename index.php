@@ -265,8 +265,25 @@ if (file_exists('discord/discord-config.php')) {
                     <!-- Webhook selector container - always present but hidden by default -->
                     <div id="webhook-selector-container" style="display: none;">
                         <?php 
+                        // Always render webhook selector even if user_webhooks is empty
+                        // The actual webhooks will be loaded via AJAX
                         if ($discord_enabled && $discord_authenticated && function_exists('render_webhook_selector')) {
-                            render_webhook_selector($user_webhooks, '');
+                            if (empty($user_webhooks)) {
+                                // Create a placeholder - will be populated by AJAX
+                                echo '<div class="webhook-selector-ajax-container">';
+                                echo '<div class="send-to-discord">';
+                                echo '<div class="send-to-discord-title">Send to Discord</div>';
+                                echo '<div class="webhook-selector">';
+                                echo '<div class="webhook-loading">Loading webhooks...</div>';
+                                echo '</div>';
+                                echo '<button id="send-to-discord-btn" class="btn btn-secondary" disabled>';
+                                echo '<i class="fas fa-paper-plane"></i> Send to Discord';
+                                echo '</button>';
+                                echo '</div>';
+                                echo '</div>';
+                            } else {
+                                render_webhook_selector($user_webhooks, '');
+                            }
                         }
                         ?>
                     </div>
@@ -454,14 +471,76 @@ if (file_exists('discord/discord-config.php')) {
                                     console.log("Setting selector container to display:block");
                                     selectorContainer.style.display = 'block';
                                     
-                                    // Pre-select this webhook
-                                    const webhookOptions = document.querySelectorAll('.webhook-option');
-                                    console.log("Found webhook options:", webhookOptions.length);
-                                    webhookOptions.forEach(option => {
-                                        if (option.dataset.webhookId === data.webhook.id.toString()) {
-                                            option.click();
+                                    // Populate the webhooks if container is empty
+                                    const webhookSelectorDiv = selectorContainer.querySelector('.webhook-selector');
+                                    console.log("Webhook selector div:", webhookSelectorDiv);
+                                    
+                                    if (webhookSelectorDiv) {
+                                        // Clear any loading message
+                                        webhookSelectorDiv.innerHTML = '';
+                                        
+                                        // Add the default webhook option
+                                        const webhookOption = document.createElement('div');
+                                        webhookOption.className = 'webhook-option selected';
+                                        webhookOption.dataset.webhookId = data.webhook.id.toString();
+                                        webhookOption.innerHTML = `<i class="fab fa-discord"></i> #${data.webhook.channel_name}`;
+                                        webhookSelectorDiv.appendChild(webhookOption);
+                                        
+                                        // Enable the send button
+                                        const sendBtn = selectorContainer.querySelector('#send-to-discord-btn');
+                                        if (sendBtn) {
+                                            sendBtn.disabled = false;
+                                            
+                                            // Add click handler to the button
+                                            sendBtn.addEventListener('click', function() {
+                                                const outputContent = document.getElementById('output-display').innerHTML;
+                                                const webhookId = data.webhook.id;
+                                                const generatorType = sendDiscordBtn.getAttribute('data-generator-type') || '';
+                                                
+                                                // Show loading state
+                                                sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+                                                sendBtn.disabled = true;
+                                                
+                                                // Send to webhook
+                                                fetch('discord/send_to_webhook.php', {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                    },
+                                                    body: JSON.stringify({
+                                                        webhook_id: webhookId,
+                                                        content: outputContent,
+                                                        generator_type: generatorType
+                                                    })
+                                                })
+                                                .then(response => response.json())
+                                                .then(result => {
+                                                    if (result.status === 'success') {
+                                                        sendBtn.innerHTML = '<i class="fas fa-check"></i> Sent!';
+                                                        
+                                                        // Hide webhook selector after success
+                                                        setTimeout(() => {
+                                                            selectorContainer.style.display = 'none';
+                                                            sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send to Discord';
+                                                            sendBtn.disabled = false;
+                                                        }, 2000);
+                                                    } else {
+                                                        alert('Error: ' + result.message);
+                                                        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send to Discord';
+                                                        sendBtn.disabled = false;
+                                                    }
+                                                })
+                                                .catch(error => {
+                                                    console.error('Error sending to Discord:', error);
+                                                    alert('Error sending to Discord. Check console for details.');
+                                                    sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send to Discord';
+                                                    sendBtn.disabled = false;
+                                                });
+                                            });
                                         }
-                                    });
+                                    } else {
+                                        console.error("Could not find webhook selector div inside container");
+                                    }
                                 } else {
                                     console.error("Selector container not found in DOM");
                                     alert('Error: Webhook selector not properly loaded. Please reload the page.');
