@@ -40,6 +40,11 @@ if (file_exists('discord/discord-config.php')) {
                         require_once 'discord/discord_service.php';
                         if (function_exists('get_user_webhooks')) {
                             $user_webhooks = get_user_webhooks($conn, $user_id);
+                            
+                            // Debug for webhook issues - log webhook count
+                            if (isset($_GET['show_discord'])) {
+                                error_log('User has ' . count($user_webhooks) . ' webhooks configured.');
+                            }
                         } else {
                             error_log('get_user_webhooks function not found');
                         }
@@ -258,16 +263,19 @@ if (file_exists('discord/discord-config.php')) {
                         </div>
                     <?php endif; ?>
                     
-                    <?php if ($discord_enabled && $discord_authenticated && function_exists('render_webhook_selector') && !empty($user_webhooks)): ?>
-                        <div id="webhook-selector-container" style="display: none;">
+                    <?php
+                    // Determine which Discord panel to show by default
+                    $show_webhook_panel = isset($_GET['show_discord']) ? true : false;
+                    if ($discord_enabled && $discord_authenticated && function_exists('render_webhook_selector') && !empty($user_webhooks)): ?>
+                        <div id="webhook-selector-container" style="display: <?php echo $show_webhook_panel ? 'block' : 'none'; ?>;">
                             <?php render_webhook_selector($user_webhooks, ''); ?>
                         </div>
                     <?php elseif ($discord_enabled && $discord_authenticated): ?>
-                        <div id="webhook-not-configured" style="display: none; margin-top: 20px; text-align: center; padding: 15px; background: rgba(255,100,100,0.1); border: 1px solid #d66;">
+                        <div id="webhook-not-configured" style="display: <?php echo $show_webhook_panel ? 'block' : 'none'; ?>; margin-top: 20px; text-align: center; padding: 15px; background: rgba(255,100,100,0.1); border: 1px solid #d66;">
                             <p>You need to set up a Discord webhook to send content. <a href="discord/webhooks.php" style="color: #7289DA;">Configure webhooks</a></p>
                         </div>
                     <?php else: ?>
-                        <div id="discord-not-connected" style="display: none; margin-top: 20px; text-align: center; padding: 15px; background: rgba(255,100,100,0.1); border: 1px solid #d66;">
+                        <div id="discord-not-connected" style="display: <?php echo $show_webhook_panel ? 'block' : 'none'; ?>; margin-top: 20px; text-align: center; padding: 15px; background: rgba(255,100,100,0.1); border: 1px solid #d66;">
                             <p>You need to connect your Discord account to send content to Discord.</p>
                         </div>
                     <?php endif; ?>
@@ -390,22 +398,8 @@ if (file_exists('discord/discord-config.php')) {
                     console.log("Webhook not configured:", webhookNotConfigured);
                     console.log("Discord not connected:", discordNotConnected);
                     
-                    // Show appropriate panel based on Discord status
-                    if (webhookSelectorContainer) {
-                        webhookSelectorContainer.style.display = 'block';
-                        if (webhookNotConfigured) webhookNotConfigured.style.display = 'none';
-                        if (discordNotConnected) discordNotConnected.style.display = 'none';
-                    } else if (webhookNotConfigured) {
-                        webhookNotConfigured.style.display = 'block';
-                        if (webhookSelectorContainer) webhookSelectorContainer.style.display = 'none';
-                        if (discordNotConnected) discordNotConnected.style.display = 'none';
-                    } else if (discordNotConnected) {
-                        discordNotConnected.style.display = 'block';
-                        if (webhookSelectorContainer) webhookSelectorContainer.style.display = 'none';
-                        if (webhookNotConfigured) webhookNotConfigured.style.display = 'none';
-                    } else {
-                        alert("Discord connection required to send content.");
-                    }
+                    // Force the page to load fresh webhook data to avoid stale state
+                    window.location.href = 'index.php?show_discord=1';
                 });
             }
             
