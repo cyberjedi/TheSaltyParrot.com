@@ -92,5 +92,32 @@ require_once 'components/character_controller.php';
     <?php if ($discord_enabled && $discord_authenticated): ?>
     <script src="js/discord_integration.js?v=<?php echo time(); ?>"></script>
     <?php endif; ?>
+    
+    <!-- Diagnostic script to check button functionality directly -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Direct button diagnostic script executing');
+        
+        // Test direct event attachment
+        const printBtn = document.getElementById('print-character-btn');
+        if (printBtn) {
+            console.log('Found print button in diagnostic script');
+            printBtn.addEventListener('click', function() {
+                console.log('Print button clicked via direct handler');
+                alert('Print button clicked via diagnostic handler');
+                window.print();
+            });
+        } else {
+            console.error('Print button not found in diagnostic script');
+        }
+        
+        // List all buttons in the document
+        const allButtons = document.querySelectorAll('button');
+        console.log('Total buttons found:', allButtons.length);
+        allButtons.forEach((btn, index) => {
+            console.log(`Button ${index}:`, btn.id || '(no id)', btn.textContent.trim());
+        });
+    });
+    </script>
 </body>
 </html>

@@ -3,29 +3,84 @@
  * Handles interactions for the character sheet component
  */
 
+console.log('Character sheet script loaded - before DOM ready');
+
+// Track script loads to detect duplicates
+if (typeof window.characterSheetLoadCount === 'undefined') {
+    window.characterSheetLoadCount = 1;
+} else {
+    window.characterSheetLoadCount++;
+}
+console.log('Character sheet script load count:', window.characterSheetLoadCount);
+
+// Add global error handler to catch and log JavaScript errors
+window.onerror = function(message, source, lineno, colno, error) {
+    console.error('JavaScript Error:', message);
+    console.error('Source:', source);
+    console.error('Line:', lineno, 'Column:', colno);
+    console.error('Error object:', error);
+    return false; // Allow default error handling as well
+};
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Get modal elements
+    console.log('Character sheet DOM ready event fired');
+    
+    // Log initial state
+    console.log('Checking for UI elements to attach handlers:');
+    // Get modal elements and log results
     const editModal = document.getElementById('edit-character-modal');
+    console.log('editModal found:', !!editModal);
+    
     const switcherModal = document.getElementById('character-switcher-modal');
+    console.log('switcherModal found:', !!switcherModal);
+    
     const diceRollModal = document.getElementById('dice-roll-modal');
+    console.log('diceRollModal found:', !!diceRollModal);
+    
     const editBtn = document.getElementById('edit-character-btn');
+    console.log('editBtn found:', !!editBtn);
+    
     const switchBtn = document.getElementById('switch-character-btn');
+    console.log('switchBtn found:', !!switchBtn);
+    
     const closeBtns = document.querySelectorAll('.close-modal');
+    console.log('closeBtns found:', closeBtns.length);
+    
     const closeFormBtns = document.querySelectorAll('.close-modal-btn');
+    console.log('closeFormBtns found:', closeFormBtns.length);
+    
     const newCharacterBtn = document.getElementById('new-character-btn');
+    console.log('newCharacterBtn found:', !!newCharacterBtn);
+    
     const createNewFromSwitcherBtn = document.getElementById('create-new-from-switcher');
+    console.log('createNewFromSwitcherBtn found:', !!createNewFromSwitcherBtn);
+    
     const printBtn = document.getElementById('print-character-btn');
+    console.log('printBtn found:', !!printBtn);
+    
     const imageInput = document.getElementById('character_image');
+    console.log('imageInput found:', !!imageInput);
+    
     const imagePreview = document.getElementById('image-preview');
+    console.log('imagePreview found:', !!imagePreview);
+    
     const copyRollBtn = document.getElementById('copy-roll-btn');
+    console.log('copyRollBtn found:', !!copyRollBtn);
+    
     const sendRollDiscordBtn = document.getElementById('send-roll-discord-btn');
+    console.log('sendRollDiscordBtn found:', !!sendRollDiscordBtn);
+    
     const statBoxes = document.querySelectorAll('.stat-box');
+    console.log('statBoxes found:', statBoxes.length);
     
     // Character data from PHP
     const characterData = window.character_data || {};
+    console.log('Character data from global scope:', characterData);
     
     // Discord authentication status - set by PHP
     const isAuthenticated = window.discord_authenticated || false;
+    console.log('Discord authentication status:', isAuthenticated);
+    console.log('Global discord_authenticated value:', window.discord_authenticated);
     
     // Track the current roll result
     let currentRoll = {
@@ -37,13 +92,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Open edit modal when edit button is clicked
     if (editBtn) {
+        console.log('Attaching click handler to edit button');
         editBtn.addEventListener('click', function() {
+            console.log('Edit button clicked');
             if (isAuthenticated) {
                 editModal.style.display = 'block';
+                console.log('Edit modal displayed');
             } else {
                 alert('You must connect with Discord to edit characters.');
+                console.log('Not authenticated for editing');
             }
         });
+    } else {
+        console.warn('Could not attach edit button handler - button not found');
     }
     
     // Open switcher modal when switch button is clicked
@@ -121,9 +182,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Print button functionality
     if (printBtn) {
+        console.log('Attaching click handler to print button');
         printBtn.addEventListener('click', function() {
+            console.log('Print button clicked');
             window.print();
         });
+    } else {
+        console.warn('Could not attach print button handler - button not found');
     }
     
     // Image preview functionality
