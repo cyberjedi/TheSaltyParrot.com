@@ -264,7 +264,7 @@
 
 /* Discord Modal Styles */
 .modal {
-    display: none;
+    display: none !important; /* Force hiding with !important */
     position: fixed;
     z-index: 1000;
     left: 0;
@@ -274,6 +274,7 @@
     overflow: auto;
     background-color: rgba(0,0,0,0.7);
     animation: fadeIn 0.3s;
+    visibility: hidden; /* Additional hiding property */
 }
 
 .modal-content {

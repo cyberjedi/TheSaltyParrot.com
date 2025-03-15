@@ -287,7 +287,7 @@ if (file_exists('discord/discord-config.php')) {
     <?php include 'components/print_helper.php'; ?>
     
     <!-- Discord webhook modal - matches the inventory implementation -->
-    <div id="discord-webhook-modal" class="modal">
+    <div id="discord-webhook-modal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
             <h3>Send to Discord</h3>
@@ -362,8 +362,10 @@ if (file_exists('discord/discord-config.php')) {
                 // Get all modals
                 const discordModal = document.getElementById('discord-webhook-modal');
                 
-                // Hide modals
-                if (discordModal) discordModal.style.display = 'none';
+                // Hide modals - reset to original CSS values
+                if (discordModal) {
+                    discordModal.setAttribute('style', 'display: none !important; visibility: hidden !important;');
+                }
             }
             
             // Clear output button
@@ -447,9 +449,9 @@ if (file_exists('discord/discord-config.php')) {
                     if (webhookLoading) webhookLoading.style.display = 'block';
                     if (webhookError) webhookError.style.display = 'none';
                     
-                    // Show the modal
+                    // Show the modal - override the CSS !important rule
                     if (discordModal) {
-                        discordModal.style.display = 'block';
+                        discordModal.setAttribute('style', 'display: block !important; visibility: visible !important;');
                     }
                     
                     // Get base URL from window location
