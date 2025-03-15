@@ -4,6 +4,45 @@
     --light: #f0f0f0;
     --dark: #0d1117;
 }
+
+/* Base Modal Styles */
+.tsp-modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.7);
+}
+
+.tsp-modal-content {
+    background-color: var(--dark);
+    margin: 15% auto;
+    padding: 25px;
+    border: 1px solid var(--secondary);
+    border-radius: 8px;
+    width: 80%;
+    max-width: 600px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    position: relative;
+}
+
+.tsp-close-modal {
+    color: var(--secondary);
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.tsp-close-modal:hover {
+    color: #fff;
+}
 .container {
     max-width: 1200px;
     margin: 0 auto;
