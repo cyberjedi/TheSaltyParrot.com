@@ -405,9 +405,8 @@ if (file_exists('discord/discord-config.php')) {
                     if (error) error.style.display = 'none';
                     if (preview) preview.innerHTML = '<p>Loading webhook information...</p>';
                     
-                    // Show the Discord modal - directly access with ID
-                    const discordModal = document.getElementById('discord-webhook-modal');
-                    if (discordModal) discordModal.style.display = 'block';
+                    // Get the Discord modal and show it
+                    document.getElementById('discord-webhook-modal').style.display = 'block';
                     
                     // Get base URL from window location
                     const baseUrl = window.location.href.split('index.php')[0] || './';
@@ -840,33 +839,7 @@ if (file_exists('discord/discord-config.php')) {
         }
     </script>
     
-    <!-- Discord webhook modal - using the same classes as inventory modal -->
-    <div id="discord-webhook-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h3>Send to Discord</h3>
-            
-            <div id="discord-modal-content">
-                <div id="webhook-content-preview">
-                    <p>Content will be sent to your Discord channel.</p>
-                </div>
-                
-                <div id="webhook-loading" style="text-align: center; display: none;">
-                    <p><i class="fas fa-spinner fa-spin"></i> Loading webhooks...</p>
-                </div>
-                
-                <div id="webhook-error" style="display: none; color: #d33; margin: 10px 0;">
-                    <p><i class="fas fa-exclamation-triangle"></i> <span id="webhook-error-message"></span></p>
-                </div>
-            </div>
-            
-            <div class="form-buttons">
-                <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
-                <button type="button" class="btn btn-discord" id="send-to-discord-btn" disabled>
-                    <i class="fab fa-discord"></i> Send to Discord
-                </button>
-            </div>
-        </div>
-    </div>
+    <!-- Include the Discord modal component -->
+    <?php include 'components/discord_modal.php'; ?>
 </body>
 </html>
