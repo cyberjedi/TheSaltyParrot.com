@@ -12,7 +12,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (sendToDiscordBtn) {
         console.log('Found Discord send button in dice roll modal');
         
-        sendToDiscordBtn.addEventListener('click', function(event) {
+        // Remove any existing event listeners before adding a new one
+        const clonedBtn = sendToDiscordBtn.cloneNode(true);
+        sendToDiscordBtn.parentNode.replaceChild(clonedBtn, sendToDiscordBtn);
+        
+        clonedBtn.addEventListener('click', function(event) {
             console.log('Discord send button clicked');
             event.preventDefault();
             
@@ -26,7 +30,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const webhookModalBtn = document.getElementById('open-discord-modal');
             if (webhookModalBtn) {
                 console.log('Triggering webhook modal');
-                webhookModalBtn.click();
+                // Use a setTimeout to allow other event handlers to complete first
+                setTimeout(function() {
+                    webhookModalBtn.click();
+                }, 10);
             } else {
                 console.error('Discord webhook modal button not found');
                 alert('Discord webhook not properly configured. Please refresh the page and try again.');
