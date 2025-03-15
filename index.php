@@ -286,34 +286,7 @@ if (file_exists('discord/discord-config.php')) {
     <!-- Include the print helper component -->
     <?php include 'components/print_helper.php'; ?>
     
-    <!-- Discord webhook modal - completely new implementation -->
-    <div id="discordWebhookModal" class="tsp-modal">
-        <div class="tsp-modal-content">
-            <span class="tsp-close-modal">&times;</span>
-            <h3>Send to Discord</h3>
-            
-            <div id="discordModalContent">
-                <div id="webhookContentPreview">
-                    <p>Content will be sent to your Discord channel.</p>
-                </div>
-                
-                <div id="webhookLoading" style="text-align: center; display: none;">
-                    <p><i class="fas fa-spinner fa-spin"></i> Loading webhooks...</p>
-                </div>
-                
-                <div id="webhookError" style="display: none; color: #d33; margin: 10px 0;">
-                    <p><i class="fas fa-exclamation-triangle"></i> <span id="webhookErrorMessage"></span></p>
-                </div>
-            </div>
-            
-            <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 20px;">
-                <button type="button" class="btn btn-secondary tsp-close-btn">Cancel</button>
-                <button type="button" class="btn btn-discord" id="sendToDiscordBtn" disabled>
-                    <i class="fab fa-discord"></i> Send to Discord
-                </button>
-            </div>
-        </div>
-    </div>
+<!-- Move the Discord modal outside the main flow for proper positioning -->
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -326,13 +299,7 @@ if (file_exists('discord/discord-config.php')) {
             const saveOutputBtn = document.getElementById('save-output-btn');
             const sendDiscordBtn = document.getElementById('send-discord-btn'); // Button in the header
             
-            // Get modal elements
-            const discordModal = document.getElementById('discordWebhookModal');
-            const webhookLoading = document.getElementById('webhookLoading');
-            const webhookError = document.getElementById('webhookError');
-            const webhookErrorMessage = document.getElementById('webhookErrorMessage');
-            const webhookContentPreview = document.getElementById('webhookContentPreview');
-            const sendToDiscordBtn = document.getElementById('sendToDiscordBtn');
+            // Modal elements are referenced directly when needed
             
             // Generator buttons
             const shipGeneratorBtn = document.getElementById('ship-generator-btn');
@@ -354,11 +321,15 @@ if (file_exists('discord/discord-config.php')) {
                 });
             }
             
-            // Function to close all modals
-            function closeDiscordModal() {
-                if (discordModal) {
-                    discordModal.style.display = 'none';
-                }
+            // Function to close all modals - same pattern as inventory.js
+            function closeAllModals() {
+                // Get all modals
+                const modals = document.querySelectorAll('.modal');
+                
+                // Hide each modal
+                modals.forEach(modal => {
+                    modal.style.display = 'none';
+                });
             }
             
             // Clear output button
@@ -371,10 +342,8 @@ if (file_exists('discord/discord-config.php')) {
                         </div>
                     `;
                     
-                    // Hide Discord modal
-                    if (discordModal) {
-                        discordModal.style.display = 'none';
-                    }
+                    // Hide all modals
+                    closeAllModals();
                     
                     // Disable Discord send button
                     if (sendDiscordBtn) {
@@ -425,19 +394,20 @@ if (file_exists('discord/discord-config.php')) {
                     }
                     
                     // Get fresh references to modal elements
-                    const modal = document.getElementById('discordWebhookModal');
-                    const loading = document.getElementById('webhookLoading');
-                    const error = document.getElementById('webhookError');
-                    const errorMsg = document.getElementById('webhookErrorMessage');
-                    const preview = document.getElementById('webhookContentPreview');
+                    const modal = document.getElementById('discord-webhook-modal');
+                    const loading = document.getElementById('webhook-loading');
+                    const error = document.getElementById('webhook-error');
+                    const errorMsg = document.getElementById('webhook-error-message');
+                    const preview = document.getElementById('webhook-content-preview');
                     
                     // Reset modal state
                     if (loading) loading.style.display = 'block';
                     if (error) error.style.display = 'none';
                     if (preview) preview.innerHTML = '<p>Loading webhook information...</p>';
                     
-                    // Show the modal
-                    if (modal) modal.style.display = 'block';
+                    // Show the Discord modal - directly access with ID
+                    const discordModal = document.getElementById('discord-webhook-modal');
+                    if (discordModal) discordModal.style.display = 'block';
                     
                     // Get base URL from window location
                     const baseUrl = window.location.href.split('index.php')[0] || './';
@@ -464,7 +434,7 @@ if (file_exists('discord/discord-config.php')) {
                                 }
                                 
                                 // Get the send button
-                                const sendBtn = document.getElementById('sendToDiscordBtn');
+                                const sendBtn = document.getElementById('send-to-discord-btn');
                                 if (!sendBtn) {
                                     console.error("Send button not found");
                                     return;
@@ -508,7 +478,7 @@ if (file_exists('discord/discord-config.php')) {
                                                 
                                                 // Close modal after success
                                                 setTimeout(() => {
-                                                    if (modal) modal.style.display = 'none';
+                                                    closeAllModals();
                                                     this.innerHTML = '<i class="fab fa-discord"></i> Send to Discord';
                                                     this.disabled = false;
                                                 }, 1500);
@@ -563,8 +533,8 @@ if (file_exists('discord/discord-config.php')) {
                 });
             }
             // Add event listeners for closing modals
-            document.querySelectorAll('.tsp-close-modal, .tsp-close-btn').forEach(btn => {
-                btn.addEventListener('click', closeDiscordModal);
+            document.querySelectorAll('.close-modal, .close-modal-btn').forEach(btn => {
+                btn.addEventListener('click', closeAllModals);
             });
             
             // Generator button event listeners
@@ -869,5 +839,34 @@ if (file_exists('discord/discord-config.php')) {
             }, 500);
         }
     </script>
+    
+    <!-- Discord webhook modal - using the same classes as inventory modal -->
+    <div id="discord-webhook-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Send to Discord</h3>
+            
+            <div id="discord-modal-content">
+                <div id="webhook-content-preview">
+                    <p>Content will be sent to your Discord channel.</p>
+                </div>
+                
+                <div id="webhook-loading" style="text-align: center; display: none;">
+                    <p><i class="fas fa-spinner fa-spin"></i> Loading webhooks...</p>
+                </div>
+                
+                <div id="webhook-error" style="display: none; color: #d33; margin: 10px 0;">
+                    <p><i class="fas fa-exclamation-triangle"></i> <span id="webhook-error-message"></span></p>
+                </div>
+            </div>
+            
+            <div class="form-buttons">
+                <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
+                <button type="button" class="btn btn-discord" id="send-to-discord-btn" disabled>
+                    <i class="fab fa-discord"></i> Send to Discord
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
