@@ -228,6 +228,11 @@
     background-color: rgba(0, 0, 0, 0.7);
 }
 
+/* Ensure modals don't interfere with each other */
+.modal.active {
+    z-index: 1500;
+}
+
 .modal-content {
     background-color: #fff;
     margin: 5% auto;

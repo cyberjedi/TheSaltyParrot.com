@@ -375,7 +375,7 @@ function render_discord_webhook_modal($contentSelector = '#output-display', $sou
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
+            z-index: 2000; /* Higher z-index to ensure it appears above other modals */
             overflow: auto;
         }
         

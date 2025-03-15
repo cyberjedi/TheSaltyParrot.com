@@ -655,6 +655,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     background-color: rgba(0, 0, 0, 0.7);
 }
 
+/* Ensure modals don't interfere with each other */
+.modal.active {
+    z-index: 1500;
+}
+
 .modal-content {
     background-color: #f9f5eb;
     margin: 10% auto;

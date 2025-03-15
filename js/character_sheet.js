@@ -96,7 +96,14 @@ document.addEventListener('DOMContentLoaded', function() {
         editBtn.addEventListener('click', function() {
             console.log('Edit button clicked');
             if (isAuthenticated) {
+                // Remove active class from all modals first
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+                
+                // Show the modal and make it active
                 editModal.style.display = 'block';
+                editModal.classList.add('active');
                 console.log('Edit modal displayed');
             } else {
                 alert('You must connect with Discord to edit characters.');
@@ -110,7 +117,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Open switcher modal when switch button is clicked
     if (switchBtn) {
         switchBtn.addEventListener('click', function() {
+            // Remove active class from all modals first
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.classList.remove('active');
+            });
+            
+            // Show the modal and make it active
             switcherModal.style.display = 'block';
+            switcherModal.classList.add('active');
+            console.log('Switcher modal displayed');
         });
     }
     
@@ -118,8 +133,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (closeBtns) {
         closeBtns.forEach(function(btn) {
             btn.addEventListener('click', function() {
-                editModal.style.display = 'none';
-                switcherModal.style.display = 'none';
+                // Hide all modals and remove active class
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.style.display = 'none';
+                    modal.classList.remove('active');
+                });
+                console.log('Modals closed via close button');
             });
         });
     }
@@ -128,19 +147,25 @@ document.addEventListener('DOMContentLoaded', function() {
     if (closeFormBtns) {
         closeFormBtns.forEach(function(btn) {
             btn.addEventListener('click', function() {
-                editModal.style.display = 'none';
-                switcherModal.style.display = 'none';
+                // Hide all modals and remove active class
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.style.display = 'none';
+                    modal.classList.remove('active');
+                });
+                console.log('Modals closed via cancel button');
             });
         });
     }
     
     // Close modals when clicking outside of them
     window.addEventListener('click', function(event) {
-        if (event.target == editModal) {
-            editModal.style.display = 'none';
-        }
-        if (event.target == switcherModal) {
-            switcherModal.style.display = 'none';
+        // Check if the clicked target is a modal background
+        const clickedModal = event.target.closest('.modal');
+        if (clickedModal && event.target === clickedModal) {
+            // If clicked on the modal background (not content), close it
+            clickedModal.style.display = 'none';
+            clickedModal.classList.remove('active');
+            console.log('Modal closed via outside click:', clickedModal.id);
         }
     });
     
@@ -350,7 +375,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Show the dice roll modal if it exists
         if (diceRollModal) {
+            // Remove active class from all modals first
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.classList.remove('active');
+            });
+            
+            // Show the modal and make it active
             diceRollModal.style.display = 'block';
+            diceRollModal.classList.add('active');
+            console.log('Dice roll modal displayed');
         } else {
             console.error('Dice roll modal not found');
             alert(`You rolled a ${currentRoll.attributeName} check: ${currentRoll.diceValue} (d20) + ${currentRoll.attributeValue} = ${currentRoll.totalValue}`);
@@ -379,10 +412,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Send roll result to Discord - actual implementation is in discord_integration.js
-    // This is just a stub for backward compatibility
+    // Send roll result to Discord - handled by discord_integration.js
+    // This is just a stub for backward compatibility and proper initialization
     if (sendRollDiscordBtn) {
-        console.log('Discord button handler will be attached by discord_integration.js');
+        console.log('Discord button: marking as initialized for discord_integration.js');
+        // Add a data attribute to mark this as processed by character_sheet.js
+        sendRollDiscordBtn.setAttribute('data-character-sheet-init', 'true');
+        // Let other scripts know we've seen this button
+        if (!window.characterSheetButtons) {
+            window.characterSheetButtons = {};
+        }
+        window.characterSheetButtons.sendRollDiscordBtn = true;
     }
     
     // Close dice roll modal when the X is clicked or when clicking outside
@@ -392,14 +432,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (closeRollModal) {
             closeRollModal.addEventListener('click', function() {
                 diceRollModal.style.display = 'none';
+                diceRollModal.classList.remove('active');
+                console.log('Dice roll modal closed via X button');
             });
         }
         
-        // Close when clicking outside of the modal
-        window.addEventListener('click', function(event) {
-            if (event.target == diceRollModal) {
-                diceRollModal.style.display = 'none';
-            }
-        });
+        // Note: we don't need a separate window click handler here,
+        // as the one above will handle all modals with the .modal class
     }
 });
