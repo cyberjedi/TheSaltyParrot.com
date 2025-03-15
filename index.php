@@ -362,9 +362,9 @@ if (file_exists('discord/discord-config.php')) {
                 // Get all modals
                 const discordModal = document.getElementById('discord-webhook-modal');
                 
-                // Hide modals - reset to original CSS values
+                // Hide modals
                 if (discordModal) {
-                    discordModal.setAttribute('style', 'display: none !important; visibility: hidden !important;');
+                    discordModal.style.display = 'none';
                 }
             }
             
@@ -449,9 +449,9 @@ if (file_exists('discord/discord-config.php')) {
                     if (webhookLoading) webhookLoading.style.display = 'block';
                     if (webhookError) webhookError.style.display = 'none';
                     
-                    // Show the modal - override the CSS !important rule
+                    // Show the modal
                     if (discordModal) {
-                        discordModal.setAttribute('style', 'display: block !important; visibility: visible !important;');
+                        discordModal.style.display = 'block';
                     }
                     
                     // Get base URL from window location
