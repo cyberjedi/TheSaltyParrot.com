@@ -30,6 +30,9 @@ if (file_exists('discord/discord-config.php')) {
                 $stmt->execute();
                 $user = $stmt->fetch(PDO::FETCH_ASSOC);
                 
+                // Initialize empty array for webhooks
+                $user_webhooks = [];
+                
                 if ($user) {
                     $user_id = $user['id'];
                     // Include the discord_service.php file to get the get_user_webhooks function
@@ -214,18 +217,6 @@ if (file_exists('discord/discord-config.php')) {
                             <i class="fas fa-coins"></i>
                             <span>Loot Generator</span>
                         </button>
-                        <button id="dice-generator-btn" class="generator-btn">
-                            <i class="fas fa-dice-d20"></i>
-                            <span>Dice Roller</span>
-                        </button>
-                        <button id="npc-generator-btn" class="generator-btn">
-                            <i class="fas fa-user-friends"></i>
-                            <span>NPC Generator</span>
-                        </button>
-                        <button id="treasure-generator-btn" class="generator-btn">
-                            <i class="fas fa-gem"></i>
-                            <span>Treasure Generator</span>
-                        </button>
                     </div>
                 </div>
                 
@@ -235,7 +226,7 @@ if (file_exists('discord/discord-config.php')) {
                         <h3 class="output-title">Output</h3>
                         <div class="output-actions">
                             <button id="send-discord-btn" class="output-action-btn discord-send-btn" title="Send to Discord">
-                                <i class="fas fa-hand-paper"></i>
+                                <i class="fab fa-discord"></i>
                             </button>
                             <button id="save-output-btn" class="output-action-btn" title="Save Output">
                                 <i class="fas fa-save"></i>

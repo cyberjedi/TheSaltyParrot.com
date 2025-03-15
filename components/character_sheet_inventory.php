@@ -168,7 +168,7 @@ try {
                                     <i class="fas fa-info-circle"></i>
                                 </button>
                                 <button class="item-use-btn" title="Use Item" data-item-id="<?php echo $item['item_id']; ?>" data-item-name="<?php echo htmlspecialchars($item['item_name']); ?>">
-                                    <i class="fas fa-hand-paper" style="color: #7289da;"></i>
+                                    <i class="fab fa-discord" style="color: #7289da;"></i>
                                 </button>
                             </div>
                         </td>
