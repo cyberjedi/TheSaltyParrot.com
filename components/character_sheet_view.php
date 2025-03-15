@@ -325,9 +325,11 @@
             <button id="copy-roll-btn" class="btn btn-secondary">
                 <i class="fas fa-copy"></i> Copy Result
             </button>
-            <div id="send-roll-container">
-                <!-- Discord Webhook Modal will be injected here -->
-            </div>
+            <?php if ($discord_authenticated): ?>
+                <button id="send-roll-discord-btn" class="btn btn-discord">
+                    <i class="fab fa-discord"></i> Send to Discord
+                </button>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -360,38 +362,51 @@ echo '</div>';
 // Add the necessary JavaScript to handle the Discord webhook integration
 ?>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Track current roll result
-    window.updateCurrentRoll = function(rollData) {
-        currentRollData = rollData;
-        
-        // Format the content for Discord
-        const rollContent = `
-            <div class="attribute-roll">
-                <h3>${rollData.characterName} - ${rollData.attributeName} Check</h3>
-                <div class="roll-details">
-                    <p>Dice Roll: ${rollData.diceValue}</p>
-                    <p>${rollData.attributeName} Bonus: ${rollData.attributeValue}</p>
-                    <p>Total: ${rollData.totalValue}</p>
-                </div>
+// Define the update function without a DOMContentLoaded wrapper
+// This prevents conflicts with other event handlers
+window.updateCurrentRoll = function(rollData) {
+    // Update our global variable
+    if (window.currentRollData) {
+        window.currentRollData = rollData;
+    } else {
+        // Fallback - set on window if variable not defined
+        window.currentRollData = rollData;
+    }
+    
+    // Format the content for Discord
+    const rollContent = `
+        <div class="attribute-roll">
+            <h3>${rollData.characterName} - ${rollData.attributeName} Check</h3>
+            <div class="roll-details">
+                <p>Dice Roll: ${rollData.diceValue}</p>
+                <p>${rollData.attributeName} Bonus: ${rollData.attributeValue}</p>
+                <p>Total: ${rollData.totalValue}</p>
             </div>
-        `;
-        
-        // Update the attribute roll content
-        document.getElementById('attribute-roll-content').innerHTML = rollContent;
+        </div>
+    `;
+    
+    // Update the attribute roll content if the element exists
+    const contentElement = document.getElementById('attribute-roll-content');
+    if (contentElement) {
+        contentElement.innerHTML = rollContent;
         
         // Force refresh the Discord webhook modal
-        if (document.getElementById('discord-webhook-modal')) {
-            if (document.getElementById('discord-webhook-modal').style.display === 'block') {
-                // If modal is open, refresh preview
-                setTimeout(() => {
+        const modal = document.getElementById('discord-webhook-modal');
+        if (modal && modal.style.display === 'block') {
+            // If modal is open, refresh preview
+            setTimeout(() => {
+                try {
                     const event = new Event('contentUpdated');
                     document.dispatchEvent(event);
-                }, 100);
-            }
+                } catch (error) {
+                    console.warn('Could not dispatch contentUpdated event:', error);
+                }
+            }, 100);
         }
-    };
-});
+    } else {
+        console.warn('attribute-roll-content element not found');
+    }
+};
 </script>
 
 <?php
@@ -406,7 +421,7 @@ render_discord_webhook_modal(
         'button_icon' => 'fa-discord',
         'button_class' => 'btn-discord',
         'modal_title' => 'Send Attribute Roll to Discord',
-        'button_id' => 'send-roll-discord-btn',
+        'button_id' => 'open-discord-modal',
         'show_character_image' => true  // Enable character image
     ]
 );

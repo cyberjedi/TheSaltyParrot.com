@@ -3,7 +3,15 @@
  * Handles interactions for the character sheet component
  */
 
-document.addEventListener('DOMContentLoaded', function() {
+// Ensure we're not double-binding events
+if (window.characterSheetInitialized) {
+    console.log('Character sheet already initialized, skipping');
+} else {
+    // Flag to prevent double initialization
+    window.characterSheetInitialized = true;
+    
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
     // Get modal elements
     const editModal = document.getElementById('edit-character-modal');
     const switcherModal = document.getElementById('character-switcher-modal');
@@ -314,8 +322,30 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Discord handling is now provided by the webhook_modal component
-    // We just need to make sure that we update the roll data when it changes
+    // Send roll result to Discord using the new webhook system
+    if (sendRollDiscordBtn) {
+        sendRollDiscordBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            
+            if (!isAuthenticated) {
+                alert('You must connect with Discord to send rolls to a webhook.');
+                return;
+            }
+            
+            // Close the dice roll modal
+            if (diceRollModal) {
+                diceRollModal.style.display = 'none';
+            }
+            
+            // Trigger the Discord modal by clicking the button in the webhook component
+            const webhookModalButton = document.getElementById('open-discord-modal');
+            if (webhookModalButton) {
+                webhookModalButton.click();
+            } else {
+                console.error('Discord webhook modal button not found');
+            }
+        });
+    }
     
     // Close dice roll modal when the X is clicked or when clicking outside
     if (diceRollModal) {
@@ -334,4 +364,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-});
+    
+    // Log that initialization is complete
+    console.log('Character sheet initialization complete');
+    });
+}
