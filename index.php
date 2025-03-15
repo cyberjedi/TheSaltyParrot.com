@@ -323,7 +323,13 @@ if (file_exists('discord/discord-config.php')) {
             
             // Function to close all modals - same pattern as inventory.js
             function closeAllModals() {
-                // Get all modals
+                // For Discord modal, we actually remove it from the DOM
+                const modalContainer = document.getElementById('discord-modal-container');
+                if (modalContainer) {
+                    modalContainer.innerHTML = '';
+                }
+                
+                // Get all other modals
                 const modals = document.querySelectorAll('.modal');
                 
                 // Hide each modal
@@ -393,20 +399,44 @@ if (file_exists('discord/discord-config.php')) {
                         return;
                     }
                     
-                    // Get fresh references to modal elements
-                    const modal = document.getElementById('discord-webhook-modal');
-                    const loading = document.getElementById('webhook-loading');
-                    const error = document.getElementById('webhook-error');
-                    const errorMsg = document.getElementById('webhook-error-message');
-                    const preview = document.getElementById('webhook-content-preview');
+                    // Create the Discord modal dynamically when needed
+                    const modalContainer = document.getElementById('discord-modal-container');
                     
-                    // Reset modal state
-                    if (loading) loading.style.display = 'block';
-                    if (error) error.style.display = 'none';
-                    if (preview) preview.innerHTML = '<p>Loading webhook information...</p>';
+                    // Create the modal HTML
+                    modalContainer.innerHTML = `
+                        <div id="discord-webhook-modal" class="modal" style="display: block;">
+                            <div class="modal-content">
+                                <span class="close-modal">&times;</span>
+                                <h3>Send to Discord</h3>
+                                
+                                <div id="discord-modal-content">
+                                    <div id="webhook-content-preview">
+                                        <p><i class="fas fa-spinner fa-spin"></i> Loading webhook information...</p>
+                                    </div>
+                                    
+                                    <div id="webhook-loading" style="text-align: center; display: none;">
+                                        <p><i class="fas fa-spinner fa-spin"></i> Loading webhooks...</p>
+                                    </div>
+                                    
+                                    <div id="webhook-error" style="display: none; color: #d33; margin: 10px 0;">
+                                        <p><i class="fas fa-exclamation-triangle"></i> <span id="webhook-error-message"></span></p>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-buttons">
+                                    <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
+                                    <button type="button" class="btn btn-discord" id="send-to-discord-btn" disabled>
+                                        <i class="fab fa-discord"></i> Send to Discord
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
                     
-                    // Get the Discord modal and show it
-                    document.getElementById('discord-webhook-modal').style.display = 'block';
+                    // Re-add event listeners for the close button
+                    document.querySelectorAll('.close-modal, .close-modal-btn').forEach(btn => {
+                        btn.addEventListener('click', closeAllModals);
+                    });
                     
                     // Get base URL from window location
                     const baseUrl = window.location.href.split('index.php')[0] || './';
@@ -421,12 +451,15 @@ if (file_exists('discord/discord-config.php')) {
                             return response.json();
                         })
                         .then(data => {
+                            // Get loading element reference
+                            const loading = document.getElementById('webhook-loading');
                             if (loading) loading.style.display = 'none';
                             
                             if (data.status === 'success' && data.webhook) {
-                                // Update content preview
-                                if (preview) {
-                                    preview.innerHTML = `
+                                // Update content preview - get fresh reference
+                                const previewEl = document.getElementById('webhook-content-preview');
+                                if (previewEl) {
+                                    previewEl.innerHTML = `
                                         <p>Content will be sent to <strong>${data.webhook.webhook_name}</strong> 
                                         channel <strong>#${data.webhook.channel_name}</strong></p>
                                     `;
@@ -482,6 +515,8 @@ if (file_exists('discord/discord-config.php')) {
                                                     this.disabled = false;
                                                 }, 1500);
                                             } else {
+                                                const error = document.getElementById('webhook-error');
+                                                const errorMsg = document.getElementById('webhook-error-message');
                                                 if (error) {
                                                     error.style.display = 'block';
                                                     if (errorMsg) {
@@ -494,6 +529,8 @@ if (file_exists('discord/discord-config.php')) {
                                         })
                                         .catch(err => {
                                             console.error('Error sending to Discord:', err);
+                                            const error = document.getElementById('webhook-error');
+                                            const errorMsg = document.getElementById('webhook-error-message');
                                             if (error) {
                                                 error.style.display = 'block';
                                                 if (errorMsg) {
@@ -509,6 +546,8 @@ if (file_exists('discord/discord-config.php')) {
                                 }
                             } else {
                                 // Show error if no webhook found
+                                const error = document.getElementById('webhook-error');
+                                const errorMsg = document.getElementById('webhook-error-message');
                                 if (error) {
                                     error.style.display = 'block';
                                     if (errorMsg) {
@@ -521,6 +560,10 @@ if (file_exists('discord/discord-config.php')) {
                             console.error('Error fetching webhook:', err);
                             
                             // Hide loading and show error
+                            const loading = document.getElementById('webhook-loading');
+                            const error = document.getElementById('webhook-error');
+                            const errorMsg = document.getElementById('webhook-error-message');
+                            
                             if (loading) loading.style.display = 'none';
                             if (error) {
                                 error.style.display = 'block';
@@ -839,7 +882,6 @@ if (file_exists('discord/discord-config.php')) {
         }
     </script>
     
-    <!-- Include the Discord modal component -->
-    <?php include 'components/discord_modal.php'; ?>
+    <div id="discord-modal-container"></div>
 </body>
 </html>
