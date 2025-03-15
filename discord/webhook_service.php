@@ -666,8 +666,8 @@ class WebhookService {
  * @return WebhookService
  */
 function createWebhookService($conn = null) {
-    global $conn as $globalConn;
-    $dbConn = $conn ?: $globalConn;
+    global $conn;
+    $dbConn = $conn ?: $conn;
     
     return new WebhookService($dbConn);
 }
