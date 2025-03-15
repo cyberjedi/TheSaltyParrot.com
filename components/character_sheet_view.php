@@ -338,91 +338,29 @@
 
 <!-- Include Discord webhook modal component -->
 <?php if ($discord_authenticated): ?>
-<script>
-// Store current roll data for Discord webhook
-let currentRollData = {
-    characterName: "<?php echo htmlspecialchars($character['name']); ?>",
-    attributeName: "",
-    attributeValue: 0,
-    diceValue: 0,
-    totalValue: 0
-};
-</script>
-
 <?php
 // Load the Discord webhook modal component for attribute rolls
 require_once dirname(__FILE__) . '/discord_webhook_modal.php';
 
-// Render the webhook modal for attribute rolls
+// Render the hidden container for attribute roll content
 echo '<div id="attribute-roll-discord-container" style="display:none">';
-echo '<div id="attribute-roll-content">';
-echo '</div>';
+echo '<div id="attribute-roll-content"></div>';
 echo '</div>';
 
-// Add the necessary JavaScript to handle the Discord webhook integration
-?>
-<script>
-// Define the update function without a DOMContentLoaded wrapper
-// This prevents conflicts with other event handlers
-window.updateCurrentRoll = function(rollData) {
-    // Update our global variable
-    if (window.currentRollData) {
-        window.currentRollData = rollData;
-    } else {
-        // Fallback - set on window if variable not defined
-        window.currentRollData = rollData;
-    }
-    
-    // Format the content for Discord
-    const rollContent = `
-        <div class="attribute-roll">
-            <h3>${rollData.characterName} - ${rollData.attributeName} Check</h3>
-            <div class="roll-details">
-                <p>Dice Roll: ${rollData.diceValue}</p>
-                <p>${rollData.attributeName} Bonus: ${rollData.attributeValue}</p>
-                <p>Total: ${rollData.totalValue}</p>
-            </div>
-        </div>
-    `;
-    
-    // Update the attribute roll content if the element exists
-    const contentElement = document.getElementById('attribute-roll-content');
-    if (contentElement) {
-        contentElement.innerHTML = rollContent;
-        
-        // Force refresh the Discord webhook modal
-        const modal = document.getElementById('discord-webhook-modal');
-        if (modal && modal.style.display === 'block') {
-            // If modal is open, refresh preview
-            setTimeout(() => {
-                try {
-                    const event = new Event('contentUpdated');
-                    document.dispatchEvent(event);
-                } catch (error) {
-                    console.warn('Could not dispatch contentUpdated event:', error);
-                }
-            }, 100);
-        }
-    } else {
-        console.warn('attribute-roll-content element not found');
-    }
-};
-</script>
-
-<?php
-// Render Discord webhook modal
+// Render Discord webhook modal with unique ID
 render_discord_webhook_modal(
-    '#attribute-roll-content', // Content selector
-    'attribute_roll',         // Source type
-    false,                    // No extra inputs
-    '',                       // No extra inputs HTML
+    '#attribute-roll-content',
+    'attribute_roll',
+    false,
+    '',
     [
         'button_text' => 'Send to Discord',
         'button_icon' => 'fa-discord',
         'button_class' => 'btn-discord',
         'modal_title' => 'Send Attribute Roll to Discord',
         'button_id' => 'open-discord-modal',
-        'show_character_image' => true  // Enable character image
+        'modal_id' => 'discord-webhook-modal-character',
+        'show_character_image' => true
     ]
 );
 ?>
@@ -430,25 +368,7 @@ render_discord_webhook_modal(
 
 <!-- Pass authentication status to JS -->
 <script>
-// Set authentication status for the character sheet JS
-window.discord_authenticated = <?php echo $discord_authenticated ? 'true' : 'false'; ?>;
-
-// Character data for reference in JS
-window.character_data = {
-    id: <?php echo (int)$character['id']; ?>,
-    name: "<?php echo htmlspecialchars($character['name']); ?>",
-    attributes: {
-        strength: <?php echo (int)$character['strength']; ?>,
-        agility: <?php echo (int)$character['agility']; ?>,
-        presence: <?php echo (int)$character['presence']; ?>,
-        toughness: <?php echo (int)$character['toughness']; ?>,
-        spirit: <?php echo (int)$character['spirit']; ?>
-    }
-};
-
-// Set base url for API requests
-window.base_url = "<?php echo isset($base_path) ? $base_path : './'; ?>";
-console.log("Base URL for requests:", window.base_url);
+// Character sheet data is already set in the main page
+// This is just for component-specific JS initialization
+console.log("Character sheet view component loaded");
 </script>
-<!-- External character sheet JS -->
-<script src="/js/character_sheet.js?v=<?php echo time(); ?>"></script>

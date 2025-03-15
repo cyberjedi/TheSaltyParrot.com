@@ -89,5 +89,8 @@ require_once 'components/character_controller.php';
     <script src="js/character_sheet.js?v=<?php echo time(); ?>"></script>
     <script src="js/inventory.js?v=<?php echo time(); ?>"></script>
     <script src="js/inventory_containers.js?v=<?php echo time(); ?>"></script>
+    <?php if ($discord_enabled && $discord_authenticated): ?>
+    <script src="js/discord_integration.js?v=<?php echo time(); ?>"></script>
+    <?php endif; ?>
 </body>
 </html>

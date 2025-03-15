@@ -3,15 +3,7 @@
  * Handles interactions for the character sheet component
  */
 
-// Ensure we're not double-binding events
-if (window.characterSheetInitialized) {
-    console.log('Character sheet already initialized, skipping');
-} else {
-    // Flag to prevent double initialization
-    window.characterSheetInitialized = true;
-    
-    // Initialize when DOM is ready
-    document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
     // Get modal elements
     const editModal = document.getElementById('edit-character-modal');
     const switcherModal = document.getElementById('character-switcher-modal');
@@ -322,29 +314,10 @@ if (window.characterSheetInitialized) {
         });
     }
     
-    // Send roll result to Discord using the new webhook system
+    // Send roll result to Discord - actual implementation is in discord_integration.js
+    // This is just a stub for backward compatibility
     if (sendRollDiscordBtn) {
-        sendRollDiscordBtn.addEventListener('click', function(event) {
-            event.preventDefault();
-            
-            if (!isAuthenticated) {
-                alert('You must connect with Discord to send rolls to a webhook.');
-                return;
-            }
-            
-            // Close the dice roll modal
-            if (diceRollModal) {
-                diceRollModal.style.display = 'none';
-            }
-            
-            // Trigger the Discord modal by clicking the button in the webhook component
-            const webhookModalButton = document.getElementById('open-discord-modal');
-            if (webhookModalButton) {
-                webhookModalButton.click();
-            } else {
-                console.error('Discord webhook modal button not found');
-            }
-        });
+        console.log('Discord button handler will be attached by discord_integration.js');
     }
     
     // Close dice roll modal when the X is clicked or when clicking outside
@@ -364,8 +337,4 @@ if (window.characterSheetInitialized) {
             }
         });
     }
-    
-    // Log that initialization is complete
-    console.log('Character sheet initialization complete');
-    });
-}
+});
