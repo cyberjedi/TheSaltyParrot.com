@@ -72,6 +72,31 @@ if (file_exists('discord/discord-config.php')) {
     <?php endif; ?>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <style>
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+        
+        .modal-content {
+            background-color: #f9f5eb;
+            margin: 10% auto;
+            padding: 25px;
+            border: 1px solid #bf9d61;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 550px;
+            position: relative;
+            color: #1a2639;
+        }
+        
         /* New Generator Page Styles */
         .generators-container {
             display: grid;
@@ -321,18 +346,16 @@ if (file_exists('discord/discord-config.php')) {
                 });
             }
             
-            // Function to close all modals - same pattern as inventory.js
+            // Function to close all modals
             function closeAllModals() {
-                // For Discord modal, we actually remove it from the DOM
+                // Clear the Discord modal container
                 const modalContainer = document.getElementById('discord-modal-container');
                 if (modalContainer) {
                     modalContainer.innerHTML = '';
                 }
                 
-                // Get all other modals
+                // Hide all other modals
                 const modals = document.querySelectorAll('.modal');
-                
-                // Hide each modal
                 modals.forEach(modal => {
                     modal.style.display = 'none';
                 });
@@ -399,26 +422,21 @@ if (file_exists('discord/discord-config.php')) {
                         return;
                     }
                     
-                    // Create the Discord modal dynamically when needed
+                    // Create a simple custom popup modal that we can build upon later
                     const modalContainer = document.getElementById('discord-modal-container');
-                    
-                    // Create a simple modal with just "Test" inside
                     modalContainer.innerHTML = `
-                        <div id="discord-webhook-modal" class="modal" style="display: block;">
+                        <div id="custom-discord-modal" class="modal" style="display: block;">
                             <div class="modal-content">
-                                <span class="close-modal">&times;</span>
-                                <h3>Send to Discord</h3>
                                 <p>Test</p>
-                                <div class="form-buttons">
-                                    <button type="button" class="btn btn-secondary close-modal-btn">Close</button>
-                                </div>
                             </div>
                         </div>
                     `;
                     
-                    // Add event listeners for the close button
-                    document.querySelectorAll('.close-modal, .close-modal-btn').forEach(btn => {
-                        btn.addEventListener('click', closeAllModals);
+                    // Close when clicking outside the modal
+                    window.addEventListener('click', function(event) {
+                        if (event.target.id === 'custom-discord-modal') {
+                            closeAllModals();
+                        }
                     });
                 });
             }
