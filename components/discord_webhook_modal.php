@@ -207,37 +207,32 @@ function render_discord_webhook_modal($contentSelector = '#output-display', $sou
                         let shipDetails = tempDiv.querySelector('.ship-details');
                         let cargoList = tempDiv.querySelector('#cargo-list');
                         
-                        let previewHtml = '<div class="preview-item">';
-                        previewHtml += shipName ? '<h4>' + shipName.textContent + '</h4>' : '';
-                        previewHtml += shipDetails ? '<div class="preview-details">' + shipDetails.innerHTML + '</div>' : '';
-                        
-                        if (cargoList) {
-                            previewHtml += '<div class="preview-cargo"><strong>Cargo:</strong>';
-                            previewHtml += cargoList.innerHTML;
-                            previewHtml += '</div>';
-                        }
-                        
-                        previewHtml += '</div>';
-                        return previewHtml;
+                        const shipPreviewHtml = '<div class="preview-item">' + 
+                            (shipName ? '<h4>' + shipName.textContent + '</h4>' : '') +
+                            (shipDetails ? '<div class="preview-details">' + shipDetails.innerHTML + '</div>' : '') +
+                            (cargoList ? '<div class="preview-cargo"><strong>Cargo:</strong>' + cargoList.innerHTML + '</div>' : '') +
+                            '</div>';
+                            
+                        return shipPreviewHtml;
                         
                     case 'loot':
                         // Extract loot cards
                         let lootCards = tempDiv.querySelectorAll('.loot-card');
-                        let previewHtml = '';
+                        let lootPreviewHtml = '';
                         
                         lootCards.forEach(card => {
                             let lootName = card.querySelector('.loot-name');
                             let lootDesc = card.querySelector('.loot-description');
                             let lootCategory = card.querySelector('.loot-category');
                             
-                            previewHtml += '<div class="preview-item">';
-                            previewHtml += lootName ? '<h4>' + lootName.textContent + '</h4>' : '';
-                            previewHtml += lootDesc ? '<p>' + lootDesc.textContent + '</p>' : '';
-                            previewHtml += lootCategory ? '<p><em>' + lootCategory.textContent + '</em></p>' : '';
-                            previewHtml += '</div>';
+                            lootPreviewHtml += '<div class="preview-item">';
+                            lootPreviewHtml += lootName ? '<h4>' + lootName.textContent + '</h4>' : '';
+                            lootPreviewHtml += lootDesc ? '<p>' + lootDesc.textContent + '</p>' : '';
+                            lootPreviewHtml += lootCategory ? '<p><em>' + lootCategory.textContent + '</em></p>' : '';
+                            lootPreviewHtml += '</div>';
                         });
                         
-                        return previewHtml;
+                        return lootPreviewHtml;
                         
                     default:
                         // Generic preview with limited HTML
@@ -246,8 +241,9 @@ function render_discord_webhook_modal($contentSelector = '#output-display', $sou
                         scripts.forEach(script => script.remove());
                         
                         // Return a simplified version
+                        let genericHTML = tempDiv.innerHTML.substring(0, 500);
                         return '<div class="preview-generic">' + 
-                               tempDiv.innerHTML.substring(0, 500) + 
+                               genericHTML + 
                                (tempDiv.innerHTML.length > 500 ? '...' : '') +
                                '</div>';
                 }
