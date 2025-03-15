@@ -301,14 +301,27 @@ class WebhookService {
                     break;
                     
                 default:
-                    // Generic handling for other generator types
+                    // For custom content, extract any h2/h3 for title, and use content for description
+                    $title = '🏴‍☠️ Generated Content';
+                    $description = 'No content available';
+                    
+                    // Try to extract a title from h2 or h3
+                    if (preg_match('/<h[23][^>]*>(.*?)<\/h[23]>/i', $content, $titleMatches)) {
+                        $title = strip_tags($titleMatches[1]);
+                    }
+                    
+                    // Extract text content
+                    $tempContent = strip_tags(str_replace(['<br>', '<p>', '</p>', '<div>', '</div>'], ["\n", "\n", "", "\n", ""], $content));
+                    $description = trim(preg_replace('/\n{3,}/', "\n\n", $tempContent));
+                    
+                    // Create a single embed
                     $embeds[] = [
-                        'title' => '🏴‍☠️ The Salty Parrot - Generated Content',
-                        'description' => 'Content generated with The Salty Parrot. Visit the app to see the full details!',
+                        'title' => $title,
+                        'description' => $description,
                         'color' => 0xbf9d61
                     ];
                     
-                    $contentSummary = "Content from " . ucfirst($source) . " generator";
+                    $contentSummary = "Custom content: " . substr($title, 0, 30);
             }
             
             // Prepare webhook message
@@ -478,8 +491,20 @@ class WebhookService {
         preg_match('/<div class="ship-details">(.*?)<\/div>/is', $content, $detailsMatches);
         $details = isset($detailsMatches[1]) ? $detailsMatches[1] : '';
         
-        // Clean up HTML
-        $details = strip_tags(str_replace(['<h3>', '</h3>', '<strong>', '</strong>', '<br>'], ["\n\n**", "**\n", '**', '**', "\n"], $details));
+        // Extract ship info from details
+        $detailMap = [];
+        preg_match_all('/<h3>(.*?):<\/h3>\s*<p>(.*?)<\/p>/is', $details, $detailMatches, PREG_SET_ORDER);
+        foreach ($detailMatches as $match) {
+            $key = strip_tags($match[1]);
+            $value = strip_tags($match[2]);
+            $detailMap[$key] = $value;
+        }
+        
+        // Build formatted description
+        $formattedDesc = '';
+        foreach ($detailMap as $key => $value) {
+            $formattedDesc .= "**$key:** $value\n";
+        }
         
         // Extract cargo items
         preg_match('/<ul id="cargo-list">(.*?)<\/ul>/is', $content, $cargoMatches);
@@ -487,7 +512,7 @@ class WebhookService {
         if (isset($cargoMatches[1])) {
             preg_match_all('/<li>(.*?)<\/li>/is', $cargoMatches[1], $cargoItems);
             if (isset($cargoItems[1]) && !empty($cargoItems[1])) {
-                $cargo = "\n\n**Cargo:**\n";
+                $cargo = "\n**Cargo:**\n";
                 foreach ($cargoItems[1] as $item) {
                     $cargo .= "• " . strip_tags($item) . "\n";
                 }
@@ -497,13 +522,13 @@ class WebhookService {
         // Extract plot twist
         $plotTwist = '';
         if (preg_match('/<h3>Plot Twist \(Optional\):<\/h3>\s*<p>(.*?)<\/p>/is', $content, $plotMatches)) {
-            $plotTwist = "\n\n**Plot Twist:**\n" . strip_tags($plotMatches[1]);
+            $plotTwist = "\n**Plot Twist:**\n" . strip_tags($plotMatches[1]);
         }
         
         // Create embed
         $embeds[] = [
             'title' => '🚢 ' . $shipName,
-            'description' => $details . $cargo . $plotTwist,
+            'description' => $formattedDesc . $cargo . $plotTwist,
             'color' => 0xbf9d61 // The Salty Parrot gold
         ];
         
@@ -552,7 +577,7 @@ class WebhookService {
                 // Create embed
                 $embeds[] = [
                     'title' => '💰 ' . $title,
-                    'description' => "**Roll:** $roll\n\n$desc\n\n**Category:** $category",
+                    'description' => "**Roll:** $roll\n**Category:** $category\n\n$desc",
                     'color' => $index === 0 ? 0xbf9d61 : 0x805d2c // Different color for additional rolls
                 ];
                 
@@ -593,7 +618,7 @@ class WebhookService {
         // Create embed
         $embed = [
             'title' => '🎲 ' . $attributeName . ' Check',
-            'description' => "**Dice Roll (d20):** " . $diceValue . "\n**" . $attributeName . " Bonus:** " . $attributeBonus . "\n**Total:** " . $totalValue,
+            'description' => "**Roll:** " . $diceValue . "  **Bonus:** " . $attributeBonus . "  **Total:** " . $totalValue,
             'color' => 0x5765F2 // Discord blue color
         ];
         
@@ -633,13 +658,13 @@ class WebhookService {
         // Extract notes if any
         $notes = '';
         if (preg_match('/<strong>Notes:<\/strong>\s*(.*?)<\/p>/i', $content, $notesMatches)) {
-            $notes = "\n\n**Notes:** " . strip_tags($notesMatches[1]);
+            $notes = "**Notes:** " . strip_tags($notesMatches[1]);
         }
         
         // Create embed
         $embed = [
             'title' => '✋ Using: ' . $itemName,
-            'description' => "**Item:** " . $itemName . $notes,
+            'description' => ($notes ? $notes : "Using " . $itemName),
             'color' => 0x7289DA // Discord blurple color
         ];
         
