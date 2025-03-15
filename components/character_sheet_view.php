@@ -325,14 +325,93 @@
             <button id="copy-roll-btn" class="btn btn-secondary">
                 <i class="fas fa-copy"></i> Copy Result
             </button>
-            <button id="send-roll-discord-btn" class="btn btn-discord">
-                <i class="fab fa-discord"></i> Send to Discord
-            </button>
+            <div id="send-roll-container">
+                <!-- Discord Webhook Modal will be injected here -->
+            </div>
         </div>
     </div>
 </div>
 
 <!-- Character sheet styles are loaded from css/character_sheet.css -->
+
+<!-- Include Discord webhook modal component -->
+<?php if ($discord_authenticated): ?>
+<script>
+// Store current roll data for Discord webhook
+let currentRollData = {
+    characterName: "<?php echo htmlspecialchars($character['name']); ?>",
+    attributeName: "",
+    attributeValue: 0,
+    diceValue: 0,
+    totalValue: 0
+};
+</script>
+
+<?php
+// Load the Discord webhook modal component for attribute rolls
+require_once dirname(__FILE__) . '/discord_webhook_modal.php';
+
+// Render the webhook modal for attribute rolls
+echo '<div id="attribute-roll-discord-container" style="display:none">';
+echo '<div id="attribute-roll-content">';
+echo '</div>';
+echo '</div>';
+
+// Add the necessary JavaScript to handle the Discord webhook integration
+?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Track current roll result
+    window.updateCurrentRoll = function(rollData) {
+        currentRollData = rollData;
+        
+        // Format the content for Discord
+        const rollContent = `
+            <div class="attribute-roll">
+                <h3>${rollData.characterName} - ${rollData.attributeName} Check</h3>
+                <div class="roll-details">
+                    <p>Dice Roll: ${rollData.diceValue}</p>
+                    <p>${rollData.attributeName} Bonus: ${rollData.attributeValue}</p>
+                    <p>Total: ${rollData.totalValue}</p>
+                </div>
+            </div>
+        `;
+        
+        // Update the attribute roll content
+        document.getElementById('attribute-roll-content').innerHTML = rollContent;
+        
+        // Force refresh the Discord webhook modal
+        if (document.getElementById('discord-webhook-modal')) {
+            if (document.getElementById('discord-webhook-modal').style.display === 'block') {
+                // If modal is open, refresh preview
+                setTimeout(() => {
+                    const event = new Event('contentUpdated');
+                    document.dispatchEvent(event);
+                }, 100);
+            }
+        }
+    };
+});
+</script>
+
+<?php
+// Render Discord webhook modal
+render_discord_webhook_modal(
+    '#attribute-roll-content', // Content selector
+    'attribute_roll',         // Source type
+    false,                    // No extra inputs
+    '',                       // No extra inputs HTML
+    [
+        'button_text' => 'Send to Discord',
+        'button_icon' => 'fa-discord',
+        'button_class' => 'btn-discord',
+        'modal_title' => 'Send Attribute Roll to Discord',
+        'button_id' => 'send-roll-discord-btn',
+        'show_character_image' => true  // Enable character image
+    ]
+);
+?>
+<?php endif; ?>
 
 <!-- Pass authentication status to JS -->
 <script>

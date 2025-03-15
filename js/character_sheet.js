@@ -241,13 +241,27 @@ document.addEventListener('DOMContentLoaded', function() {
         const diceValue = Math.floor(Math.random() * 20) + 1;
         const totalValue = diceValue + attributeValue;
         
+        // Format the attribute name (capitalize first letter)
+        const formattedAttributeName = attributeName.charAt(0).toUpperCase() + attributeName.slice(1);
+        
         // Store current roll data
         currentRoll = {
-            attributeName: attributeName.charAt(0).toUpperCase() + attributeName.slice(1),
+            attributeName: formattedAttributeName,
             attributeValue: attributeValue,
             diceValue: diceValue,
             totalValue: totalValue
         };
+        
+        // Update the roll data for Discord webhook if available
+        if (window.updateCurrentRoll) {
+            window.updateCurrentRoll({
+                characterName: characterData.name,
+                attributeName: formattedAttributeName,
+                attributeValue: attributeValue,
+                diceValue: diceValue,
+                totalValue: totalValue
+            });
+        }
         
         console.log('Generated roll:', currentRoll);
         
@@ -300,130 +314,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Send roll result to Discord
-    if (sendRollDiscordBtn) {
-        console.log('Send to Discord button found:', sendRollDiscordBtn);
-        
-        sendRollDiscordBtn.addEventListener('click', function(event) {
-            console.log('Send to Discord button clicked');
-            event.preventDefault();
-            
-            if (!isAuthenticated) {
-                console.log('User not authenticated with Discord');
-                alert('You must connect with Discord to send rolls to a webhook.');
-                return;
-            }
-            
-            console.log('Preparing to send roll to Discord:', currentRoll);
-            
-            // Format content for Discord
-            const rollContent = `
-                <div class="attribute-roll">
-                    <h3>${characterData.name} - ${currentRoll.attributeName} Check</h3>
-                    <div class="roll-details">
-                        <p>Dice Roll: ${currentRoll.diceValue}</p>
-                        <p>${currentRoll.attributeName} Bonus: ${currentRoll.attributeValue}</p>
-                        <p>Total: ${currentRoll.totalValue}</p>
-                    </div>
-                </div>
-            `;
-            
-            // Show loading indicator on the button
-            const originalButtonContent = sendRollDiscordBtn.innerHTML;
-            sendRollDiscordBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-            sendRollDiscordBtn.disabled = true;
-            
-            // Get base URL from window object or use default
-            const baseUrl = window.base_url || './';
-            const webhookUrl = baseUrl + 'discord/webhooks.php?action=get_default_webhook&format=json';
-            
-            // Fetch default webhook from the server
-            console.log('Fetching default webhook');
-            
-            fetch(webhookUrl)
-                .then(response => {
-                    console.log('Webhook response status:', response.status);
-                    if (!response.ok) {
-                        throw new Error(`Server error: ${response.status}`);
-                    }
-                    return response.json().catch(error => {
-                        console.error('Error parsing JSON response:', error);
-                        throw new Error('Invalid response from server. Try again later.');
-                    });
-                })
-                .then(data => {
-                    console.log('Webhook response data:', data);
-                    
-                    // Handle error cases
-                    if (data.status === 'error' || !data.webhook) {
-                        console.error('Error fetching default webhook:', data.message || 'No default webhook found');
-                        sendRollDiscordBtn.innerHTML = originalButtonContent;
-                        sendRollDiscordBtn.disabled = false;
-                        
-                        // Show error alert
-                        alert('Error: ' + (data.message || 'No default webhook found. Please configure a webhook in Discord settings.'));
-                        return;
-                    }
-                    
-                    // Get the default webhook ID
-                    const webhookId = data.webhook.id;
-                                
-                    console.log('Sending to webhook ID:', webhookId);
-                    
-                    // Get send webhook URL
-                    const sendWebhookUrl = baseUrl + 'discord/send_to_webhook.php';
-                    
-                    console.log('Sending webhook to:', sendWebhookUrl);
-                    
-                    // Get character image URL if available
-                    const characterImage = document.querySelector('.character-image img').src || '';
-                    
-                    // Send content to webhook with proper path
-                    fetch(sendWebhookUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            webhook_id: webhookId,
-                            content: rollContent,
-                            generator_type: 'attribute_roll',
-                            character_image: characterImage
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(result => {
-                        if (result.status === 'success') {
-                            // Show success feedback
-                            sendRollDiscordBtn.innerHTML = '<i class="fas fa-check"></i> Sent!';
-                            sendRollDiscordBtn.disabled = false;
-                            
-                            setTimeout(() => {
-                                sendRollDiscordBtn.innerHTML = originalButtonContent;
-                            }, 2000);
-                        } else {
-                            // Show error
-                            console.error('Error sending to Discord:', result.message);
-                            sendRollDiscordBtn.innerHTML = originalButtonContent;
-                            sendRollDiscordBtn.disabled = false;
-                            alert('Error sending to Discord: ' + result.message);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        sendRollDiscordBtn.innerHTML = originalButtonContent;
-                        sendRollDiscordBtn.disabled = false;
-                        alert('Error sending to Discord. Check console for details.');
-                    });
-                })
-                .catch(error => {
-                    console.error('Error fetching default webhook:', error);
-                    sendRollDiscordBtn.innerHTML = originalButtonContent;
-                    sendRollDiscordBtn.disabled = false;
-                    alert('Could not retrieve your Discord webhook configuration. Please check your Discord settings and try again.');
-                });
-        });
-    }
+    // Discord handling is now provided by the webhook_modal component
+    // We just need to make sure that we update the roll data when it changes
     
     // Close dice roll modal when the X is clicked or when clicking outside
     if (diceRollModal) {
