@@ -11,16 +11,6 @@
         <span class="close-modal">&times;</span>
         <h3>Character Selection</h3>
         
-        <div class="character-debug-info">
-            <p><strong>Available Characters:</strong> Found <?php echo count($user_characters); ?> characters</p>
-            <?php if (isset($discord_id) && $discord_id): ?>
-                <p><small>Discord ID: <?php echo $discord_id; ?> → User ID: <?php echo isset($db_user_id) ? $db_user_id : 'not set'; ?></small></p>
-                <p><small>Discord User: <?php echo isset($_SESSION['discord_user']['username']) ? $_SESSION['discord_user']['username'] : 'unknown'; ?></small></p>
-            <?php else: ?>
-                <p><small>Not authenticated with Discord</small></p>
-            <?php endif; ?>
-        </div>
-        
         <?php if (count($user_characters) > 0): ?>
             <div class="character-list">
                 <?php foreach ($user_characters as $char): ?>
@@ -39,14 +29,6 @@
                             </div>
                             <div class="character-list-details">
                                 <span class="character-name"><?php echo htmlspecialchars($char['name']); ?></span>
-                                <span class="character-user-id">User ID: <?php echo isset($char['user_id']) ? $char['user_id'] : 'unknown'; ?></span>
-                                
-                                <!-- Debug info with explicit styling -->
-                                <span class="character-debug" style="font-size: 0.75rem; color: #777;">
-                                    ID: <?php echo $char['id']; ?>, 
-                                    <?php if (isset($char['strength'])): ?>STR: <?php echo $char['strength']; ?><?php endif; ?>
-                                </span>
-                                
                                 <?php if ($character && $character['id'] == $char['id']): ?>
                                     <span class="current-badge">Current</span>
                                 <?php endif; ?>
