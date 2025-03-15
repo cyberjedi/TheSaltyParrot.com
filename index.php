@@ -262,34 +262,6 @@ if (file_exists('discord/discord-config.php')) {
                     // CRITICAL FIX: Always render all containers but hide them.
                     // The actual display will be controlled by JavaScript based on API response
                     ?>
-                    <!-- Discord webhook modal - matches the inventory implementation -->
-                    <div id="discord-webhook-modal" class="modal">
-                        <div class="modal-content">
-                            <span class="close-modal">&times;</span>
-                            <h3>Send to Discord</h3>
-                            
-                            <div class="send-to-discord-content">
-                                <div id="webhook-content-preview">
-                                    <p>Content will be sent to your Discord channel.</p>
-                                </div>
-                                
-                                <div id="webhook-loading" style="text-align: center; display: none;">
-                                    <p><i class="fas fa-spinner fa-spin"></i> Loading webhooks...</p>
-                                </div>
-                                
-                                <div id="webhook-error" style="display: none; color: #d33; margin: 10px 0;">
-                                    <p><i class="fas fa-exclamation-triangle"></i> <span id="webhook-error-message"></span></p>
-                                </div>
-                            </div>
-                            
-                            <div class="form-buttons">
-                                <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
-                                <button type="button" class="btn btn-discord" id="send-to-discord-btn" disabled>
-                                    <i class="fab fa-discord"></i> Send to Discord
-                                </button>
-                            </div>
-                        </div>
-                    </div>
                     
                     <!-- Webhook not configured message - always present but hidden by default -->
                     <div id="webhook-not-configured" style="display: none; margin-top: 20px; text-align: center; padding: 15px; background: rgba(255,100,100,0.1); border: 1px solid #d66;">
@@ -313,6 +285,35 @@ if (file_exists('discord/discord-config.php')) {
 
     <!-- Include the print helper component -->
     <?php include 'components/print_helper.php'; ?>
+    
+    <!-- Discord webhook modal - matches the inventory implementation -->
+    <div id="discord-webhook-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Send to Discord</h3>
+            
+            <div class="send-to-discord-content">
+                <div id="webhook-content-preview">
+                    <p>Content will be sent to your Discord channel.</p>
+                </div>
+                
+                <div id="webhook-loading" style="text-align: center; display: none;">
+                    <p><i class="fas fa-spinner fa-spin"></i> Loading webhooks...</p>
+                </div>
+                
+                <div id="webhook-error" style="display: none; color: #d33; margin: 10px 0;">
+                    <p><i class="fas fa-exclamation-triangle"></i> <span id="webhook-error-message"></span></p>
+                </div>
+            </div>
+            
+            <div class="form-buttons">
+                <button type="button" class="btn btn-secondary close-modal-btn">Cancel</button>
+                <button type="button" class="btn btn-discord" id="send-to-discord-btn" disabled>
+                    <i class="fab fa-discord"></i> Send to Discord
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -322,7 +323,8 @@ if (file_exists('discord/discord-config.php')) {
             const clearOutputBtn = document.getElementById('clear-output-btn');
             const printOutputBtn = document.getElementById('print-output-btn');
             const saveOutputBtn = document.getElementById('save-output-btn');
-            const sendDiscordBtn = document.getElementById('send-discord-btn');
+            const sendDiscordBtn = document.getElementById('send-discord-btn'); // This is the button in header
+            const discordModal = document.getElementById('discord-webhook-modal'); // The modal element
             
             // IMPORTANT: Get the webhook elements by their IDs
             console.log("Looking for webhook containers...");
