@@ -1,0 +1,304 @@
+/**
+ * Discord Components CSS
+ * Styles for Discord-related UI components
+ */
+
+/* Discord webhook component */
+.discord-webhook-component {
+    margin: 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Common modal styles */
+.modal-discord {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    overflow: auto;
+}
+
+.modal-discord-content {
+    background-color: #36393f;
+    color: #dcddde;
+    margin: 10% auto;
+    padding: 0;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    animation: modal-in 0.3s ease-out;
+}
+
+@keyframes modal-in {
+    from { opacity: 0; transform: translateY(-50px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-discord-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #202225;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-discord-header h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 18px;
+}
+
+.modal-discord-close {
+    color: #72767d;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.modal-discord-close:hover {
+    color: #fff;
+}
+
+.modal-discord-body {
+    padding: 20px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.modal-discord-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #202225;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* Webhook selection styles */
+.webhook-selector {
+    margin-bottom: 20px;
+}
+
+.webhook-selector label {
+    display: block;
+    margin-bottom: 8px;
+    color: #dcddde;
+}
+
+.webhook-dropdown {
+    width: 100%;
+    padding: 10px;
+    background-color: #2f3136;
+    color: #dcddde;
+    border: 1px solid #202225;
+    border-radius: 4px;
+}
+
+.webhook-dropdown option {
+    background-color: #2f3136;
+    color: #dcddde;
+}
+
+/* Message preview styles */
+.webhook-preview {
+    background-color: #2f3136;
+    border: 1px solid #202225;
+    border-radius: 4px;
+    padding: 15px;
+    margin-top: 20px;
+}
+
+.webhook-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.webhook-preview-header h4 {
+    margin: 0;
+    color: #fff;
+    font-size: 16px;
+}
+
+.webhook-preview-content {
+    background-color: #36393f;
+    border-radius: 4px;
+    padding: 15px;
+    min-height: 100px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Loading indicator */
+.webhook-loading {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    color: #72767d;
+}
+
+.webhook-loading i {
+    margin-right: 8px;
+}
+
+/* Discord login button */
+.btn-discord {
+    background-color: #7289da;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 15px;
+    font-size: 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+.btn-discord:hover {
+    background-color: #5e78d5;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-discord i {
+    margin-right: 8px;
+}
+
+/* Discord result messages */
+.discord-message {
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.discord-message.success {
+    background-color: #43b581;
+    color: white;
+}
+
+.discord-message.error {
+    background-color: #f04747;
+    color: white;
+}
+
+.discord-message.info {
+    background-color: #7289da;
+    color: white;
+}
+
+.discord-message.warning {
+    background-color: #faa61a;
+    color: white;
+}
+
+/* Webhook item styling */
+.webhook-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background-color: #2f3136;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    transition: background-color 0.2s;
+}
+
+.webhook-item:hover {
+    background-color: #36393f;
+}
+
+.webhook-item-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.webhook-item-name {
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+.webhook-item-channel {
+    font-size: 12px;
+    color: #b9bbbe;
+}
+
+.webhook-item-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.webhook-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+    margin-left: 8px;
+}
+
+.webhook-badge.default {
+    background-color: #7289da;
+    color: white;
+}
+
+.webhook-badge.shared {
+    background-color: #43b581;
+    color: white;
+}
+
+/* Additional inputs in modals */
+.webhook-extra-inputs {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #2f3136;
+    border-radius: 4px;
+}
+
+.webhook-extra-inputs label {
+    display: block;
+    margin-bottom: 8px;
+    color: #dcddde;
+}
+
+.webhook-extra-inputs input,
+.webhook-extra-inputs textarea,
+.webhook-extra-inputs select {
+    width: 100%;
+    padding: 10px;
+    background-color: #40444b;
+    color: #dcddde;
+    border: 1px solid #202225;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.webhook-extra-inputs textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Help text */
+.help-text {
+    font-size: 12px;
+    color: #72767d;
+    margin-top: 5px;
+}
+
+/* Authentication prompt */
+.webhook-auth-prompt {
+    margin-top: 10px;
+    padding: 15px;
+    background-color: #2f3136;
+    border-radius: 4px;
+    text-align: center;
+}
