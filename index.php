@@ -294,9 +294,17 @@ if (file_exists('discord/discord-config.php')) {
             const printOutputBtn = document.getElementById('print-output-btn');
             const saveOutputBtn = document.getElementById('save-output-btn');
             const sendDiscordBtn = document.getElementById('send-discord-btn');
+            
+            // IMPORTANT: Get the webhook elements by their IDs
+            console.log("Looking for webhook containers...");
             const webhookSelectorContainer = document.getElementById('webhook-selector-container');
+            console.log("webhook-selector-container found:", webhookSelectorContainer);
+            
             const webhookNotConfigured = document.getElementById('webhook-not-configured');
+            console.log("webhook-not-configured found:", webhookNotConfigured);
+            
             const discordNotConnected = document.getElementById('discord-not-connected');
+            console.log("discord-not-connected found:", discordNotConnected);
             
             // Generator buttons
             const shipGeneratorBtn = document.getElementById('ship-generator-btn');
@@ -413,29 +421,47 @@ if (file_exists('discord/discord-config.php')) {
                         .then(data => {
                             console.log('Webhook response data:', data);
                             
+                            // Debug - check if containers really exist at this point
+                            console.log("WEBHOOK DEBUG - Double checking containers:");
+                            console.log("webhook-selector-container:", document.getElementById('webhook-selector-container'));
+                            console.log("webhook-not-configured:", document.getElementById('webhook-not-configured'));
+                            
                             if (data.status === 'success' && data.webhook) {
+                                console.log("Webhook found, showing selector container");
+                                
                                 // User has a webhook, show the selector
-                                if (webhookSelectorContainer) {
-                                    webhookSelectorContainer.style.display = 'block';
+                                const selectorContainer = document.getElementById('webhook-selector-container');
+                                if (selectorContainer) {
+                                    console.log("Setting selector container to display:block");
+                                    selectorContainer.style.display = 'block';
+                                    
                                     if (webhookNotConfigured) webhookNotConfigured.style.display = 'none';
                                     if (discordNotConnected) discordNotConnected.style.display = 'none';
                                     
                                     // Pre-select this webhook
                                     const webhookOptions = document.querySelectorAll('.webhook-option');
+                                    console.log("Found webhook options:", webhookOptions.length);
                                     webhookOptions.forEach(option => {
                                         if (option.dataset.webhookId === data.webhook.id.toString()) {
                                             option.click();
                                         }
                                     });
                                 } else {
-                                    alert('Please reload the page and try again.');
+                                    console.error("Selector container not found in DOM");
+                                    alert('Webhook selector not found. Please reload the page and try again.');
                                 }
                             } else {
+                                console.log("No webhook, showing configuration message");
                                 // User doesn't have a webhook, show configuration message
-                                if (webhookNotConfigured) {
-                                    webhookNotConfigured.style.display = 'block';
+                                const notConfigured = document.getElementById('webhook-not-configured');
+                                if (notConfigured) {
+                                    console.log("Setting webhook-not-configured to display:block");
+                                    notConfigured.style.display = 'block';
+                                    
                                     if (webhookSelectorContainer) webhookSelectorContainer.style.display = 'none';
                                     if (discordNotConnected) discordNotConnected.style.display = 'none';
+                                } else {
+                                    console.error("webhook-not-configured element not found");
                                 }
                             }
                             
