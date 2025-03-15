@@ -424,13 +424,20 @@ if (file_exists('discord/discord-config.php')) {
                         return;
                     }
                     
-                    // Reset modal state
-                    if (sendToDiscordBtn) sendToDiscordBtn.disabled = true;
-                    if (webhookLoading) webhookLoading.style.display = 'block';
-                    if (webhookError) webhookError.style.display = 'none';
+                    // Get fresh references to modal elements
+                    const modal = document.getElementById('discordWebhookModal');
+                    const loading = document.getElementById('webhookLoading');
+                    const error = document.getElementById('webhookError');
+                    const errorMsg = document.getElementById('webhookErrorMessage');
+                    const preview = document.getElementById('webhookContentPreview');
                     
-                    // Show the modal - this is the key part - it must be a popup
-                    discordModal.style.display = 'block';
+                    // Reset modal state
+                    if (loading) loading.style.display = 'block';
+                    if (error) error.style.display = 'none';
+                    if (preview) preview.innerHTML = '<p>Loading webhook information...</p>';
+                    
+                    // Show the modal
+                    if (modal) modal.style.display = 'block';
                     
                     // Get base URL from window location
                     const baseUrl = window.location.href.split('index.php')[0] || './';
@@ -445,88 +452,113 @@ if (file_exists('discord/discord-config.php')) {
                             return response.json();
                         })
                         .then(data => {
-                            // Hide loading indicator
-                            webhookLoading.style.display = 'none';
+                            if (loading) loading.style.display = 'none';
                             
                             if (data.status === 'success' && data.webhook) {
                                 // Update content preview
-                                webhookContentPreview.innerHTML = `
-                                    <p>Content will be sent to <strong>${data.webhook.webhook_name}</strong> 
-                                    channel <strong>#${data.webhook.channel_name}</strong></p>
-                                `;
+                                if (preview) {
+                                    preview.innerHTML = `
+                                        <p>Content will be sent to <strong>${data.webhook.webhook_name}</strong> 
+                                        channel <strong>#${data.webhook.channel_name}</strong></p>
+                                    `;
+                                }
                                 
-                                // Enable send button and attach webhook ID
-                                sendToDiscordBtn.disabled = false;
-                                sendToDiscordBtn.dataset.webhookId = data.webhook.id;
+                                // Get the send button
+                                const sendBtn = document.getElementById('sendToDiscordBtn');
+                                if (!sendBtn) {
+                                    console.error("Send button not found");
+                                    return;
+                                }
                                 
-                                // Clear previous event listeners
-                                const newSendBtn = sendToDiscordBtn.cloneNode(true);
-                                sendToDiscordBtn.parentNode.replaceChild(newSendBtn, sendToDiscordBtn);
+                                // Store webhook ID directly on the button
+                                sendBtn.setAttribute('data-webhook-id', data.webhook.id);
+                                sendBtn.disabled = false;
                                 
-                                // Update the reference
-                                const sendButton = newSendBtn;
-                                
-                                // Add click handler to the send button
-                                sendButton.addEventListener('click', function() {
-                                    const outputContent = outputDisplay.innerHTML;
-                                    const webhookId = this.dataset.webhookId;
-                                    const generatorType = sendDiscordBtn.getAttribute('data-generator-type') || '';
+                                // Remove existing click handlers
+                                const clonedBtn = sendBtn.cloneNode(true);
+                                if (sendBtn.parentNode) {
+                                    sendBtn.parentNode.replaceChild(clonedBtn, sendBtn);
                                     
-                                    // Show loading state
-                                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-                                    this.disabled = true;
-                                    
-                                    // Send to webhook
-                                    fetch('discord/send_to_webhook.php', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                        },
-                                        body: JSON.stringify({
-                                            webhook_id: webhookId,
-                                            content: outputContent,
-                                            generator_type: generatorType
+                                    // Add click handler to the new button
+                                    clonedBtn.addEventListener('click', function() {
+                                        const outputContent = outputDisplay.innerHTML;
+                                        const webhookId = this.getAttribute('data-webhook-id');
+                                        const generatorType = sendDiscordBtn.getAttribute('data-generator-type') || '';
+                                        
+                                        // Show loading state
+                                        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+                                        this.disabled = true;
+                                        
+                                        // Send to webhook
+                                        fetch('discord/send_to_webhook.php', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                            },
+                                            body: JSON.stringify({
+                                                webhook_id: webhookId,
+                                                content: outputContent,
+                                                generator_type: generatorType
+                                            })
                                         })
-                                    })
-                                    .then(response => response.json())
-                                    .then(result => {
-                                        if (result.status === 'success') {
-                                            this.innerHTML = '<i class="fas fa-check"></i> Sent!';
-                                            
-                                            // Close modal after success
-                                            setTimeout(() => {
-                                                closeDiscordModal();
+                                        .then(response => response.json())
+                                        .then(result => {
+                                            if (result.status === 'success') {
+                                                this.innerHTML = '<i class="fas fa-check"></i> Sent!';
+                                                
+                                                // Close modal after success
+                                                setTimeout(() => {
+                                                    if (modal) modal.style.display = 'none';
+                                                    this.innerHTML = '<i class="fab fa-discord"></i> Send to Discord';
+                                                    this.disabled = false;
+                                                }, 1500);
+                                            } else {
+                                                if (error) {
+                                                    error.style.display = 'block';
+                                                    if (errorMsg) {
+                                                        errorMsg.textContent = result.message || 'Error sending to Discord';
+                                                    }
+                                                }
                                                 this.innerHTML = '<i class="fab fa-discord"></i> Send to Discord';
                                                 this.disabled = false;
-                                            }, 1500);
-                                        } else {
-                                            webhookError.style.display = 'block';
-                                            webhookErrorMessage.textContent = result.message || 'Error sending to Discord';
+                                            }
+                                        })
+                                        .catch(err => {
+                                            console.error('Error sending to Discord:', err);
+                                            if (error) {
+                                                error.style.display = 'block';
+                                                if (errorMsg) {
+                                                    errorMsg.textContent = err.message || 'Error sending to Discord';
+                                                }
+                                            }
                                             this.innerHTML = '<i class="fab fa-discord"></i> Send to Discord';
                                             this.disabled = false;
-                                        }
-                                    })
-                                    .catch(error => {
-                                        console.error('Error sending to Discord:', error);
-                                        webhookError.style.display = 'block';
-                                        webhookErrorMessage.textContent = error.message || 'Error sending to Discord';
-                                        this.innerHTML = '<i class="fab fa-discord"></i> Send to Discord';
-                                        this.disabled = false;
+                                        });
                                     });
-                                });
+                                } else {
+                                    console.error("Button parent node is null");
+                                }
                             } else {
                                 // Show error if no webhook found
-                                webhookError.style.display = 'block';
-                                webhookErrorMessage.textContent = data.message || 'No webhook configured';
+                                if (error) {
+                                    error.style.display = 'block';
+                                    if (errorMsg) {
+                                        errorMsg.textContent = data.message || 'No webhook configured';
+                                    }
+                                }
                             }
                         })
-                        .catch(error => {
-                            console.error('Error fetching webhook:', error);
+                        .catch(err => {
+                            console.error('Error fetching webhook:', err);
                             
                             // Hide loading and show error
-                            webhookLoading.style.display = 'none';
-                            webhookError.style.display = 'block';
-                            webhookErrorMessage.textContent = error.message || 'Error connecting to Discord';
+                            if (loading) loading.style.display = 'none';
+                            if (error) {
+                                error.style.display = 'block';
+                                if (errorMsg) {
+                                    errorMsg.textContent = err.message || 'Error connecting to Discord';
+                                }
+                            }
                         });
                 });
             }
