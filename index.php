@@ -264,28 +264,17 @@ if (file_exists('discord/discord-config.php')) {
                     ?>
                     <!-- Webhook selector container - always present but hidden by default -->
                     <div id="webhook-selector-container" style="display: none;">
-                        <?php 
-                        // Always render webhook selector even if user_webhooks is empty
-                        // The actual webhooks will be loaded via AJAX
-                        if ($discord_enabled && $discord_authenticated && function_exists('render_webhook_selector')) {
-                            if (empty($user_webhooks)) {
-                                // Create a placeholder - will be populated by AJAX
-                                echo '<div class="webhook-selector-ajax-container">';
-                                echo '<div class="send-to-discord">';
-                                echo '<div class="send-to-discord-title">Send to Discord</div>';
-                                echo '<div class="webhook-selector">';
-                                echo '<div class="webhook-loading">Loading webhooks...</div>';
-                                echo '</div>';
-                                echo '<button id="send-to-discord-btn" class="btn btn-secondary" disabled>';
-                                echo '<i class="fas fa-paper-plane"></i> Send to Discord';
-                                echo '</button>';
-                                echo '</div>';
-                                echo '</div>';
-                            } else {
-                                render_webhook_selector($user_webhooks, '');
-                            }
-                        }
-                        ?>
+                        <!-- Always include the basic structure for the webhook selector -->
+                        <div class="send-to-discord">
+                            <div class="send-to-discord-title">Send to Discord</div>
+                            <div class="webhook-selector">
+                                <!-- This div will be populated with webhook options via JavaScript -->
+                                <div class="webhook-loading">Loading webhooks...</div>
+                            </div>
+                            <button id="send-to-discord-btn" class="btn btn-secondary" disabled>
+                                <i class="fas fa-paper-plane"></i> Send to Discord
+                            </button>
+                        </div>
                     </div>
                     
                     <!-- Webhook not configured message - always present but hidden by default -->
