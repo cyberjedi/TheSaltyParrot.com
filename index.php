@@ -40,11 +40,6 @@ if (file_exists('discord/discord-config.php')) {
                         require_once 'discord/discord_service.php';
                         if (function_exists('get_user_webhooks')) {
                             $user_webhooks = get_user_webhooks($conn, $user_id);
-                            
-                            // Debug for webhook issues - log webhook count
-                            if (isset($_GET['show_discord'])) {
-                                error_log('User has ' . count($user_webhooks) . ' webhooks configured.');
-                            }
                         } else {
                             error_log('get_user_webhooks function not found');
                         }
@@ -264,18 +259,16 @@ if (file_exists('discord/discord-config.php')) {
                     <?php endif; ?>
                     
                     <?php
-                    // Determine which Discord panel to show by default
-                    $show_webhook_panel = isset($_GET['show_discord']) ? true : false;
                     if ($discord_enabled && $discord_authenticated && function_exists('render_webhook_selector') && !empty($user_webhooks)): ?>
-                        <div id="webhook-selector-container" style="display: <?php echo $show_webhook_panel ? 'block' : 'none'; ?>;">
+                        <div id="webhook-selector-container" style="display: none;">
                             <?php render_webhook_selector($user_webhooks, ''); ?>
                         </div>
                     <?php elseif ($discord_enabled && $discord_authenticated): ?>
-                        <div id="webhook-not-configured" style="display: <?php echo $show_webhook_panel ? 'block' : 'none'; ?>; margin-top: 20px; text-align: center; padding: 15px; background: rgba(255,100,100,0.1); border: 1px solid #d66;">
+                        <div id="webhook-not-configured" style="display: none; margin-top: 20px; text-align: center; padding: 15px; background: rgba(255,100,100,0.1); border: 1px solid #d66;">
                             <p>You need to set up a Discord webhook to send content. <a href="discord/webhooks.php" style="color: #7289DA;">Configure webhooks</a></p>
                         </div>
                     <?php else: ?>
-                        <div id="discord-not-connected" style="display: <?php echo $show_webhook_panel ? 'block' : 'none'; ?>; margin-top: 20px; text-align: center; padding: 15px; background: rgba(255,100,100,0.1); border: 1px solid #d66;">
+                        <div id="discord-not-connected" style="display: none; margin-top: 20px; text-align: center; padding: 15px; background: rgba(255,100,100,0.1); border: 1px solid #d66;">
                             <p>You need to connect your Discord account to send content to Discord.</p>
                         </div>
                     <?php endif; ?>
@@ -398,8 +391,72 @@ if (file_exists('discord/discord-config.php')) {
                     console.log("Webhook not configured:", webhookNotConfigured);
                     console.log("Discord not connected:", discordNotConnected);
                     
-                    // Force the page to load fresh webhook data to avoid stale state
-                    window.location.href = 'index.php?show_discord=1';
+                    // Get base URL from window location
+                    const baseUrl = window.location.href.split('index.php')[0] || './';
+                    const webhookUrl = baseUrl + 'discord/webhooks.php?action=get_default_webhook&format=json';
+                    
+                    // Show loading state
+                    sendDiscordBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+                    sendDiscordBtn.disabled = true;
+                    
+                    // Fetch default webhook from the server
+                    console.log('Fetching default webhook from:', webhookUrl);
+                    
+                    fetch(webhookUrl)
+                        .then(response => {
+                            console.log('Webhook response status:', response.status);
+                            if (!response.ok) {
+                                throw new Error(`Server error: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log('Webhook response data:', data);
+                            
+                            if (data.status === 'success' && data.webhook) {
+                                // User has a webhook, show the selector
+                                if (webhookSelectorContainer) {
+                                    webhookSelectorContainer.style.display = 'block';
+                                    if (webhookNotConfigured) webhookNotConfigured.style.display = 'none';
+                                    if (discordNotConnected) discordNotConnected.style.display = 'none';
+                                    
+                                    // Pre-select this webhook
+                                    const webhookOptions = document.querySelectorAll('.webhook-option');
+                                    webhookOptions.forEach(option => {
+                                        if (option.dataset.webhookId === data.webhook.id.toString()) {
+                                            option.click();
+                                        }
+                                    });
+                                } else {
+                                    alert('Please reload the page and try again.');
+                                }
+                            } else {
+                                // User doesn't have a webhook, show configuration message
+                                if (webhookNotConfigured) {
+                                    webhookNotConfigured.style.display = 'block';
+                                    if (webhookSelectorContainer) webhookSelectorContainer.style.display = 'none';
+                                    if (discordNotConnected) discordNotConnected.style.display = 'none';
+                                }
+                            }
+                            
+                            // Reset button
+                            sendDiscordBtn.innerHTML = '<i class="fab fa-discord"></i>';
+                            sendDiscordBtn.disabled = false;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching webhook:', error);
+                            
+                            // Show appropriate error message
+                            if (discordNotConnected) {
+                                discordNotConnected.style.display = 'block';
+                                if (webhookSelectorContainer) webhookSelectorContainer.style.display = 'none';
+                                if (webhookNotConfigured) webhookNotConfigured.style.display = 'none';
+                            }
+                            
+                            // Reset button
+                            sendDiscordBtn.innerHTML = '<i class="fab fa-discord"></i>';
+                            sendDiscordBtn.disabled = false;
+                        });
                 });
             }
             
