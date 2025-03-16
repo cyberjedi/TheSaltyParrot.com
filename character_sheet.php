@@ -65,6 +65,118 @@ require_once 'components/character_controller.php';
             // Include the character sheet view component
             include 'components/character_sheet_view.php'; 
             ?>
+ 
+        <!-- Emergency Button Fix for ensuring critical buttons work -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait for all other scripts to initialize
+    setTimeout(function() {
+        console.log('[Emergency Fix] Checking for buttons without handlers');
+        
+        // Critical buttons that must work
+        const criticalButtons = {
+            'edit-character-btn': function() {
+                const modal = document.getElementById('edit-character-modal');
+                if (modal) {
+                    document.querySelectorAll('.modal').forEach(m => {
+                        m.style.display = 'none';
+                        m.classList.remove('active');
+                    });
+                    modal.style.display = 'block';
+                    modal.classList.add('active');
+                }
+            },
+            'switch-character-btn': function() {
+                const modal = document.getElementById('character-switcher-modal');
+                if (modal) {
+                    document.querySelectorAll('.modal').forEach(m => {
+                        m.style.display = 'none';
+                        m.classList.remove('active');
+                    });
+                    modal.style.display = 'block';
+                    modal.classList.add('active');
+                }
+            },
+            'print-character-btn': function() {
+                window.print();
+            },
+            'new-character-btn': function() {
+                const form = document.getElementById('edit-character-form');
+                if (form) form.reset();
+                
+                const idField = document.querySelector('input[name="character_id"]');
+                if (idField) idField.value = '';
+                
+                document.getElementById('name').value = 'New Pirate';
+                document.getElementById('strength').value = '0';
+                document.getElementById('agility').value = '0';
+                document.getElementById('presence').value = '0';
+                document.getElementById('toughness').value = '0';
+                document.getElementById('spirit').value = '0';
+                
+                const imagePreview = document.getElementById('image-preview');
+                if (imagePreview) {
+                    imagePreview.src = 'assets/TSP_default_character.jpg';
+                }
+                
+                const modal = document.getElementById('edit-character-modal');
+                if (modal) {
+                    document.querySelectorAll('.modal').forEach(m => {
+                        m.style.display = 'none';
+                        m.classList.remove('active');
+                    });
+                    modal.style.display = 'block';
+                    modal.classList.add('active');
+                }
+            }
+        };
+        
+        // Check each critical button
+        for (const [id, handler] of Object.entries(criticalButtons)) {
+            const button = document.getElementById(id);
+            if (!button) {
+                console.warn(`[Emergency Fix] Button #${id} not found`);
+                continue;
+            }
+            
+            // Apply "nuclear option" - clone and replace with working button
+            const clone = button.cloneNode(true);
+            button.parentNode.replaceChild(clone, button);
+            
+            // Add event listener to the cloned button
+            clone.addEventListener('click', handler);
+            console.log(`[Emergency Fix] Repaired button #${id}`);
+        }
+        
+        // Ensure all close buttons work
+        document.querySelectorAll('.close-modal, .close-modal-btn').forEach(closeBtn => {
+            const clone = closeBtn.cloneNode(true);
+            closeBtn.parentNode.replaceChild(clone, closeBtn);
+            
+            clone.addEventListener('click', function() {
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.style.display = 'none';
+                    modal.classList.remove('active');
+                });
+            });
+        });
+        
+        // Ensure modal background clicks work
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(event) {
+                if (event.target === this) {
+                    this.style.display = 'none';
+                    this.classList.remove('active');
+                }
+            });
+        });
+        
+        console.log('[Emergency Fix] All critical buttons checked and fixed');
+    }, 1500); // Wait 1.5 seconds to ensure all other scripts have had time to run
+});
+</script>
+        
+        
         </main>
     </div>
     
