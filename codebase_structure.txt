@@ -1,0 +1,120 @@
+# The Salty Parrot - Codebase Structure
+
+This document provides an overview of the codebase structure, explaining the purpose of each file and directory in the project.
+
+## Main Files
+
+- **index.php** - Main entry point for the application
+- **character_sheet.php** - Primary character sheet functionality page
+- **CLAUDE.md** - Project documentation and notes
+- **README.md** - Project overview and information
+- **.cpanel.yml** - cPanel deployment configuration
+- **.htaccess** - Apache server configuration
+
+## Core Files by Type
+
+### Core PHP Pages
+
+- **character_sheet.php** - Main character sheet page that imports components
+- **standalone_character_sheet.php** - Self-contained version of character sheet without dependencies
+
+### Core Components
+
+- **components/character_controller.php** - Handles character data and logic
+- **components/character_sheet.php** - Character sheet component with database operations
+- **components/character_sheet_inventory.php** - Character inventory display and management
+- **components/character_sheet_view.php** - Character sheet UI rendering
+- **components/discord_webhook_modal.php** - Modal dialog for Discord webhook integration
+- **components/print_helper.php** - Helper functions for print-friendly versions
+- **components/sidebar.php** - Main navigation sidebar component
+
+### JavaScript Files
+
+- **js/character_sheet.js** - Main JS for character sheet functionality
+- **js/discord_integration.js** - Handles Discord webhook integration for character sheet
+- **js/inventory.js** - Character inventory system JS
+- **js/inventory_containers.js** - Container management for inventory system
+
+### CSS Files
+
+- **css/styles.css** - Main application styles
+- **css/character_sheet.css** - Character sheet-specific styles
+- **css/dashboard.css** - Dashboard layout styles
+- **css/discord.css** - Discord integration styles
+- **css/discord_components.css** - Styles for Discord UI components
+- **css/inventory.css** - Inventory system styles
+- **css/sidebar.css** - Navigation sidebar styles
+- **css/webhooks.css** - Discord webhook UI styles
+
+### Configuration
+
+- **config/db_connect.php** - Database connection configuration
+
+### Assets
+
+- **assets/TSP_Logo_3inch.svg** - The Salty Parrot logo
+- **assets/TSP_default_character.jpg** - Default character image
+
+## API Endpoints
+
+- **api/add_inventory_item.php** - Adds items to character inventory
+- **api/generate_loot.php** - Generates random loot items
+- **api/generate_ship.php** - Generates random ship encounters
+- **api/get_available_items.php** - Retrieves available items for inventory
+- **api/get_container_contents.php** - Gets items in a container
+- **api/get_item_details.php** - Retrieves detailed item information
+- **api/remove_inventory_item.php** - Removes items from inventory
+- **api/send_webhook.php** - Sends data to Discord webhooks
+- **api/update_container.php** - Updates container properties
+- **api/update_item_quantity.php** - Updates item quantities in inventory
+
+## Discord Integration
+
+- **discord/discord-config.php** - Discord API configuration
+- **discord/discord-login.php** - Discord OAuth login
+- **discord/discord-logout.php** - Discord session logout
+- **discord/discord-callback.php** - OAuth callback handler
+- **discord/discord-direct-popup.php** - Popup for direct Discord authentication
+- **discord/discord_login_button.php** - Reusable Discord login button
+- **discord/discord_service.php** - Core Discord service functions
+- **discord/get_channels.php** - Retrieves Discord channels
+- **discord/reauth.php** - Re-authentication for expired tokens
+- **discord/send_to_webhook.php** - Sends messages to Discord webhooks
+- **discord/webhook_service.php** - Service for managing webhooks
+- **discord/webhooks.php** - Webhook management page
+- **discord/test_webhook.php** - Tests webhook functionality
+
+## Test Files (Consider for Removal)
+
+These files were created during development for testing and may be candidates for removal:
+
+1. **test.php** - General test file
+2. **test_config.php** - Configuration testing
+3. **test_characters.php** - Character system tests
+4. **test_switcher.php** - Character switcher testing
+5. **discord_api_test.php** - Discord API testing
+6. **discord_test.php** - Discord integration tests
+7. **discord_token_test.php** - Token handling tests
+8. **discord_direct_auth.php** - Direct authentication testing
+9. **fix_discord_auth.php** - Auth fix testing
+10. **webhook-fix.php** - Webhook fix testing
+11. **db_diagnostic.php** - Database connection diagnostics
+12. **character_diagnostics.php** - Character system diagnostics
+13. **fixed_character_sheet.php** - Temporary fixed version of character sheet
+14. **examples/discord_webhook_example.php** - Example webhook implementation
+
+## Deployment Information
+
+- **deploy_info.txt** - Information related to deployment
+
+## Structure Overview
+
+The codebase follows a component-based architecture:
+- Main pages serve as entry points
+- Components handle specific UI elements and functionality
+- JavaScript provides client-side interactivity
+- CSS styles maintain consistent design
+- API endpoints provide data services
+- Discord integration connects with Discord for social features
+
+The character sheet system is the primary feature, with Discord integration to enable sharing character information with gaming groups.
