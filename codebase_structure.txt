@@ -82,26 +82,11 @@ This document provides an overview of the codebase structure, explaining the pur
 - **discord/send_to_webhook.php** - Sends messages to Discord webhooks
 - **discord/webhook_service.php** - Service for managing webhooks
 - **discord/webhooks.php** - Webhook management page
-- **discord/test_webhook.php** - Tests webhook functionality
+- **discord/test_webhook.php** - Utility to test Discord webhook functionality
 
-## Test Files (Consider for Removal)
+## Testing
 
-These files were created during development for testing and may be candidates for removal:
-
-1. **test.php** - General test file
-2. **test_config.php** - Configuration testing
-3. **test_characters.php** - Character system tests
-4. **test_switcher.php** - Character switcher testing
-5. **discord_api_test.php** - Discord API testing
-6. **discord_test.php** - Discord integration tests
-7. **discord_token_test.php** - Token handling tests
-8. **discord_direct_auth.php** - Direct authentication testing
-9. **fix_discord_auth.php** - Auth fix testing
-10. **webhook-fix.php** - Webhook fix testing
-11. **db_diagnostic.php** - Database connection diagnostics
-12. **character_diagnostics.php** - Character system diagnostics
-13. **fixed_character_sheet.php** - Temporary fixed version of character sheet
-14. **examples/discord_webhook_example.php** - Example webhook implementation
+Testing can be added as needed during development. All previous test files have been removed to clean up the codebase and reduce clutter. Any new test files should be created in a dedicated `/tests` directory for better organization.
 
 ## Deployment Information
 
