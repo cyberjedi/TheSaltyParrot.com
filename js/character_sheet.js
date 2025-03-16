@@ -375,15 +375,26 @@ function attachEventHandlers(elements) {
             totalValue: totalValue
         };
         
-        // Update the roll data for Discord webhook if available
+        // Emit a custom event for dice rolls that other modules (like Discord) can listen for
+        const rollEventData = {
+            characterName: characterData.name,
+            attributeName: formattedAttributeName,
+            attributeValue: attributeValue,
+            diceValue: diceValue,
+            totalValue: totalValue
+        };
+        
+        // Dispatch event for other modules to listen for
+        const rollEvent = new CustomEvent('characterDiceRoll', {
+            detail: rollEventData,
+            bubbles: true
+        });
+        document.dispatchEvent(rollEvent);
+        csDebug('Dispatched characterDiceRoll event');
+        
+        // Legacy support
         if (window.updateCurrentRoll) {
-            window.updateCurrentRoll({
-                characterName: characterData.name,
-                attributeName: formattedAttributeName,
-                attributeValue: attributeValue,
-                diceValue: diceValue,
-                totalValue: totalValue
-            });
+            window.updateCurrentRoll(rollEventData);
         }
         
         csDebug(`Generated roll: ${JSON.stringify(currentRoll)}`);
