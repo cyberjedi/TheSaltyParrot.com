@@ -1,111 +1,256 @@
 /**
  * Discord Integration for Character Sheet
  * This file handles the Discord webhook integration specifically
+ * Version: 2.0 - Complete rewrite with better isolation and event handling
  */
 
-// Create a namespace for Discord integration
-window.DiscordIntegration = {
-    // Track initialization status
-    initialized: false,
+// Create a properly isolated namespace for Discord integration
+(function() {
+    'use strict';
     
-    // Initialize the Discord integration
-    init: function() {
-        if (this.initialized) {
-            console.log('Discord integration already initialized, skipping');
-            return;
+    // Private variables - not accessible from outside this module
+    let _initialized = false;
+    let _debugMode = false; // Set to true to enable verbose logging
+    let _currentRollData = null;
+    
+    // Private logging function that respects debug mode
+    function _log(message, type = 'log') {
+        if (_debugMode || type === 'error' || type === 'warn') {
+            console[type](`[Discord Integration] ${message}`);
         }
-        
-        console.log('Discord integration initializing');
-        this.setupEventHandlers();
-        this.initialized = true;
-    },
+    }
     
-    // Set up event handlers for Discord integration
-    setupEventHandlers: function() {
-        // CRITICAL FIX: Only attach to specific Discord buttons, not the entire document
-        // This avoids interfering with all other buttons on the page
+    // The main Discord Integration object - exposed to window
+    const DiscordIntegration = {
+        // Public configuration options
+        config: {
+            rollButtonId: 'send-roll-discord-btn',
+            webhookButtonId: 'open-discord-modal',
+            diceRollModalId: 'dice-roll-modal',
+            attributeRollContentId: 'attribute-roll-content',
+            safetyDelay: 50, // Milliseconds to wait between operations
+        },
         
-        // Find the specific Discord send button
-        const sendToDiscordBtn = document.getElementById('send-roll-discord-btn');
-        if (sendToDiscordBtn) {
-            console.log('Found Discord send button in dice roll modal');
+        // Enable debug logging
+        enableDebug: function() {
+            _debugMode = true;
+            _log('Debug mode enabled');
+            return this;
+        },
+        
+        // Disable debug logging
+        disableDebug: function() {
+            _log('Debug mode disabled');
+            _debugMode = false;
+            return this;
+        },
+        
+        // Check if a Discord button exists
+        hasDiscordButtons: function() {
+            const sendButton = document.getElementById(this.config.rollButtonId);
+            return !!sendButton;
+        },
+        
+        // Initialize the Discord integration
+        init: function() {
+            if (_initialized) {
+                _log('Already initialized, skipping initialization');
+                return this;
+            }
             
-            // Attach handler directly to only this specific button
-            sendToDiscordBtn.addEventListener('click', function(event) {
-                console.log('Discord send button clicked directly');
+            _log('Initializing Discord integration');
+            
+            // Check if the page has Discord authentication
+            if (typeof window.discord_authenticated === 'undefined') {
+                _log('Discord authentication status not found in window object', 'warn');
+            } else if (!window.discord_authenticated) {
+                _log('Discord is not authenticated, some features may be disabled');
+            }
+            
+            // Set up the event handlers for Discord integration
+            this.setupEventHandlers();
+            
+            // Set initialization flag
+            _initialized = true;
+            _log('Discord integration initialized successfully');
+            
+            return this;
+        },
+        
+        // Reset the integration (useful for testing)
+        reset: function() {
+            _log('Resetting Discord integration');
+            _initialized = false;
+            return this;
+        },
+        
+        // Set up event handlers safely
+        setupEventHandlers: function() {
+            _log('Setting up event handlers');
+            
+            // Look for Send to Discord button in the dice roll modal
+            const sendButton = document.getElementById(this.config.rollButtonId);
+            
+            if (sendButton) {
+                _log(`Found Discord send button (#${this.config.rollButtonId})`);
                 
-                // Don't call preventDefault() on the entire document!
-                // Only stop propagation for this specific event
-                event.stopPropagation();
+                // Store a reference to the current instance for use in event handlers
+                const self = this;
                 
-                // Close the dice roll modal
-                const diceRollModal = document.getElementById('dice-roll-modal');
-                if (diceRollModal) {
-                    diceRollModal.style.display = 'none';
-                }
+                // Remove any existing event listeners by cloning the button
+                // This prevents duplicate handler issues if init() is called multiple times
+                const newSendButton = sendButton.cloneNode(true);
+                sendButton.parentNode.replaceChild(newSendButton, sendButton);
                 
-                // Use a timeout to ensure clean event handling
-                setTimeout(function() {
-                    // Get the Discord webhook modal button and click it
-                    const webhookModalBtn = document.getElementById('open-discord-modal');
-                    if (webhookModalBtn) {
-                        console.log('Triggering webhook modal');
-                        webhookModalBtn.click();
-                    } else {
-                        console.error('Discord webhook modal button not found');
-                        alert('Discord webhook not properly configured. Please refresh the page and try again.');
+                // Add new event listener
+                newSendButton.addEventListener('click', function(event) {
+                    _log('Discord send button clicked');
+                    
+                    // Only stop propagation - don't prevent default
+                    // This allows the event to be processed normally
+                    event.stopPropagation();
+                    
+                    // Handle the send to Discord action with proper isolation
+                    self.handleSendToDiscord();
+                });
+                
+                _log('Successfully attached event handler to Discord send button');
+            } else {
+                _log('Discord send button not found in DOM', 'warn');
+                
+                // Set up a one-time check for late-loaded elements
+                // This could happen with dynamic content loading
+                setTimeout(() => {
+                    if (!_initialized || !this.hasDiscordButtons()) {
+                        _log('Checking again for late-loaded Discord buttons');
+                        if (document.getElementById(this.config.rollButtonId)) {
+                            _log('Found late-loaded Discord button');
+                            this.setupEventHandlers();
+                        } else {
+                            _log('Discord buttons still not found after delay', 'warn');
+                        }
                     }
-                }, 50);
-            });
-        } else {
-            console.warn('Discord send button not found in dice roll modal during init');
+                }, 1500); // Longer timeout for late loading
+            }
             
-            // Only if the button isn't found yet, set up a one-time check for it
-            // This is safer than a permanent document-level handler
+            return this;
+        },
+        
+        // Handle sending to Discord 
+        handleSendToDiscord: function() {
+            _log('Handling send to Discord action');
+            
+            // First, safely close the dice roll modal
+            this.closeDiceRollModal();
+            
+            // Then, after a small delay, open the webhook modal
+            const self = this;
             setTimeout(function() {
-                const lateLoadedBtn = document.getElementById('send-roll-discord-btn');
-                if (lateLoadedBtn) {
-                    console.log('Found late-loaded Discord send button');
-                    window.DiscordIntegration.setupEventHandlers();
-                }
-            }, 1000);
+                self.openWebhookModal();
+            }, this.config.safetyDelay);
+            
+            return this;
+        },
+        
+        // Safely close the dice roll modal
+        closeDiceRollModal: function() {
+            const diceRollModal = document.getElementById(this.config.diceRollModalId);
+            if (diceRollModal) {
+                _log('Closing dice roll modal');
+                diceRollModal.style.display = 'none';
+                
+                // If modal uses active class for z-index, remove it
+                diceRollModal.classList.remove('active');
+            } else {
+                _log('Dice roll modal not found, nothing to close', 'warn');
+            }
+            
+            return this;
+        },
+        
+        // Safely open the webhook modal
+        openWebhookModal: function() {
+            const webhookButton = document.getElementById(this.config.webhookButtonId);
+            if (webhookButton) {
+                _log('Opening webhook modal by clicking webhook button');
+                webhookButton.click();
+            } else {
+                _log('Webhook modal button not found', 'error');
+                console.error('Discord webhook modal button not found');
+                alert('Discord webhook not properly configured. Please refresh the page and try again.');
+            }
+            
+            return this;
+        },
+        
+        // Update current roll data for Discord
+        updateRollData: function(rollData) {
+            if (!rollData || typeof rollData !== 'object') {
+                _log('Invalid roll data provided', 'error');
+                return this;
+            }
+            
+            _log('Updating roll data for Discord', 'log');
+            _currentRollData = rollData;
+            
+            // Format the HTML content for the Discord webhook
+            const rollContent = this.formatRollContent(rollData);
+            
+            // Update the attribute roll content element if it exists
+            const contentElement = document.getElementById(this.config.attributeRollContentId);
+            if (contentElement) {
+                contentElement.innerHTML = rollContent;
+                _log('Updated attribute roll content for Discord webhook');
+            } else {
+                _log(`Attribute roll content element (#${this.config.attributeRollContentId}) not found`, 'warn');
+            }
+            
+            return this;
+        },
+        
+        // Format roll content as HTML
+        formatRollContent: function(rollData) {
+            return `
+                <div class="attribute-roll">
+                    <h3>${rollData.characterName} - ${rollData.attributeName} Check</h3>
+                    <div class="roll-details">
+                        <p>Dice Roll: ${rollData.diceValue}</p>
+                        <p>${rollData.attributeName} Bonus: ${rollData.attributeValue}</p>
+                        <p>Total: ${rollData.totalValue}</p>
+                    </div>
+                </div>
+            `;
+        },
+        
+        // Get current roll data
+        getRollData: function() {
+            return _currentRollData;
         }
-    }
-};
-
-// Initialize Discord integration when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    // Wait a bit to ensure all other scripts have run
-    setTimeout(function() {
-        window.DiscordIntegration.init();
-    }, 100);
-});
-
-// Global function to update roll data for Discord
-window.updateCurrentRoll = function(rollData) {
-    console.log('Updating current roll data for Discord:', rollData);
+    };
     
-    // Store the roll data globally
-    window.currentRollData = rollData;
+    // Expose the Discord Integration object to the window
+    window.DiscordIntegration = DiscordIntegration;
     
-    // Format the content for Discord
-    const rollContent = `
-        <div class="attribute-roll">
-            <h3>${rollData.characterName} - ${rollData.attributeName} Check</h3>
-            <div class="roll-details">
-                <p>Dice Roll: ${rollData.diceValue}</p>
-                <p>${rollData.attributeName} Bonus: ${rollData.attributeValue}</p>
-                <p>Total: ${rollData.totalValue}</p>
-            </div>
-        </div>
-    `;
+    // Set up backward compatibility for existing code
+    window.updateCurrentRoll = function(rollData) {
+        console.log('Legacy updateCurrentRoll called - using new API');
+        window.DiscordIntegration.updateRollData(rollData);
+    };
     
-    // Update the attribute roll content element
-    const contentElement = document.getElementById('attribute-roll-content');
-    if (contentElement) {
-        contentElement.innerHTML = rollContent;
-        console.log('Updated attribute roll content for Discord');
-    } else {
-        console.warn('attribute-roll-content element not found');
-    }
-};
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Wait for a short delay to ensure character sheet JS has initialized
+        setTimeout(function() {
+            // Initialize Discord integration
+            DiscordIntegration.init();
+            
+            // Check after a short delay if Discord buttons have loaded
+            setTimeout(function() {
+                if (!DiscordIntegration.hasDiscordButtons()) {
+                    console.log('Discord buttons not found after DOM ready, rechecking...');
+                    DiscordIntegration.setupEventHandlers();
+                }
+            }, 800);
+        }, 200);
+    });
+})();
