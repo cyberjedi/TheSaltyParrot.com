@@ -7,10 +7,35 @@
 (function() {
     'use strict';
     
-    // Simple console logger
-    function log(message) {
-        console.log(`[Discord Simple] ${message}`);
+    // Simple console logger with improved visibility
+    function log(message, type = 'log') {
+        const prefix = '🎮 [Discord]';
+        
+        switch(type) {
+            case 'error':
+                console.error(`${prefix} ❌ ${message}`);
+                break;
+            case 'warn':
+                console.warn(`${prefix} ⚠️ ${message}`);
+                break;
+            case 'info':
+                console.info(`${prefix} ℹ️ ${message}`);
+                break;
+            default:
+                console.log(`${prefix} ${message}`);
+        }
     }
+    
+    // For debugging DOM events
+    const traceEvent = function(event) {
+        console.group('🎮 Discord Event Traced');
+        console.log('Event type:', event.type);
+        console.log('Target:', event.target);
+        console.log('Current target:', event.currentTarget);
+        console.log('Event phase:', event.eventPhase);
+        console.log('Default prevented:', event.defaultPrevented);
+        console.groupEnd();
+    };
     
     // Wait for DOM to be ready
     document.addEventListener('DOMContentLoaded', function() {
@@ -31,42 +56,82 @@
         
         // Set up the Discord button handler ONLY if it exists
         if (discordButton) {
-            log('Found Discord button, setting up handler');
+            log('Found Discord button, setting up handler', 'info');
+            console.log('Discord button details:', discordButton);
             
-            // Simple click handler - no complex event manipulation
-            discordButton.addEventListener('click', function() {
+            // Apply a data attribute to mark this as processed by Discord
+            if (discordButton.hasAttribute('data-discord-handler')) {
+                log('Discord button already has handler, removing it first', 'warn');
+                // Create a clean clone to remove existing handlers
+                const clone = discordButton.cloneNode(true);
+                discordButton.parentNode.replaceChild(clone, discordButton);
+                discordButton = clone;
+            }
+            
+            // Mark this button as having our handler
+            discordButton.setAttribute('data-discord-handler', 'true');
+            
+            // Simple click handler with extensive tracing
+            discordButton.addEventListener('click', function(event) {
+                console.group('🎮 DISCORD BUTTON CLICKED');
+                console.log('Button:', this);
+                console.log('Event:', event);
+                traceEvent(event);
+                
                 // Skip if no roll data
                 if (!currentRollData) {
-                    log('No roll data available');
+                    log('No roll data available', 'warn');
+                    console.groupEnd();
                     return;
                 }
                 
-                // Close dice roll modal
-                const diceRollModal = document.getElementById('dice-roll-modal');
-                if (diceRollModal) {
-                    diceRollModal.style.display = 'none';
+                log('Processing Discord button click');
+                
+                try {
+                    // Close dice roll modal
+                    const diceRollModal = document.getElementById('dice-roll-modal');
+                    if (diceRollModal) {
+                        console.log('Closing dice roll modal');
+                        diceRollModal.style.display = 'none';
+                    } else {
+                        console.warn('Dice roll modal not found, nothing to close');
+                    }
+                    
+                    // Prepare Discord webhook content
+                    const content = formatRollForDiscord(currentRollData);
+                    console.log('Formatted content for Discord:', content);
+                    
+                    // Update the content in the Discord modal
+                    const contentElement = document.getElementById('attribute-roll-content');
+                    if (contentElement) {
+                        contentElement.innerHTML = content;
+                        console.log('Updated attribute roll content element');
+                    } else {
+                        console.warn('Attribute roll content element not found');
+                    }
+                    
+                    // Open Discord webhook modal
+                    const webhookButton = document.getElementById('open-discord-modal');
+                    if (webhookButton) {
+                        console.log('Found webhook button, clicking it:', webhookButton);
+                        webhookButton.click();
+                        console.log('Webhook button clicked');
+                    } else {
+                        log('Discord webhook button not found', 'error');
+                        alert('Discord webhook not properly configured');
+                    }
+                    
+                    log('Discord button handler completed successfully', 'info');
+                } catch (error) {
+                    console.error('Error in Discord button handler:', error);
                 }
                 
-                // Prepare Discord webhook content
-                const content = formatRollForDiscord(currentRollData);
-                
-                // Update the content in the Discord modal
-                const contentElement = document.getElementById('attribute-roll-content');
-                if (contentElement) {
-                    contentElement.innerHTML = content;
-                }
-                
-                // Open Discord webhook modal
-                const webhookButton = document.getElementById('open-discord-modal');
-                if (webhookButton) {
-                    webhookButton.click();
-                } else {
-                    log('Discord webhook button not found');
-                    alert('Discord webhook not properly configured');
-                }
+                console.groupEnd();
             });
+            
+            log('Discord button handler attached successfully', 'info');
         } else {
-            log('Discord button not found in page');
+            log('Discord button not found in page', 'warn');
         }
     });
     

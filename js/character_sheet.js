@@ -4,7 +4,7 @@
  * Version: 2.0 - Improved with robust event handling and debug logging
  */
 
-// Create a global debug flag
+// Create a global debug flag - set to true for verbose logging
 window.CS_DEBUG = true;
 
 // Add a custom debug logger for character sheet
@@ -12,6 +12,24 @@ function csDebug(message, type = 'log') {
     if (window.CS_DEBUG || type === 'error' || type === 'warn') {
         console[type](`[Character Sheet] ${message}`);
     }
+}
+
+// Add extra tracing for click events throughout the page
+if (window.CS_DEBUG) {
+    // This will help us see ALL clicks and which elements they're targeting
+    document.addEventListener('click', function(event) {
+        console.log('========== CLICK EVENT DETECTED ==========');
+        console.log('Click target:', event.target);
+        console.log('Click target ID:', event.target.id);
+        console.log('Click target tag:', event.target.tagName);
+        console.log('Click target classes:', event.target.className);
+        console.log('Click event was cancelled:', event.defaultPrevented);
+        console.log('Click event phase:', 
+            event.eventPhase === 1 ? 'CAPTURING' : 
+            event.eventPhase === 2 ? 'AT_TARGET' : 
+            event.eventPhase === 3 ? 'BUBBLING' : 'UNKNOWN');
+        console.log('=========================================');
+    }, true); // Capture phase to detect even if event is stopped in bubbling
 }
 
 // Track script loads to detect duplicates
@@ -511,17 +529,36 @@ function attachSafeClickHandler(element, handler) {
         element.id = 'cs-elem-' + Math.random().toString(36).substr(2, 9);
     }
     
+    // Log the element we're attaching to
+    console.log(`🔍 ATTACHING HANDLER TO: ${element.id}`, element);
+    
     // Check if we already attached a handler to this element
     if (element.getAttribute('data-has-handler') === 'true') {
-        csDebug(`Element ${element.id || 'unknown'} already has a handler, removing first`);
+        console.warn(`⚠️ Element ${element.id} already has a handler, removing first`);
         // Create a clean clone to remove all event listeners
         const clone = element.cloneNode(true);
         element.parentNode.replaceChild(clone, element);
         element = clone; // Update reference to the new element
     }
     
-    // Attach the new handler
-    element.addEventListener('click', handler);
+    // Create a wrapper handler that logs before and after execution
+    const tracingHandler = function(event) {
+        console.log(`🎯 CLICK DETECTED on #${element.id}`);
+        
+        try {
+            // Call the original handler with proper "this" context
+            const result = handler.call(this, event);
+            console.log(`✅ Handler for #${element.id} completed successfully`);
+            return result;
+        } catch (error) {
+            console.error(`❌ ERROR in handler for #${element.id}:`, error);
+            throw error; // Re-throw so it's visible in console
+        }
+    };
+    
+    // Attach the tracing handler instead of the original
+    element.addEventListener('click', tracingHandler);
+    console.log(`✅ Attached traced handler to #${element.id}`);
     
     // Mark this element as having a handler
     element.setAttribute('data-has-handler', 'true');
@@ -545,3 +582,70 @@ if (window.CS_DEBUG) {
         }
     }, 5000);
 }
+
+// Debug function to check for script conflicts
+function debugCheckScriptConflicts() {
+    console.group('🔍 CHECKING FOR SCRIPT CONFLICTS');
+    
+    // Check for common script conflicts
+    console.log('GLOBAL EVENT HANDLERS:');
+    
+    // Check critical buttons
+    const criticalButtons = [
+        'edit-character-btn',
+        'switch-character-btn',
+        'print-character-btn',
+        'new-character-btn',
+        'send-roll-discord-btn'
+    ];
+    
+    criticalButtons.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            console.log(`Button #${btnId} exists and is visible:`, btn.offsetParent !== null);
+            console.log(`Button #${btnId} has data-has-handler:`, btn.getAttribute('data-has-handler'));
+            
+            // Check for any click handlers by cloning and seeing if events still work
+            const clone = btn.cloneNode(true);
+            const originalParent = btn.parentNode;
+            if (originalParent) {
+                // Replace with clone temporarily
+                originalParent.replaceChild(clone, btn);
+                console.log(`Tested #${btnId} by cloning - if handlers were lost, button may have inline script handlers`);
+                // Put back the original
+                originalParent.replaceChild(btn, clone);
+            }
+        } else {
+            console.warn(`⚠️ Button #${btnId} not found in DOM!`);
+        }
+    });
+    
+    // Check for any elements with inline onclick attributes
+    const elementsWithInlineHandlers = document.querySelectorAll('[onclick]');
+    if (elementsWithInlineHandlers.length > 0) {
+        console.warn(`⚠️ Found ${elementsWithInlineHandlers.length} elements with inline onclick handlers!`);
+        elementsWithInlineHandlers.forEach(el => {
+            console.log(`Element with inline onclick:`, el);
+        });
+    }
+    
+    // Check if any custom click events are blocked
+    const testButton = document.createElement('button');
+    testButton.id = 'test-event-propagation-btn';
+    testButton.style.display = 'none';
+    document.body.appendChild(testButton);
+    
+    let testEventWorked = false;
+    testButton.addEventListener('click', function() {
+        testEventWorked = true;
+    });
+    
+    testButton.click();
+    console.log(`Test click event propagation works: ${testEventWorked}`);
+    document.body.removeChild(testButton);
+    
+    console.groupEnd();
+}
+
+// Run the script conflict check after a delay to let everything initialize
+setTimeout(debugCheckScriptConflicts, 1000);
