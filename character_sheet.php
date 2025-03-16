@@ -119,5 +119,159 @@ require_once 'components/character_controller.php';
         });
     });
     </script>
+
+// Auth Transition Fix - addresses issues during authentication transitions
+(function() {
+    'use strict';
+    
+    // Check if this is a post-authentication page load
+    const isPostAuth = document.referrer.includes('discord-callback.php') || 
+                       localStorage.getItem('discord_auth_transition') === 'true';
+    
+    if (isPostAuth) {
+        console.log('[Auth Fix] Detected post-authentication page load');
+        // Clear the flag if it was set
+        localStorage.removeItem('discord_auth_transition');
+        
+        // Wait for DOM to be fully loaded and all other scripts to initialize
+        setTimeout(function() {
+            console.log('[Auth Fix] Applying post-auth fixes');
+            
+            // Check for critical buttons and ensure they have handlers
+            const criticalButtons = [
+                'edit-character-btn', 
+                'switch-character-btn', 
+                'print-character-btn',
+                'new-character-btn'
+            ];
+            
+            criticalButtons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (!btn) return;
+                
+                // Check if the button has event listeners by testing for our marker attribute
+                if (!btn.getAttribute('data-has-handler')) {
+                    console.log(`[Auth Fix] Re-attaching handler to ${btnId}`);
+                    
+                    // Re-attach appropriate handler based on button ID
+                    if (btnId === 'edit-character-btn') {
+                        btn.addEventListener('click', function() {
+                            const editModal = document.getElementById('edit-character-modal');
+                            if (editModal) {
+                                // Close all other modals first
+                                document.querySelectorAll('.modal').forEach(m => {
+                                    m.style.display = 'none';
+                                    m.classList.remove('active');
+                                });
+                                
+                                editModal.style.display = 'block';
+                                editModal.classList.add('active');
+                            }
+                        });
+                    } else if (btnId === 'switch-character-btn') {
+                        btn.addEventListener('click', function() {
+                            const switcherModal = document.getElementById('character-switcher-modal');
+                            if (switcherModal) {
+                                // Close all other modals first
+                                document.querySelectorAll('.modal').forEach(m => {
+                                    m.style.display = 'none';
+                                    m.classList.remove('active');
+                                });
+                                
+                                switcherModal.style.display = 'block';
+                                switcherModal.classList.add('active');
+                            }
+                        });
+                    } else if (btnId === 'print-character-btn') {
+                        btn.addEventListener('click', function() {
+                            window.print();
+                        });
+                    } else if (btnId === 'new-character-btn') {
+                        btn.addEventListener('click', function() {
+                            // Reset the form for a new character
+                            const form = document.getElementById('edit-character-form');
+                            if (form) {
+                                form.reset();
+                                const idField = document.querySelector('input[name="character_id"]');
+                                if (idField) idField.value = '';
+                                
+                                // Set default values
+                                const nameField = document.getElementById('name');
+                                if (nameField) nameField.value = 'New Pirate';
+                                
+                                const statFields = ['strength', 'agility', 'presence', 'toughness', 'spirit'];
+                                statFields.forEach(stat => {
+                                    const field = document.getElementById(stat);
+                                    if (field) field.value = '0';
+                                });
+                                
+                                // Reset image preview to default
+                                const imagePreview = document.getElementById('image-preview');
+                                if (imagePreview) {
+                                    imagePreview.src = 'assets/TSP_default_character.jpg';
+                                }
+                            }
+                            
+                            // Show the edit modal
+                            const editModal = document.getElementById('edit-character-modal');
+                            if (editModal) {
+                                // Close all other modals first
+                                document.querySelectorAll('.modal').forEach(m => {
+                                    m.style.display = 'none';
+                                    m.classList.remove('active');
+                                });
+                                
+                                editModal.style.display = 'block';
+                                editModal.classList.add('active');
+                            }
+                        });
+                    }
+                    
+                    // Mark as having a handler now
+                    btn.setAttribute('data-has-handler', 'true');
+                }
+            });
+            
+            // Ensure all close buttons work
+            document.querySelectorAll('.close-modal, .close-modal-btn').forEach(closeBtn => {
+                if (!closeBtn.getAttribute('data-has-handler')) {
+                    closeBtn.addEventListener('click', function() {
+                        // Close all modals
+                        document.querySelectorAll('.modal').forEach(modal => {
+                            modal.style.display = 'none';
+                            modal.classList.remove('active');
+                        });
+                    });
+                    closeBtn.setAttribute('data-has-handler', 'true');
+                }
+            });
+            
+            // Reinforce modal outside-click handling
+            document.querySelectorAll('.modal').forEach(modal => {
+                if (!modal.getAttribute('data-outside-click-handler')) {
+                    modal.addEventListener('click', function(event) {
+                        if (event.target === this) {
+                            this.style.display = 'none';
+                            this.classList.remove('active');
+                        }
+                    });
+                    modal.setAttribute('data-outside-click-handler', 'true');
+                }
+            });
+            
+            console.log('[Auth Fix] Post-auth fixes applied');
+        }, 1000); // Wait 1 second to ensure other scripts have loaded
+    }
+    
+    // Set flag when navigating to Discord authentication
+    document.addEventListener('click', function(event) {
+        // Check if it's a Discord login link
+        if (event.target.closest('a[href*="discord-login.php"]')) {
+            localStorage.setItem('discord_auth_transition', 'true');
+            console.log('[Auth Fix] Discord auth transition detected, setting flag');
+        }
+    });
+})();
+
 </body>
 </html>
