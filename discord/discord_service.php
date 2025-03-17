@@ -206,6 +206,9 @@ function render_discord_user_profile() {
             require_once 'config/db_connect.php';
         }
         
+        // Make sure we have a connection
+        global $conn;
+        
         // Get the database user ID based on Discord ID
         $discord_id = $user['id'];
         $userStmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
