@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to refresh the active webhook status
     function refreshWebhookStatus() {
-        fetch('/path/to/your/api/endpoint')
+        fetch('/discord/api/refresh_webhook_status.php')
             .then(response => response.json())
             .then(data => {
                 // Update the UI with the new webhook status
