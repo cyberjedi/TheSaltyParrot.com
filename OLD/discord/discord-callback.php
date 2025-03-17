@@ -1,32 +1,19 @@
 <?php
-/**
- * Discord OAuth Callback for New UI
- * 
- * This script handles the OAuth callback from Discord for the new UI.
- * It's a complete replacement for the original callback, specifically for the new UI.
- */
+// File: discord/discord-callback.php
+// This file handles the callback from Discord OAuth with improved debugging
 
-// Start session if not started
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
+require_once 'discord-config.php';
+require_once '../config/db_connect.php';
 
-// Use our new configuration
-require_once 'discord-config_new.php';
-require_once '../config/db_connect_new.php';
-
-// Get return URL from session or default to new UI index
-$return_url = isset($_SESSION['discord_new_ui_return']) ? $_SESSION['discord_new_ui_return'] : '../index_new.php';
-
-// Clear this session variable
-unset($_SESSION['discord_new_ui_return']);
-
-// Check if this was initiated from new UI
+// Check if request came from new UI and set redirect accordingly
 $from_new_ui = isset($_SESSION['from_new_ui']) && $_SESSION['from_new_ui'] === true;
+$redirect_url = $from_new_ui ? '../index_new.php' : (isset($_SESSION['discord_auth_referrer']) ? $_SESSION['discord_auth_referrer'] : '../index.php');
+
+// Log the redirect for debugging
+error_log('Discord callback. From new UI: ' . ($from_new_ui ? 'Yes' : 'No') . '. Redirecting to: ' . $redirect_url);
 
 // Helper function to render error page
 function renderErrorPage($error_message) {
-    global $return_url;
     ?>
     <!DOCTYPE html>
     <html>
@@ -70,12 +57,13 @@ function renderErrorPage($error_message) {
             }
         </style>
         <script>
+            // Close popup after a short delay
             window.onload = function() {
                 setTimeout(function() {
                     if (window.opener && !window.opener.closed) {
                         window.close();
                     } else {
-                        window.location.href = '<?php echo $return_url; ?>';
+                        window.location.href = '../index.php';
                     }
                 }, 3000);
             };
@@ -96,8 +84,6 @@ function renderErrorPage($error_message) {
     exit;
 }
 
-// ===== Begin Discord authentication logic =====
-
 // Check for errors or authorization denial
 if (isset($_GET['error'])) {
     $_SESSION['discord_error'] = 'Authorization denied: ' . $_GET['error_description'];
@@ -110,7 +96,7 @@ if (!isset($_GET['state']) || !isset($_SESSION['discord_oauth_state']) || $_GET[
     renderErrorPage('Invalid state parameter. Please try again.');
 }
 
-// Clear the state from session
+// Clear the state and from_new_ui flag from session
 unset($_SESSION['discord_oauth_state']);
 unset($_SESSION['from_new_ui']);
 
@@ -157,7 +143,7 @@ $token_response = json_decode($response, true);
 // Check for errors in the response
 if ($http_code < 200 || $http_code >= 300) {
     error_log('Discord token error response: ' . $response);
-    $_SESSION['discord_error'] = 'Failed to exchange code for token.';
+    $_SESSION['discord_error'] = 'Failed to exchange code for token (HTTP ' . $http_code . ').';
     renderErrorPage('Failed to exchange code for token. Please try again.');
 }
 
@@ -169,13 +155,17 @@ if (!isset($token_response['access_token']) || !isset($token_response['refresh_t
     renderErrorPage('Invalid response from Discord. Please try again.');
 }
 
-// Store tokens in session
-$_SESSION['discord_access_token'] = $token_response['access_token'];
-$_SESSION['discord_refresh_token'] = $token_response['refresh_token'];
+// Store original tokens for direct debugging and database storage
+$original_access_token = $token_response['access_token'];
+$original_refresh_token = $token_response['refresh_token'];
+
+// Store tokens directly without any modification
+$_SESSION['discord_access_token'] = $original_access_token;
+$_SESSION['discord_refresh_token'] = $original_refresh_token;
 $_SESSION['discord_token_expires'] = time() + $token_response['expires_in'];
 
-// Fetch user information using new UI API request function
-$user_response = discord_api_request_new('/users/@me', 'GET', [], $_SESSION['discord_access_token']);
+// Fetch user information
+$user_response = discord_api_request('/users/@me', 'GET', [], $_SESSION['discord_access_token']);
 
 if (!isset($user_response['id'])) {
     error_log('Failed to fetch user information: ' . json_encode($user_response));
@@ -191,16 +181,10 @@ $_SESSION['discord_user'] = [
     'avatar' => $user_response['avatar']
 ];
 
-// Store the user in the database - use new DB connection
+// Store the user in the database
 try {
-    global $conn_new;
-    
-    if (!$conn_new) {
-        throw new Exception('Database connection not available');
-    }
-    
     // Check if user exists first
-    $checkStmt = $conn_new->prepare("SELECT * FROM discord_users WHERE discord_id = :discord_id");
+    $checkStmt = $conn->prepare("SELECT * FROM discord_users WHERE discord_id = :discord_id");
     $discord_id = $user_response['id'];
     $checkStmt->bindParam(':discord_id', $discord_id);
     $checkStmt->execute();
@@ -209,7 +193,7 @@ try {
     
     if ($user) {
         // Update existing user
-        $updateStmt = $conn_new->prepare("UPDATE discord_users SET 
+        $updateStmt = $conn->prepare("UPDATE discord_users SET 
             username = :username, 
             discriminator = :discriminator, 
             avatar = :avatar, 
@@ -222,8 +206,8 @@ try {
         $username = $user_response['username'];
         $discriminator = $user_response['discriminator'] ?? '';
         $avatar = $user_response['avatar'];
-        $access_token = $_SESSION['discord_access_token'];
-        $refresh_token = $_SESSION['discord_refresh_token'];
+        $access_token = $original_access_token;
+        $refresh_token = $original_refresh_token;
         $token_expires = $_SESSION['discord_token_expires'];
         
         $updateStmt->bindParam(':username', $username);
@@ -237,7 +221,7 @@ try {
         $updateStmt->execute();
     } else {
         // Create new user
-        $insertStmt = $conn_new->prepare("INSERT INTO discord_users 
+        $insertStmt = $conn->prepare("INSERT INTO discord_users 
             (discord_id, username, discriminator, avatar, access_token, refresh_token, token_expires, created_at, last_login) 
             VALUES 
             (:discord_id, :username, :discriminator, :avatar, :access_token, :refresh_token, :token_expires, NOW(), NOW())");
@@ -245,8 +229,8 @@ try {
         $username = $user_response['username'];
         $discriminator = $user_response['discriminator'] ?? '';
         $avatar = $user_response['avatar'];
-        $access_token = $_SESSION['discord_access_token'];
-        $refresh_token = $_SESSION['discord_refresh_token'];
+        $access_token = $original_access_token;
+        $refresh_token = $original_refresh_token;
         $token_expires = $_SESSION['discord_token_expires'];
         
         $insertStmt->bindParam(':discord_id', $discord_id);
@@ -261,13 +245,16 @@ try {
     }
     
     $_SESSION['discord_success'] = 'Successfully logged in with Discord!';
-} catch (Exception $e) {
+} catch (PDOException $e) {
     error_log('Discord login database error: ' . $e->getMessage());
     $_SESSION['discord_warning'] = 'Your login worked, but we had trouble saving your session.';
 }
 
-// Add a clear message about the success for new UI
+// Add a clear message about the success
 $_SESSION['discord_success'] = 'Successfully connected to Discord! You can now send content to your Discord servers.';
+
+// Log the success
+error_log('Discord auth success. User ID: ' . $_SESSION['discord_user']['id']);
 
 // Display a success page with JavaScript to close popup and reload parent
 ?>
@@ -310,17 +297,17 @@ $_SESSION['discord_success'] = 'Successfully connected to Discord! You can now s
             setTimeout(function() {
                 // If this window was opened by another window, close it and refresh parent
                 if (window.opener && !window.opener.closed) {
-                    // Try to redirect the parent window to the New UI
+                    // Try to redirect the parent window
                     try {
-                        window.opener.location.href = '<?php echo $return_url; ?>';
+                        window.opener.location.href = '<?php echo $redirect_url; ?>';
                     } catch(e) {
                         console.error("Could not redirect parent window:", e);
                     }
                     // Close this popup
                     window.close();
                 } else {
-                    // If not in a popup, redirect to the New UI
-                    window.location.href = '<?php echo $return_url; ?>';
+                    // If not in a popup, redirect to the appropriate page
+                    window.location.href = '<?php echo $redirect_url; ?>';
                 }
             }, 1500);
         };
@@ -337,3 +324,6 @@ $_SESSION['discord_success'] = 'Successfully connected to Discord! You can now s
     </div>
 </body>
 </html>
+<?php
+exit;
+?>

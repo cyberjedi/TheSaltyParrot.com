@@ -1,12 +1,9 @@
-# .htaccess
-RewriteEngine On
-
-# Redirect .html requests to .php files
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.+)\.html$ $1.php [L,R=301]
-
-# Allow requests without file extension to load PHP files
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME}\.php -f
-RewriteRule ^(.*)$ $1.php [L]
+# Special rewrite for the new UI Discord callback
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # If request is coming from new UI Discord auth, redirect to our new callback
+    RewriteCond %{QUERY_STRING} state=([^&]+) [NC]
+    RewriteCond %{HTTP_COOKIE} from_new_ui=true [NC]
+    RewriteRule ^discord/discord-callback\.php$ discord/discord-callback_new.php [L,QSA]
+</IfModule>

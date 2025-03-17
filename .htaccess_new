@@ -1,9 +1,0 @@
-# Special rewrite for the new UI Discord callback
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    
-    # If request is coming from new UI Discord auth, redirect to our new callback
-    RewriteCond %{QUERY_STRING} state=([^&]+) [NC]
-    RewriteCond %{HTTP_COOKIE} from_new_ui=true [NC]
-    RewriteRule ^discord/discord-callback\.php$ discord/discord-callback_new.php [L,QSA]
-</IfModule>

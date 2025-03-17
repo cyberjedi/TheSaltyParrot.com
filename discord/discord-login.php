@@ -1,44 +1,42 @@
 <?php
 // File: discord/discord-login.php
+// Clean implementation of Discord login functionality for the new UI
 require_once 'discord-config.php';
 
-// Get return URL from cookie if available, otherwise use HTTP_REFERER or default to index
-$return_url = '../index.php';
+// Store the return URL in session
+$_SESSION['discord_ui_return'] = '../index.php';
 
-// Try to get from cookie first
-if (isset($_COOKIE['discord_return_url']) && !empty($_COOKIE['discord_return_url'])) {
-    $return_url = $_COOKIE['discord_return_url'];
-    // Clear the cookie
-    setcookie('discord_return_url', '', time() - 3600, '/');
-} 
-// Fall back to HTTP_REFERER if available
-else if (isset($_SERVER['HTTP_REFERER'])) {
-    $return_url = $_SERVER['HTTP_REFERER'];
+// Use HTTP_REFERER if available
+if (isset($_SERVER['HTTP_REFERER'])) {
+    // Make sure it's a new UI page
+    if (strpos($_SERVER['HTTP_REFERER'], '_new') !== false) {
+        $_SESSION['discord_ui_return'] = $_SERVER['HTTP_REFERER'];
+    }
 }
 
-// Store in session for callback
-$_SESSION['discord_auth_referrer'] = $return_url;
+// Set a special flag to identify this auth request came from new UI
+$_SESSION['from'] = true;
+
+// Log the authentication attempt
+error_log('Discord auth requested from new UI. Return URL: ' . $_SESSION['discord_ui_return']);
 
 // Generate a random state parameter to prevent CSRF attacks
 $state = bin2hex(random_bytes(16));
 $_SESSION['discord_oauth_state'] = $state;
 
-// Build the authorization URL with all necessary scopes
+// Build the authorization URL
 $auth_url = DISCORD_API_URL . '/oauth2/authorize';
 $auth_url .= '?client_id=' . DISCORD_CLIENT_ID;
 $auth_url .= '&redirect_uri=' . urlencode(DISCORD_REDIRECT_URI);
 $auth_url .= '&response_type=code';
 $auth_url .= '&state=' . $state;
-// Use only the basic scopes that are definitely supported
 $auth_url .= '&scope=identify%20guilds';
+$auth_url .= '&prompt=consent'; // Always show consent screen for clarity
 
-// Add a custom parameter to track that we're coming from our login page
-$auth_url .= '&custom_source=direct_login';
+// Add tracking parameter
+$auth_url .= '&custom_source=new_ui';
 
-// Log the authentication attempt with the return URL for debugging
-error_log('Discord auth attempt. Return URL: ' . $return_url);
-
-// Direct redirection without showing an intermediate page
+// Direct redirect to Discord
 header('Location: ' . $auth_url);
 exit;
 ?>

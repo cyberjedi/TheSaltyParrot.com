@@ -6,7 +6,7 @@
  */
 
 // Include Discord service
-require_once __DIR__ . '/../discord/discord_service_new.php';
+require_once __DIR__ . '/../discord/discord_service.php';
 ?>
 <div class="topbar">
     <div class="topbar-container">
@@ -27,12 +27,12 @@ require_once __DIR__ . '/../discord/discord_service_new.php';
     
     <!-- Dropdown menu with Discord options -->
     <div id="dropdown-menu" class="dropdown-menu">
-        <?php if (is_discord_authenticated_new()): ?>
+        <?php if (is_discord_authenticated()): ?>
             <!-- Show Discord-related options when logged in -->
             <?php 
                 // Determine correct path for webhook management based on current directory
                 $baseDir = dirname($_SERVER['PHP_SELF']);
-                $webhooksUrl = (strpos($baseDir, '/discord') === 0) ? 'webhooks_new.php' : 'discord/webhooks_new.php';
+                $webhooksUrl = (strpos($baseDir, '/discord') === 0) ? 'webhooks.php' : 'discord/webhooks.php';
                 $logoutUrl = (strpos($baseDir, '/discord') === 0) ? 'discord-logout.php' : 'discord/discord-logout.php';
             ?>
             <a href="<?php echo $webhooksUrl; ?>" class="discord-menu-item">
@@ -45,7 +45,7 @@ require_once __DIR__ . '/../discord/discord_service_new.php';
             <!-- Show login option when not logged in -->
             <?php 
                 // Determine correct path for auth based on current directory
-                $authUrl = (strpos($baseDir, '/discord') === 0) ? 'simple_auth_new.php' : 'discord/simple_auth_new.php';
+                $authUrl = (strpos($baseDir, '/discord') === 0) ? 'simple_auth.php' : 'discord/simple_auth.php';
             ?>
             <a href="<?php echo $authUrl; ?>" class="discord-menu-item">
                 <i class="fab fa-discord"></i> Connect to Discord

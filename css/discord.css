@@ -1,510 +1,147 @@
-/* 
- * css/discord.css - Styles for Discord integration components
- * The Salty Parrot
+/**
+ * Discord integration styles for new UI
  */
 
-/* Discord button styles */
-.discord-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    font-weight: 500;
-    text-decoration: none;
-    transition: background-color 0.2s ease;
-    cursor: pointer;
-}
-
-.discord-btn i {
-    margin-right: 8px;
-}
-
-/* Button sizes */
-.discord-btn-sm {
-    padding: 6px 10px;
-    font-size: 0.8rem;
-}
-
-.discord-btn-md {
-    padding: 8px 16px;
-    font-size: 1rem;
-}
-
-.discord-btn-lg {
-    padding: 12px 24px;
-    font-size: 1.1rem;
-}
-
-/* Button colors */
-.discord-btn-dark {
+/* Discord connect button */
+.discord-connect-button {
     background-color: #5865F2;
     color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
 }
 
-.discord-btn-dark:hover {
+.discord-connect-button:hover {
     background-color: #4752c4;
 }
 
-.discord-btn-light {
-    background-color: #fff;
-    color: #5865F2;
-    border: 1px solid #5865F2;
+.discord-connect-button i {
+    margin-right: 8px;
+    font-size: 16px;
 }
 
-.discord-btn-light:hover {
-    background-color: #f0f0f0;
-}
-
-/* Discord user profile */
+/* Discord user profile display */
 .discord-profile {
     display: flex;
     align-items: center;
-    padding: 10px;
-    background-color: rgba(88, 101, 242, 0.1);
-    border-radius: 6px;
-    margin-bottom: 15px;
+    max-width: 240px;
 }
 
 .discord-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    margin-right: 10px;
-}
-
-.discord-info {
-    flex: 1;
-}
-
-.discord-username {
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-
-.discord-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: 5px;
-}
-
-/* Streamlined Discord connection status for dashboard */
-.discord-connection-status {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-radius: 8px;
-    padding: 10px 15px;
-    background-color: var(--dark);
-    min-height: 40px;
-}
-
-.discord-status-content {
-    display: flex;
-    align-items: center;
-    flex: 1;
-}
-
-.discord-status-avatar {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    margin-right: 12px;
-}
-
-.discord-status-icon {
-    font-size: 24px;
-    margin-right: 12px;
-    color: #5865F2;
-}
-
-.discord-status-info {
-    flex: 1;
-}
-
-.discord-status-title {
-    font-weight: bold;
-    font-size: 0.95rem;
-    margin-bottom: 2px;
-    color: var(--secondary);
-}
-
-.discord-status-text {
-    opacity: 0.8;
-    font-size: 0.85rem;
-}
-
-/* Connected vs not connected states */
-.discord-connection-status.connected {
-    border: 1px solid rgba(88, 101, 242, 0.3);
-}
-
-.discord-connection-status.not-connected {
-    border: 1px solid rgba(191, 157, 97, 0.3);
-}
-
-/* Discord message notifications - more compact */
-.discord-message {
-    padding: 8px 12px;
-    margin-top: 8px;
-    border-radius: 4px;
-    font-size: 0.85rem;
-}
-
-.discord-message.error {
-    background-color: rgba(220, 53, 69, 0.1);
-    border-left: 4px solid #dc3545;
-    color: #dc3545;
-}
-
-.discord-message.success {
-    background-color: rgba(40, 167, 69, 0.1);
-    border-left: 4px solid #28a745;
-    color: #28a745;
-}
-
-.discord-message.warning {
-    background-color: rgba(255, 193, 7, 0.1);
-    border-left: 4px solid #ffc107;
-    color: #ffc107;
-}
-
-.discord-message.info {
-    background-color: rgba(23, 162, 184, 0.1);
-    border-left: 4px solid #17a2b8;
-    color: #17a2b8;
-}
-
-/* Webhook management styles */
-.webhook-list {
-    margin: 20px 0;
-}
-
-.webhook-item {
-    background-color: var(--dark);
-    border: 1px solid rgba(191, 157, 97, 0.3);
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.webhook-info {
-    flex: 1;
-}
-
-.webhook-server {
-    font-weight: bold;
-    color: var(--secondary);
-    margin-bottom: 5px;
-}
-
-.webhook-channel {
-    opacity: 0.8;
-    font-size: 0.9rem;
-}
-
-.webhook-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.webhook-actions button {
-    background: none;
-    border: none;
-    color: var(--secondary);
-    cursor: pointer;
-    font-size: 0.9rem;
-    opacity: 0.8;
-    transition: opacity 0.2s;
-}
-
-.webhook-actions button:hover {
-    opacity: 1;
-}
-
-.webhook-form {
-    margin-top: 30px;
-}
-
-.webhook-form-title {
-    font-size: 1.2rem;
-    color: var(--secondary);
-    margin-bottom: 20px;
-    border-bottom: 1px solid rgba(191, 157, 97, 0.3);
-    padding-bottom: 10px;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    color: var(--secondary);
-}
-
-.form-group select, 
-.form-group input {
-    width: 100%;
-    padding: 8px 12px;
-    background-color: var(--dark);
-    border: 1px solid rgba(191, 157, 97, 0.3);
-    color: var(--light);
-    border-radius: 4px;
-}
-
-.webhook-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-/* Discord Modal Styles */
-.modal {
-    display: none; /* Hidden by default */
-    position: fixed; /* Stay in place */
-    z-index: 1000; /* Sit on top */
-    left: 0;
-    top: 0;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgba(0,0,0,0.7); /* Black w/ opacity */
-}
-
-.modal-content {
-    background-color: var(--dark);
-    margin: 10% auto;
-    padding: 25px;
-    border: 1px solid var(--secondary);
-    border-radius: 8px;
-    width: 80%;
-    max-width: 600px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-    position: relative;
-    animation: slideIn 0.3s;
-}
-
-.close-modal {
-    color: var(--secondary);
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.close-modal:hover {
-    color: #fff;
-}
-
-.form-buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: 15px;
-    margin-top: 20px;
-}
-
-.btn-discord {
-    background-color: #7289DA;
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 500;
-    transition: background-color 0.2s;
-}
-
-.btn-discord:hover {
-    background-color: #5B73C7;
-}
-
-.btn-discord:disabled {
-    background-color: #556199;
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-@keyframes fadeIn {
-    from {opacity: 0}
-    to {opacity: 1}
-}
-
-@keyframes slideIn {
-    from {transform: translateY(-50px); opacity: 0}
-    to {transform: translateY(0); opacity: 1}
-}
-
-/* Webhook Discord delivery UI */
-.send-to-discord {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid rgba(191, 157, 97, 0.3);
-}
-
-.send-to-discord-title {
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: var(--secondary);
-}
-
-.webhook-selector {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.webhook-option {
-    background-color: var(--dark);
-    border: 1px solid rgba(191, 157, 97, 0.3);
-    border-radius: 4px;
-    padding: 8px 12px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.webhook-option:hover {
-    background-color: rgba(191, 157, 97, 0.1);
-}
-
-.webhook-option.selected {
-    background-color: rgba(191, 157, 97, 0.2);
-    border-color: var(--secondary);
-}
-
-/* Enhanced Sidebar Discord Status Styles */
-.sidebar-discord-status {
-    margin-top: auto;
-    padding: 15px;
-    border-top: 1px solid rgba(191, 157, 97, 0.3);
-    background-color: rgba(0, 0, 0, 0.2);
-    position: relative;
-    z-index: 100;
-}
-
-.discord-connect-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    padding: 10px;
-    background-color: #5865F2;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-weight: 500;
-    cursor: pointer;
-    text-decoration: none;
-    transition: background-color 0.2s ease;
-}
-
-.discord-connect-btn i {
     margin-right: 8px;
-    font-size: 1.1em;
-}
-
-.discord-connect-btn:hover {
-    background-color: #4752c4;
-}
-
-.discord-status-disabled {
-    color: rgba(255, 255, 255, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px;
-    opacity: 0.7;
-}
-
-.discord-status-disabled i {
-    margin-right: 8px;
-}
-
-.discord-status-connected {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.discord-user-info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.discord-avatar {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    margin-bottom: 8px;
-    border: 2px solid #5865F2;
-    box-shadow: 0 0 10px rgba(88, 101, 242, 0.5);
 }
 
 .discord-username {
-    font-size: 0.95rem;
-    font-weight: 500;
-    margin-bottom: 4px;
     color: var(--light);
-    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100%;
+    max-width: 180px;
 }
 
-.discord-connection-label {
-    font-size: 0.8rem;
-    color: #3ba55c; /* Discord green */
+.discord-server {
+    color: var(--secondary);
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Discord webhook info */
+.discord-webhook-info {
+    font-size: 11px;
+    color: #a0a0a0;
+    margin-top: 2px;
+}
+
+/* Discord dropdown menu items */
+.discord-menu-item {
     display: flex;
     align-items: center;
-    justify-content: center;
+    padding: 10px 15px;
+    transition: background-color 0.2s;
+    text-decoration: none;
+    color: var(--light);
 }
 
-.discord-connection-label::before {
-    content: "";
-    display: inline-block;
+.discord-menu-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.discord-menu-item i {
+    margin-right: 10px;
+    color: var(--secondary);
+    width: 16px;
+    text-align: center;
+}
+
+/* Discord status indicators */
+.discord-status {
     width: 8px;
     height: 8px;
-    background-color: #3ba55c;
     border-radius: 50%;
+    display: inline-block;
     margin-right: 5px;
 }
 
-/* Active webhook display in sidebar */
-.active-webhook {
-    font-size: 0.8rem;
-    color: #ffffff;
-    background-color: rgba(191, 157, 97, 0.2);
-    border: 1px solid rgba(191, 157, 97, 0.3);
-    border-radius: 3px;
-    padding: 3px 6px;
-    margin-top: 5px;
+.discord-status.connected {
+    background-color: #43b581;
+}
+
+.discord-status.disconnected {
+    background-color: #f04747;
+}
+
+/* Toast notifications for Discord events */
+.discord-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--primary);
+    color: var(--light);
+    padding: 12px 15px;
+    border-radius: 4px;
+    border-left: 4px solid var(--secondary);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
     display: flex;
     align-items: center;
-    max-width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    max-width: 300px;
+    animation: slideIn 0.3s ease-out;
 }
 
-.webhook-indicator {
-    color: #BF9D61;
-    margin-right: 4px;
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
-.channel-name {
-    font-style: italic;
-    margin-left: 4px;
-    color: rgba(255, 255, 255, 0.7);
+.discord-toast i {
+    margin-right: 10px;
+    font-size: 18px;
+    color: var(--secondary);
+}
+
+.discord-toast.success i {
+    color: #43b581;
+}
+
+.discord-toast.error i {
+    color: #f04747;
 }

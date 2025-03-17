@@ -1,12 +1,30 @@
 <?php
-// File: discord/webhook_service.php
-// Centralized service for handling all Discord webhook operations
+/**
+ * Discord Webhook Service for New UI
+ * 
+ * Handles all Discord webhook operations for the new interface
+ */
 
-require_once 'discord-config.php';
-require_once '../config/db_connect.php';
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Load dependencies with path handling
+if (file_exists(__DIR__ . '/discord-config.php')) {
+    require_once __DIR__ . '/discord-config.php';
+} else {
+    require_once 'discord/discord-config.php';
+}
+
+// Handle different directory contexts for database connection
+if (file_exists(__DIR__ . '/../config/db_connect.php')) {
+    require_once __DIR__ . '/../config/db_connect.php';
+} else {
+    require_once 'config/db_connect.php';
+}
 
 /**
- * WebhookService class - Handles all Discord webhook operations
+ * WebhookService class for the new UI
  */
 class WebhookService {
     private $conn;
@@ -16,10 +34,41 @@ class WebhookService {
     /**
      * Constructor - initializes the service with database connection
      * 
-     * @param PDO $conn Database connection
+     * @param PDO|null $conn Database connection
      */
-    public function __construct($conn) {
+    public function __construct($conn = null) {
+        // Handle null connection
+        if ($conn === null) {
+            // Try to ensure we have the global database connection
+            global $conn;
+            
+            // If still null, try to establish connection directly
+            if ($conn === null) {
+                // Try both possible include paths for the db_connect file
+                if (file_exists(__DIR__ . '/../config/db_connect.php')) {
+                    include_once __DIR__ . '/../config/db_connect.php';
+                } elseif (file_exists(__DIR__ . '/../config/db_connect.php')) {
+                    include_once __DIR__ . '/../config/db_connect.php';
+                    // If only original connection is available, use it
+                    if (isset($GLOBALS['conn']) && !isset($GLOBALS['conn'])) {
+                        $GLOBALS['conn'] = $GLOBALS['conn'];
+                    }
+                }
+                
+                $conn = $GLOBALS['conn'] ?? null;
+            } else {
+                $conn = $conn;
+            }
+        }
+        
         $this->conn = $conn;
+        
+        // Log connection status for debugging
+        if ($this->conn === null) {
+            error_log('WebhookService: Database connection is null');
+        } else {
+            error_log('WebhookService: Database connection established');
+        }
         
         // Set Discord user ID if authenticated
         if (isset($_SESSION['discord_user']) && isset($_SESSION['discord_user']['id'])) {
@@ -37,6 +86,12 @@ class WebhookService {
         try {
             if (!$this->discordId) return false;
             
+            // Check if we have a valid database connection
+            if (!$this->conn) {
+                error_log('WebhookService - No database connection available for setting user ID');
+                return false;
+            }
+            
             $stmt = $this->conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
             $stmt->bindParam(':discord_id', $this->discordId);
             $stmt->execute();
@@ -50,6 +105,9 @@ class WebhookService {
             return false;
         } catch (PDOException $e) {
             error_log('WebhookService - Error getting user ID: ' . $e->getMessage());
+            return false;
+        } catch (Exception $e) {
+            error_log('WebhookService - General error getting user ID: ' . $e->getMessage());
             return false;
         }
     }
@@ -87,6 +145,12 @@ class WebhookService {
         try {
             if (!$this->userId) return $webhooks;
             
+            // Check if we have a valid database connection
+            if (!$this->conn) {
+                error_log('WebhookService - No database connection available for getting webhooks');
+                return $webhooks;
+            }
+            
             $stmt = $this->conn->prepare("SELECT * FROM discord_webhooks 
                                          WHERE user_id = :user_id AND is_active = 1 
                                          ORDER BY is_default DESC, last_updated DESC");
@@ -95,6 +159,8 @@ class WebhookService {
             $webhooks = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log('WebhookService - Error fetching webhooks: ' . $e->getMessage());
+        } catch (Exception $e) {
+            error_log('WebhookService - General error fetching webhooks: ' . $e->getMessage());
         }
         
         return $webhooks;
@@ -108,6 +174,12 @@ class WebhookService {
     public function getDefaultWebhook() {
         try {
             if (!$this->userId) return null;
+            
+            // Check if we have a valid database connection
+            if (!$this->conn) {
+                error_log('WebhookService - No database connection available for getting default webhook');
+                return null;
+            }
             
             // First try to get default webhook
             $stmt = $this->conn->prepare("SELECT id, webhook_name, channel_name, is_default FROM discord_webhooks 
@@ -131,6 +203,9 @@ class WebhookService {
         } catch (PDOException $e) {
             error_log('WebhookService - Error getting default webhook: ' . $e->getMessage());
             return null;
+        } catch (Exception $e) {
+            error_log('WebhookService - General error getting default webhook: ' . $e->getMessage());
+            return null;
         }
     }
 
@@ -153,210 +228,444 @@ class WebhookService {
     }
 
     /**
-     * Send simple message to webhook
+     * Add a new webhook
      * 
-     * @param int $webhookId The webhook ID
-     * @param string $message Plain text message to send
-     * @param string $source Source/generator type for logging
+     * @param string $webhookUrl The Discord webhook URL
+     * @param string $webhookName Custom name for the webhook
+     * @param string $channelName Name of the Discord channel
+     * @param string $description Optional description
      * @return array Response with status and message
      */
-    public function sendMessage($webhookId, $message, $source = 'custom') {
+    public function addWebhook($webhookUrl, $webhookName, $channelName, $description = '') {
         try {
-            // Validate permissions
-            if (!$this->isAuthorizedForWebhook($webhookId)) {
+            if (!$this->userId) {
                 return [
                     'status' => 'error',
-                    'message' => 'Unauthorized to use this webhook'
+                    'message' => 'Not authenticated with Discord'
                 ];
             }
             
-            // Get webhook details
-            $webhook = $this->getWebhookById($webhookId);
-            if (!$webhook) {
+            // Validate the webhook URL format
+            if (!preg_match('#https?://(?:canary\.|ptb\.)?discord(?:app)?\.com/api/webhooks/(\d+)/([a-zA-Z0-9_-]+)#', $webhookUrl, $matches)) {
                 return [
                     'status' => 'error',
-                    'message' => 'Webhook not found'
+                    'message' => 'Invalid Discord webhook URL format'
                 ];
             }
             
-            // Prepare webhook payload
-            $payload = [
-                'content' => $message
-            ];
+            $webhookId = $matches[1];
+            $webhookToken = $matches[2];
             
-            // Send to Discord
-            return $this->sendToDiscord($webhook, $payload, $source, $message);
-        } catch (Exception $e) {
-            error_log('WebhookService - Error sending message: ' . $e->getMessage());
-            return [
-                'status' => 'error',
-                'message' => 'Error sending message: ' . $e->getMessage()
-            ];
-        }
-    }
-
-    /**
-     * Send embed to webhook
-     * 
-     * @param int $webhookId The webhook ID
-     * @param array $embed Embed data (title, description, color, etc.)
-     * @param string $source Source/generator type for logging
-     * @return array Response with status and message
-     */
-    public function sendEmbed($webhookId, $embed, $source = 'custom') {
-        try {
-            // Validate permissions
-            if (!$this->isAuthorizedForWebhook($webhookId)) {
+            // Verify the webhook by making a GET request to Discord
+            $url = "https://discord.com/api/webhooks/{$webhookId}/{$webhookToken}";
+            
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            if ($httpCode !== 200) {
                 return [
                     'status' => 'error',
-                    'message' => 'Unauthorized to use this webhook'
+                    'message' => 'Invalid webhook URL or webhook no longer exists'
                 ];
             }
             
-            // Get webhook details
-            $webhook = $this->getWebhookById($webhookId);
-            if (!$webhook) {
-                return [
-                    'status' => 'error',
-                    'message' => 'Webhook not found'
-                ];
-            }
+            $webhookData = json_decode($response, true);
             
-            // Ensure embed has required fields
-            if (!isset($embed['title'])) {
-                $embed['title'] = '🏴‍☠️ The Salty Parrot';
-            }
+            // Extract guild ID and channel ID if available
+            $guildId = $webhookData['guild_id'] ?? '';
+            $channelId = $webhookData['channel_id'] ?? '';
             
-            if (!isset($embed['color'])) {
-                $embed['color'] = 0xbf9d61; // Gold color
-            }
+            // Generate a sharing code
+            $sharingCode = substr(md5($webhookId . $webhookToken . time()), 0, 10);
             
-            // Prepare webhook payload
-            $payload = [
-                'embeds' => [$embed]
-            ];
-            
-            // Create summary for logging
-            $summary = isset($embed['title']) ? $embed['title'] : 'Embed message';
-            
-            // Send to Discord
-            return $this->sendToDiscord($webhook, $payload, $source, $summary);
-        } catch (Exception $e) {
-            error_log('WebhookService - Error sending embed: ' . $e->getMessage());
-            return [
-                'status' => 'error',
-                'message' => 'Error sending embed: ' . $e->getMessage()
-            ];
-        }
-    }
-
-    /**
-     * Send formatted content (HTML) to webhook
-     * 
-     * @param int $webhookId The webhook ID
-     * @param string $content HTML content to send
-     * @param string $source Source/generator type for logging
-     * @param string $characterImage Optional character image URL
-     * @return array Response with status and message
-     */
-    public function sendFormattedContent($webhookId, $content, $source = 'generator', $characterImage = null) {
-        try {
-            // Validate permissions
-            if (!$this->isAuthorizedForWebhook($webhookId)) {
-                return [
-                    'status' => 'error',
-                    'message' => 'Unauthorized to use this webhook'
-                ];
-            }
-            
-            // Get webhook details
-            $webhook = $this->getWebhookById($webhookId);
-            if (!$webhook) {
-                return [
-                    'status' => 'error',
-                    'message' => 'Webhook not found'
-                ];
-            }
-            
-            // Process the HTML content to extract relevant parts for Discord
-            $embeds = [];
-            $contentSummary = '';
-            
-            // Different formatting based on source/generator type
-            switch ($source) {
-                case 'ship':
-                    list($embeds, $contentSummary) = $this->formatShipContent($content);
-                    break;
-                    
-                case 'loot':
-                    list($embeds, $contentSummary) = $this->formatLootContent($content);
-                    break;
+            // Insert webhook into database
+            $stmt = $this->conn->prepare("INSERT INTO discord_webhooks 
+                (user_id, server_id, channel_id, channel_name, webhook_id, webhook_token, webhook_name, webhook_description, 
+                 sharing_code, is_shared, is_active, created_at, last_updated) 
+                VALUES 
+                (:user_id, :server_id, :channel_id, :channel_name, :webhook_id, :webhook_token, :webhook_name, :webhook_description,
+                 :sharing_code, 0, 1, NOW(), NOW())");
                 
-                case 'attribute_roll':
-                    list($embeds, $contentSummary) = $this->formatAttributeRollContent($content, $characterImage);
-                    break;
-                    
-                case 'item_use':
-                    list($embeds, $contentSummary) = $this->formatItemUseContent($content, $characterImage);
-                    break;
-                    
-                default:
-                    // For custom content, extract any h2/h3 for title, and use content for description
-                    $title = '🏴‍☠️ Generated Content';
-                    $description = 'No content available';
-                    
-                    // Try to extract a title from h2 or h3
-                    if (preg_match('/<h[23][^>]*>(.*?)<\/h[23]>/i', $content, $titleMatches)) {
-                        $title = strip_tags($titleMatches[1]);
-                    }
-                    
-                    // Extract text content
-                    $tempContent = strip_tags(str_replace(['<br>', '<p>', '</p>', '<div>', '</div>'], ["\n", "\n", "", "\n", ""], $content));
-                    $description = trim(preg_replace('/\n{3,}/', "\n\n", $tempContent));
-                    
-                    // Create a single embed
-                    $embeds[] = [
-                        'title' => $title,
-                        'description' => $description,
-                        'color' => 0xbf9d61
-                    ];
-                    
-                    $contentSummary = "Custom content: " . substr($title, 0, 30);
-            }
+            $stmt->bindParam(':user_id', $this->userId);
+            $stmt->bindParam(':server_id', $guildId);
+            $stmt->bindParam(':channel_id', $channelId);
+            $stmt->bindParam(':channel_name', $channelName);
+            $stmt->bindParam(':webhook_id', $webhookId);
+            $stmt->bindParam(':webhook_token', $webhookToken);
+            $stmt->bindParam(':webhook_name', $webhookName);
+            $stmt->bindParam(':webhook_description', $description);
+            $stmt->bindParam(':sharing_code', $sharingCode);
             
-            // Prepare webhook message
-            $payload = [
-                'content' => null,
-                'embeds' => $embeds
+            $stmt->execute();
+            
+            // Check if this is the user's first webhook and make it default
+            $this->ensureDefaultWebhook();
+            
+            return [
+                'status' => 'success',
+                'message' => 'Webhook added successfully',
+                'webhook_id' => $this->conn->lastInsertId()
             ];
-            
-            // Send to Discord
-            return $this->sendToDiscord($webhook, $payload, $source, $contentSummary);
-        } catch (Exception $e) {
-            error_log('WebhookService - Error sending formatted content: ' . $e->getMessage());
+        } catch (PDOException $e) {
+            error_log('WebhookService - Error adding webhook: ' . $e->getMessage());
             return [
                 'status' => 'error',
-                'message' => 'Error sending content: ' . $e->getMessage()
+                'message' => 'Error saving webhook: ' . $e->getMessage()
             ];
         }
     }
-    
+
     /**
-     * Send custom payload to webhook
+     * Import a shared webhook
      * 
-     * @param int $webhookId The webhook ID
-     * @param array $payload Complete webhook payload
-     * @param string $source Source/generator type for logging
-     * @param string $summary Summary for logging
+     * @param string $sharingCode Code to identify the shared webhook
      * @return array Response with status and message
      */
-    public function sendCustomPayload($webhookId, $payload, $source = 'custom', $summary = 'Custom payload') {
+    public function importSharedWebhook($sharingCode) {
         try {
-            // Validate permissions
+            if (!$this->userId) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Not authenticated with Discord'
+                ];
+            }
+            
+            // Look up the webhook by sharing code
+            $stmt = $this->conn->prepare("SELECT * FROM discord_webhooks WHERE sharing_code = :sharing_code");
+            $stmt->bindParam(':sharing_code', $sharingCode);
+            $stmt->execute();
+            $sharedWebhook = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$sharedWebhook) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Invalid sharing code. The webhook could not be found.'
+                ];
+            }
+            
+            // Check if user already has this webhook
+            $webhookId = $sharedWebhook['webhook_id'];
+            $stmt = $this->conn->prepare("SELECT id FROM discord_webhooks WHERE user_id = :user_id AND webhook_id = :webhook_id");
+            $stmt->bindParam(':user_id', $this->userId);
+            $stmt->bindParam(':webhook_id', $webhookId);
+            $stmt->execute();
+            
+            if ($stmt->rowCount() > 0) {
+                return [
+                    'status' => 'error',
+                    'message' => 'You already have this webhook added to your account'
+                ];
+            }
+            
+            // Verify the webhook still exists
+            $webhookToken = $sharedWebhook['webhook_token'];
+            $url = "https://discord.com/api/webhooks/{$webhookId}/{$webhookToken}";
+            
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            if ($httpCode !== 200) {
+                return [
+                    'status' => 'error',
+                    'message' => 'This webhook no longer exists or is invalid'
+                ];
+            }
+            
+            // Clone the webhook for this user
+            $stmt = $this->conn->prepare("INSERT INTO discord_webhooks 
+                (user_id, server_id, channel_id, channel_name, webhook_id, webhook_token, webhook_name, webhook_description,
+                 sharing_code, is_shared, is_active, created_at, last_updated) 
+                VALUES 
+                (:user_id, :server_id, :channel_id, :channel_name, :webhook_id, :webhook_token, :webhook_name, :webhook_description,
+                 :sharing_code, 1, 1, NOW(), NOW())");
+                
+            $webhookName = $sharedWebhook['webhook_name'] . ' (Shared)';
+            
+            $stmt->bindParam(':user_id', $this->userId);
+            $stmt->bindParam(':server_id', $sharedWebhook['server_id']);
+            $stmt->bindParam(':channel_id', $sharedWebhook['channel_id']);
+            $stmt->bindParam(':channel_name', $sharedWebhook['channel_name']);
+            $stmt->bindParam(':webhook_id', $webhookId);
+            $stmt->bindParam(':webhook_token', $webhookToken);
+            $stmt->bindParam(':webhook_name', $webhookName);
+            $stmt->bindParam(':webhook_description', $sharedWebhook['webhook_description']);
+            $stmt->bindParam(':sharing_code', $sharingCode);
+            
+            $stmt->execute();
+            
+            // Check if this is the user's first webhook and make it default
+            $this->ensureDefaultWebhook();
+            
+            return [
+                'status' => 'success',
+                'message' => 'Shared webhook imported successfully',
+                'webhook_id' => $this->conn->lastInsertId()
+            ];
+        } catch (PDOException $e) {
+            error_log('WebhookService - Error importing webhook: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => 'Error importing webhook: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Update a webhook
+     * 
+     * @param int $webhookId ID of the webhook to update
+     * @param string $webhookName New name for the webhook
+     * @param string $channelName New channel name
+     * @param string $description New description
+     * @return array Response with status and message
+     */
+    public function updateWebhook($webhookId, $webhookName, $channelName, $description = '') {
+        try {
+            if (!$this->userId) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Not authenticated with Discord'
+                ];
+            }
+            
+            // Check ownership
             if (!$this->isAuthorizedForWebhook($webhookId)) {
                 return [
                     'status' => 'error',
-                    'message' => 'Unauthorized to use this webhook'
+                    'message' => 'You do not have permission to edit this webhook'
+                ];
+            }
+            
+            // Update webhook details
+            $stmt = $this->conn->prepare("UPDATE discord_webhooks SET 
+                webhook_name = :webhook_name, 
+                webhook_description = :webhook_description, 
+                channel_name = :channel_name,
+                last_updated = NOW() 
+                WHERE id = :id AND user_id = :user_id");
+                
+            $stmt->bindParam(':webhook_name', $webhookName);
+            $stmt->bindParam(':webhook_description', $description);
+            $stmt->bindParam(':channel_name', $channelName);
+            $stmt->bindParam(':id', $webhookId);
+            $stmt->bindParam(':user_id', $this->userId);
+            
+            $stmt->execute();
+            
+            return [
+                'status' => 'success',
+                'message' => 'Webhook updated successfully'
+            ];
+        } catch (PDOException $e) {
+            error_log('WebhookService - Error updating webhook: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => 'Error updating webhook: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Delete a webhook
+     * 
+     * @param int $webhookId ID of the webhook to delete
+     * @return array Response with status and message
+     */
+    public function deleteWebhook($webhookId) {
+        try {
+            if (!$this->userId) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Not authenticated with Discord'
+                ];
+            }
+            
+            // Check ownership
+            if (!$this->isAuthorizedForWebhook($webhookId)) {
+                return [
+                    'status' => 'error',
+                    'message' => 'You do not have permission to delete this webhook'
+                ];
+            }
+            
+            // Get webhook details first
+            $webhook = $this->getWebhookById($webhookId);
+            if (!$webhook) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Webhook not found'
+                ];
+            }
+            
+            // Delete from Discord if not shared
+            if (!$webhook['is_shared']) {
+                $url = "https://discord.com/api/webhooks/{$webhook['webhook_id']}/{$webhook['webhook_token']}";
+                
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                
+                curl_exec($ch);
+                curl_close($ch);
+            }
+            
+            // Delete from database
+            $stmt = $this->conn->prepare("DELETE FROM discord_webhooks WHERE id = :id AND user_id = :user_id");
+            $stmt->bindParam(':id', $webhookId);
+            $stmt->bindParam(':user_id', $this->userId);
+            $stmt->execute();
+            
+            // Ensure another webhook is set as default if we deleted the default
+            if ($webhook['is_default']) {
+                $this->ensureDefaultWebhook();
+            }
+            
+            return [
+                'status' => 'success',
+                'message' => 'Webhook deleted successfully'
+            ];
+        } catch (PDOException $e) {
+            error_log('WebhookService - Error deleting webhook: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => 'Error deleting webhook: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Set a webhook as default
+     * 
+     * @param int $webhookId ID of the webhook to set as default
+     * @return array Response with status and message
+     */
+    public function setDefaultWebhook($webhookId) {
+        try {
+            if (!$this->userId) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Not authenticated with Discord'
+                ];
+            }
+            
+            // Check ownership
+            if (!$this->isAuthorizedForWebhook($webhookId)) {
+                return [
+                    'status' => 'error',
+                    'message' => 'You do not have permission to modify this webhook'
+                ];
+            }
+            
+            // First, unset all defaults for this user
+            $stmt = $this->conn->prepare("UPDATE discord_webhooks SET is_default = 0 WHERE user_id = :user_id");
+            $stmt->bindParam(':user_id', $this->userId);
+            $stmt->execute();
+            
+            // Then set the selected webhook as default
+            $stmt = $this->conn->prepare("UPDATE discord_webhooks SET is_default = 1 WHERE id = :id AND user_id = :user_id");
+            $stmt->bindParam(':id', $webhookId);
+            $stmt->bindParam(':user_id', $this->userId);
+            $stmt->execute();
+            
+            // Get the updated webhook details and update the session
+            $webhookStmt = $this->conn->prepare("SELECT id, webhook_name, channel_name, is_default, is_active, server_id 
+                                                FROM discord_webhooks 
+                                                WHERE id = :id");
+            $webhookStmt->bindParam(':id', $webhookId);
+            $webhookStmt->execute();
+            $webhook = $webhookStmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($webhook) {
+                $_SESSION['active_webhook'] = $webhook;
+            }
+            
+            return [
+                'status' => 'success',
+                'message' => 'Default webhook updated successfully'
+            ];
+        } catch (PDOException $e) {
+            error_log('WebhookService - Error setting default webhook: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => 'Error setting default webhook: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Ensure a user has a default webhook
+     * Sets the first webhook as default if no default exists
+     * 
+     * @return bool Success status
+     */
+    private function ensureDefaultWebhook() {
+        try {
+            // Check if user has any webhooks with default already set
+            $stmt = $this->conn->prepare("SELECT COUNT(*) FROM discord_webhooks 
+                                        WHERE user_id = :user_id AND is_default = 1");
+            $stmt->bindParam(':user_id', $this->userId);
+            $stmt->execute();
+            $hasDefault = ($stmt->fetchColumn() > 0);
+            
+            if (!$hasDefault) {
+                // Get the first webhook and set it as default
+                $stmt = $this->conn->prepare("SELECT id FROM discord_webhooks 
+                                            WHERE user_id = :user_id 
+                                            ORDER BY created_at ASC 
+                                            LIMIT 1");
+                $stmt->bindParam(':user_id', $this->userId);
+                $stmt->execute();
+                $webhook = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($webhook) {
+                    $stmt = $this->conn->prepare("UPDATE discord_webhooks 
+                                                SET is_default = 1 
+                                                WHERE id = :id AND user_id = :user_id");
+                    $stmt->bindParam(':id', $webhook['id']);
+                    $stmt->bindParam(':user_id', $this->userId);
+                    $stmt->execute();
+                    return true;
+                }
+            }
+            
+            return false;
+        } catch (PDOException $e) {
+            error_log('WebhookService - Error ensuring default webhook: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Send a test message to a webhook
+     * 
+     * @param int $webhookId ID of the webhook to test
+     * @return array Response with status and message
+     */
+    public function sendTestMessage($webhookId) {
+        try {
+            if (!$this->userId) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Not authenticated with Discord'
+                ];
+            }
+            
+            // Check ownership
+            if (!$this->isAuthorizedForWebhook($webhookId)) {
+                return [
+                    'status' => 'error',
+                    'message' => 'You do not have permission to use this webhook'
                 ];
             }
             
@@ -369,61 +678,49 @@ class WebhookService {
                 ];
             }
             
-            // Send to Discord
-            return $this->sendToDiscord($webhook, $payload, $source, $summary);
-        } catch (Exception $e) {
-            error_log('WebhookService - Error sending custom payload: ' . $e->getMessage());
-            return [
-                'status' => 'error',
-                'message' => 'Error sending payload: ' . $e->getMessage()
+            // Create test message
+            $message = [
+                'content' => null,
+                'embeds' => [
+                    [
+                        'title' => '🧪 Test Message from The Salty Parrot (New UI)',
+                        'description' => 'This is a test message to verify your webhook is working correctly. You can now send generated content from The Salty Parrot to this Discord channel!',
+                        'color' => 0xbf9d61, // Gold color
+                        'footer' => [
+                            'text' => 'The Salty Parrot - A Pirate Borg Toolbox'
+                        ],
+                        'timestamp' => date('c')
+                    ]
+                ]
             ];
-        }
-    }
-    
-    /**
-     * Send payload to Discord
-     * 
-     * @param array $webhook Webhook data from database
-     * @param array $payload Discord webhook payload
-     * @param string $source Source/generator type for logging
-     * @param string $summary Summary for logging
-     * @return array Response with status and message
-     */
-    private function sendToDiscord($webhook, $payload, $source, $summary) {
-        try {
+            
             // Send message to webhook
             $url = "https://discord.com/api/webhooks/{$webhook['webhook_id']}/{$webhook['webhook_token']}";
             
             $ch = curl_init($url);
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
             curl_setopt($ch, CURLOPT_POST, 1);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($message));
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             
-            $responseText = curl_exec($ch);
+            $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
             
             // Log webhook usage
-            $this->logWebhookUsage(
-                $webhook['id'], 
-                $this->userId, 
-                $source, 
-                $summary, 
-                $httpCode, 
-                ($httpCode >= 200 && $httpCode < 300) ? 1 : 0,
-                ($httpCode >= 200 && $httpCode < 300) ? null : $responseText
-            );
+            $this->logWebhookUsage($webhookId, 'test', 'Test message', $httpCode, 
+                                  ($httpCode >= 200 && $httpCode < 300) ? 1 : 0,
+                                  ($httpCode >= 200 && $httpCode < 300) ? null : $response);
             
             // Check response status
             if ($httpCode >= 200 && $httpCode < 300) {
                 return [
                     'status' => 'success',
-                    'message' => 'Content sent to Discord successfully'
+                    'message' => 'Test message sent successfully'
                 ];
             } else {
-                // Log error message
-                $errorData = json_decode($responseText, true);
+                // Try to parse the error
+                $errorData = json_decode($response, true);
                 $errorMessage = isset($errorData['message']) ? $errorData['message'] : 'Unknown error';
                 
                 return [
@@ -432,19 +729,18 @@ class WebhookService {
                 ];
             }
         } catch (Exception $e) {
-            error_log('WebhookService - Discord send error: ' . $e->getMessage());
+            error_log('WebhookService - Error sending test message: ' . $e->getMessage());
             return [
                 'status' => 'error',
-                'message' => 'Error sending to Discord: ' . $e->getMessage()
+                'message' => 'Error sending test message: ' . $e->getMessage()
             ];
         }
     }
-    
+
     /**
      * Log webhook usage
      * 
      * @param int $webhookId Webhook ID
-     * @param int $userId User ID
      * @param string $generatorType Generator type
      * @param string $contentSummary Content summary
      * @param int $statusCode HTTP status code
@@ -452,7 +748,7 @@ class WebhookService {
      * @param string $errorMessage Optional error message
      * @return bool Success status
      */
-    private function logWebhookUsage($webhookId, $userId, $generatorType, $contentSummary, $statusCode, $isSuccess, $errorMessage = null) {
+    private function logWebhookUsage($webhookId, $generatorType, $contentSummary, $statusCode, $isSuccess, $errorMessage = null) {
         try {
             $stmt = $this->conn->prepare("INSERT INTO discord_webhook_logs 
                 (webhook_id, user_id, generator_type, content_summary, status_code, is_success, error_message, request_timestamp, response_timestamp) 
@@ -460,7 +756,7 @@ class WebhookService {
                 (:webhook_id, :user_id, :generator_type, :content_summary, :status_code, :is_success, :error_message, NOW(), NOW())");
                 
             $stmt->bindParam(':webhook_id', $webhookId);
-            $stmt->bindParam(':user_id', $userId);
+            $stmt->bindParam(':user_id', $this->userId);
             $stmt->bindParam(':generator_type', $generatorType);
             $stmt->bindParam(':content_summary', $contentSummary);
             $stmt->bindParam(':status_code', $statusCode);
@@ -473,227 +769,42 @@ class WebhookService {
             return false;
         }
     }
-    
-    /**
-     * Format ship content for Discord
-     * 
-     * @param string $content HTML content
-     * @return array Array containing [embeds, contentSummary]
-     */
-    private function formatShipContent($content) {
-        $embeds = [];
-        
-        // Extract ship name and details
-        preg_match('/<h2 id="ship-name">(.*?)<\/h2>/i', $content, $shipNameMatches);
-        $shipName = isset($shipNameMatches[1]) ? strip_tags($shipNameMatches[1]) : 'Ship';
-        
-        // Extract ship details
-        preg_match('/<div class="ship-details">(.*?)<\/div>/is', $content, $detailsMatches);
-        $details = isset($detailsMatches[1]) ? $detailsMatches[1] : '';
-        
-        // Extract ship info from details
-        $detailMap = [];
-        preg_match_all('/<h3>(.*?):<\/h3>\s*<p>(.*?)<\/p>/is', $details, $detailMatches, PREG_SET_ORDER);
-        foreach ($detailMatches as $match) {
-            $key = strip_tags($match[1]);
-            $value = strip_tags($match[2]);
-            $detailMap[$key] = $value;
-        }
-        
-        // Build formatted description
-        $formattedDesc = '';
-        foreach ($detailMap as $key => $value) {
-            $formattedDesc .= "**$key:** $value\n";
-        }
-        
-        // Extract cargo items
-        preg_match('/<ul id="cargo-list">(.*?)<\/ul>/is', $content, $cargoMatches);
-        $cargo = '';
-        if (isset($cargoMatches[1])) {
-            preg_match_all('/<li>(.*?)<\/li>/is', $cargoMatches[1], $cargoItems);
-            if (isset($cargoItems[1]) && !empty($cargoItems[1])) {
-                $cargo = "\n**Cargo:**\n";
-                foreach ($cargoItems[1] as $item) {
-                    $cargo .= "• " . strip_tags($item) . "\n";
-                }
-            }
-        }
-        
-        // Extract plot twist
-        $plotTwist = '';
-        if (preg_match('/<h3>Plot Twist \(Optional\):<\/h3>\s*<p>(.*?)<\/p>/is', $content, $plotMatches)) {
-            $plotTwist = "\n**Plot Twist:**\n" . strip_tags($plotMatches[1]);
-        }
-        
-        // Create embed
-        $embeds[] = [
-            'title' => '🚢 ' . $shipName,
-            'description' => $formattedDesc . $cargo . $plotTwist,
-            'color' => 0xbf9d61 // The Salty Parrot gold
-        ];
-        
-        return [$embeds, "Ship: $shipName"];
-    }
-    
-    /**
-     * Format loot content for Discord
-     * 
-     * @param string $content HTML content
-     * @return array Array containing [embeds, contentSummary]
-     */
-    private function formatLootContent($content) {
-        $embeds = [];
-        $contentSummary = '';
-        
-        // Extract all loot cards
-        preg_match_all('/<div class="loot-card">(.*?)<\/div>/is', $content, $lootCards);
-        
-        if (isset($lootCards[1]) && !empty($lootCards[1])) {
-            foreach ($lootCards[1] as $index => $card) {
-                // Extract loot info
-                preg_match('/<div class="loot-roll">Roll: (.*?)<\/div>/i', $card, $rollMatches);
-                preg_match('/<div class="loot-name">(.*?)<\/div>/i', $card, $nameMatches);
-                preg_match('/<div class="loot-description">(.*?)<\/div>/i', $card, $descMatches);
-                preg_match('/<div class="loot-category">Category: (.*?)<\/div>/i', $card, $catMatches);
-                
-                $roll = isset($rollMatches[1]) ? strip_tags($rollMatches[1]) : '';
-                $name = isset($nameMatches[1]) ? strip_tags($nameMatches[1]) : 'Loot item';
-                $desc = isset($descMatches[1]) ? strip_tags($descMatches[1]) : '';
-                $category = isset($catMatches[1]) ? strip_tags($catMatches[1]) : '';
-                
-                // Check for badges
-                $isAncientRelic = strpos($card, 'ancient-relic-badge') !== false;
-                $isThingOfImportance = strpos($card, 'thing-of-importance-badge') !== false;
-                
-                // Add badges to title
-                $title = $name;
-                if ($isAncientRelic) {
-                    $title .= ' 🔮 Ancient Relic';
-                }
-                if ($isThingOfImportance) {
-                    $title .= ' 📜 Thing of Importance';
-                }
-                
-                // Create embed
-                $embeds[] = [
-                    'title' => '💰 ' . $title,
-                    'description' => "**Roll:** $roll\n**Category:** $category\n\n$desc",
-                    'color' => $index === 0 ? 0xbf9d61 : 0x805d2c // Different color for additional rolls
-                ];
-                
-                // Add to content summary
-                if ($index === 0) {
-                    $contentSummary = "Loot: $name";
-                }
-            }
-        }
-        
-        return [$embeds, $contentSummary];
-    }
-    
-    /**
-     * Format attribute roll content for Discord
-     * 
-     * @param string $content HTML content
-     * @param string $characterImage Optional character image URL
-     * @return array Array containing [embeds, contentSummary]
-     */
-    private function formatAttributeRollContent($content, $characterImage = null) {
-        $embeds = [];
-        
-        // Extract roll details
-        preg_match('/<h3>(.*?) - (.*?) Check<\/h3>/i', $content, $characterMatches);
-        $characterName = isset($characterMatches[1]) ? strip_tags($characterMatches[1]) : 'Character';
-        $attributeName = isset($characterMatches[2]) ? strip_tags($characterMatches[2]) : 'Attribute';
-        
-        // Extract roll values
-        preg_match('/Dice Roll: (\d+)/i', $content, $diceMatches);
-        preg_match('/' . $attributeName . ' Bonus: ([+-]?\d+)/i', $content, $bonusMatches);
-        preg_match('/Total: (\d+)/i', $content, $totalMatches);
-        
-        $diceValue = isset($diceMatches[1]) ? $diceMatches[1] : '?';
-        $attributeBonus = isset($bonusMatches[1]) ? $bonusMatches[1] : '?';
-        $totalValue = isset($totalMatches[1]) ? $totalMatches[1] : '?';
-        
-        // Create embed
-        $embed = [
-            'title' => '🎲 ' . $attributeName . ' Check',
-            'description' => "**Roll:** " . $diceValue . "  **Bonus:** " . $attributeBonus . "  **Total:** " . $totalValue,
-            'color' => 0x5765F2 // Discord blue color
-        ];
-        
-        // Add character image if provided - use author with icon_url for left-side image
-        if ($characterImage && filter_var($characterImage, FILTER_VALIDATE_URL)) {
-            $embed['author'] = [
-                'name' => $characterName,
-                'icon_url' => $characterImage
-            ];
-        }
-        
-        $embeds[] = $embed;
-        
-        $contentSummary = $characterName . " - " . $attributeName . " Check: " . $totalValue;
-        
-        return [$embeds, $contentSummary];
-    }
-    
-    /**
-     * Format item use content for Discord
-     * 
-     * @param string $content HTML content
-     * @param string $characterImage Optional character image URL
-     * @return array Array containing [embeds, contentSummary]
-     */
-    private function formatItemUseContent($content, $characterImage = null) {
-        $embeds = [];
-        
-        // Extract item usage details
-        preg_match('/<h3>(.*?) uses an item<\/h3>/i', $content, $characterMatches);
-        $characterName = isset($characterMatches[1]) ? strip_tags($characterMatches[1]) : 'Character';
-        
-        // Extract item name
-        preg_match('/<strong>Item:<\/strong>\s*(.*?)<\/p>/i', $content, $itemMatches);
-        $itemName = isset($itemMatches[1]) ? strip_tags($itemMatches[1]) : 'Unknown Item';
-        
-        // Extract notes if any
-        $notes = '';
-        if (preg_match('/<strong>Notes:<\/strong>\s*(.*?)<\/p>/i', $content, $notesMatches)) {
-            $notes = "**Notes:** " . strip_tags($notesMatches[1]);
-        }
-        
-        // Create embed
-        $embed = [
-            'title' => '✋ Using: ' . $itemName,
-            'description' => ($notes ? $notes : "Using " . $itemName),
-            'color' => 0x7289DA // Discord blurple color
-        ];
-        
-        // Add character image if provided - use author with icon_url for left-side image
-        if ($characterImage && filter_var($characterImage, FILTER_VALIDATE_URL)) {
-            $embed['author'] = [
-                'name' => $characterName,
-                'icon_url' => $characterImage
-            ];
-        }
-        
-        $embeds[] = $embed;
-        
-        $contentSummary = $characterName . " uses " . $itemName;
-        
-        return [$embeds, $contentSummary];
-    }
 }
 
 /**
  * Helper function to create a webhook service instance
  * 
- * @param PDO $conn Optional database connection
  * @return WebhookService
  */
-function createWebhookService($conn = null) {
-    global $conn;
-    $dbConn = $conn ?: $conn;
+function createWebhookService() {
+    global $conn, $conn;
     
-    return new WebhookService($dbConn);
+    // Try to use new connection first
+    if (isset($conn) && $conn !== null) {
+        // Good, we have our new connection
+        return new WebhookService($conn);
+    }
+    
+    // Fall back to original connection if available
+    if (isset($conn) && $conn !== null) {
+        error_log('WebhookService: Using original database connection');
+        return new WebhookService($conn);
+    }
+    
+    // If no connection is available, try to establish one using original db_connect
+    // This is more likely to work on the production server
+    if (!isset($conn) && file_exists(__DIR__ . '/../config/db_connect.php')) {
+        error_log('WebhookService: Including original db_connect.php');
+        include_once __DIR__ . '/../config/db_connect.php';
+        
+        if (isset($conn) && $conn !== null) {
+            error_log('WebhookService: Successfully got connection from original db_connect.php');
+            return new WebhookService($conn);
+        }
+    }
+    
+    // Last resort - let the constructor try to establish a connection
+    error_log('WebhookService: No existing connection found, creating new one');
+    return new WebhookService();
 }
 ?>

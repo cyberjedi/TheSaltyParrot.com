@@ -1,0 +1,12 @@
+# .htaccess
+RewriteEngine On
+
+# Redirect .html requests to .php files
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.+)\.html$ $1.php [L,R=301]
+
+# Allow requests without file extension to load PHP files
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^(.*)$ $1.php [L]

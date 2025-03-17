@@ -13,11 +13,11 @@ if (session_status() == PHP_SESSION_NONE) {
 // Include Discord configuration
 require_once 'discord-config.php';
 
-// Store the return URL directly as index_new.php
-$_SESSION['discord_auth_referrer'] = '../index_new.php';
+// Store the return URL directly as index.php
+$_SESSION['discord_auth_referrer'] = '../index.php';
 
 // Set a simple session flag to indicate this request came from the new UI
-$_SESSION['from_new_ui'] = true;
+$_SESSION['from'] = true;
 
 // Generate a random state parameter to prevent CSRF attacks
 $state = bin2hex(random_bytes(16));
