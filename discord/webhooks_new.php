@@ -246,7 +246,7 @@ if (method_exists($webhookService, 'getUserWebhooks')) {
         body {
             background-color: var(--dark);
             color: var(--light);
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0;
             padding: 0;
             min-height: 100vh;
@@ -255,53 +255,66 @@ if (method_exists($webhookService, 'getUserWebhooks')) {
         }
         
         .webhook-container {
-            max-width: 800px;
+            max-width: 850px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 25px;
         }
         
         .webhook-title {
             color: var(--secondary);
             font-size: 2rem;
             margin-bottom: 20px;
-            border-bottom: 1px solid var(--secondary);
-            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(191, 157, 97, 0.3);
+            padding-bottom: 12px;
         }
         
         .webhook-description {
             margin-bottom: 30px;
+            line-height: 1.5;
         }
         
         /* Cards and Forms */
         .webhook-card {
             background-color: var(--primary);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
             border-left: 4px solid var(--secondary);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
         }
         
         .webhook-form {
             margin-top: 20px;
+            max-width: 650px;
+            margin: 0 auto;
         }
         
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         
         label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             color: var(--secondary);
+            font-weight: 500;
         }
         
         input, select, textarea {
             width: 100%;
-            padding: 8px 12px;
-            border-radius: 4px;
-            border: 1px solid #444;
-            background-color: #2a2a2a;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(191, 157, 97, 0.3);
+            background-color: rgba(0, 0, 0, 0.3);
             color: var(--light);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 2px rgba(191, 157, 97, 0.25);
+            outline: none;
         }
         
         textarea {
@@ -310,9 +323,10 @@ if (method_exists($webhookService, 'getUserWebhooks')) {
         }
         
         .input-help {
-            font-size: 12px;
-            color: #999;
-            margin-top: 4px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 6px;
+            padding-left: 2px;
         }
         
         /* Buttons */
@@ -320,16 +334,20 @@ if (method_exists($webhookService, 'getUserWebhooks')) {
             background-color: var(--secondary);
             color: var(--dark);
             border: none;
-            padding: 10px 15px;
-            border-radius: 4px;
+            padding: 12px 20px;
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 600;
             text-decoration: none;
             display: inline-block;
+            transition: all 0.2s ease;
+            font-size: 1rem;
         }
         
         button:hover, .btn:hover {
             opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
         
         .btn-primary {
@@ -338,8 +356,9 @@ if (method_exists($webhookService, 'getUserWebhooks')) {
         }
         
         .btn-secondary {
-            background-color: #444;
+            background-color: rgba(0, 0, 0, 0.3);
             color: var(--light);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
         .btn-danger {
@@ -351,8 +370,14 @@ if (method_exists($webhookService, 'getUserWebhooks')) {
             background: none;
             border: none;
             color: var(--secondary);
-            padding: 5px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
             cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 16px;
         }
         
@@ -360,100 +385,142 @@ if (method_exists($webhookService, 'getUserWebhooks')) {
             color: #d9534f;
         }
         
+        .btn-icon.test {
+            color: #5865F2; /* Discord Blue */
+        }
+        
         .btn-icon:hover {
-            opacity: 0.8;
+            background-color: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .btn-icon.delete:hover {
+            background-color: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+        
+        .btn-icon.test:hover {
+            background-color: rgba(88, 101, 242, 0.2);
         }
         
         /* Status Messages */
         .message {
-            border-radius: 4px;
-            padding: 12px 16px;
-            margin-bottom: 20px;
+            border-radius: 8px;
+            padding: 15px 18px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
+            border-left: 5px solid transparent;
         }
         
         .message.success {
-            background-color: #28a7458a;
-            border-left: 4px solid #28a745;
+            background-color: rgba(40, 167, 69, 0.1);
+            border-left-color: #28a745;
+            color: #28a745;
         }
         
         .message.error {
-            background-color: #dc35458a;
-            border-left: 4px solid #dc3545;
+            background-color: rgba(220, 53, 69, 0.1);
+            border-left-color: #dc3545;
+            color: #dc3545;
         }
         
         .message.info {
-            background-color: #17a2b88a;
-            border-left: 4px solid #17a2b8;
+            background-color: rgba(23, 162, 184, 0.1);
+            border-left-color: #17a2b8;
+            color: #17a2b8;
         }
         
         /* Webhook Tables */
         .webhooks-table-container {
             overflow-x: auto;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
         
         .webhooks-table {
             width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 10px;
+            overflow: hidden;
         }
         
         .webhooks-table th, 
         .webhooks-table td {
             text-align: left;
-            padding: 10px;
-            border-bottom: 1px solid #444;
+            padding: 14px 16px;
         }
         
         .webhooks-table th {
-            background-color: #333;
+            background-color: rgba(0, 0, 0, 0.3);
             color: var(--secondary);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            border-bottom: 2px solid rgba(191, 157, 97, 0.3);
+        }
+        
+        .webhooks-table tbody tr {
+            transition: background-color 0.2s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .webhooks-table tbody tr:last-child {
+            border-bottom: none;
         }
         
         .webhooks-table tr:hover {
-            background-color: #333;
+            background-color: rgba(255, 255, 255, 0.05);
         }
         
         .webhooks-table tr.default-webhook {
-            background-color: rgba(191, 157, 97, 0.2);
+            background-color: rgba(191, 157, 97, 0.1);
         }
         
         .webhooks-table tr.default-webhook:hover {
-            background-color: rgba(191, 157, 97, 0.3);
+            background-color: rgba(191, 157, 97, 0.15);
         }
         
         .default-badge {
             display: inline-block;
-            font-size: 11px;
             background-color: var(--secondary);
             color: var(--dark);
-            border-radius: 3px;
-            padding: 2px 6px;
-            margin-left: 5px;
-            vertical-align: middle;
+            padding: 3px 8px;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            margin-left: 8px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
         
         .server-name {
             display: block;
-            font-size: 12px;
-            color: #999;
-            margin-top: 4px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 5px;
         }
         
         .status-badge {
             display: inline-block;
-            font-size: 11px;
-            border-radius: 3px;
-            padding: 2px 6px;
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
         
         .status-badge.owner {
-            background-color: #28a7458a;
-            border: 1px solid #28a745;
+            background-color: #2e7d32;
+            color: white;
         }
         
         .status-badge.shared {
-            background-color: #17a2b88a;
-            border: 1px solid #17a2b8;
+            background-color: #1565c0;
+            color: white;
         }
         
         .sharing-code {
@@ -462,14 +529,20 @@ if (method_exists($webhookService, 'getUserWebhooks')) {
         }
         
         .sharing-code code {
-            background-color: #333;
-            padding: 2px 6px;
-            border-radius: 3px;
-            margin-right: 5px;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            margin-right: 8px;
+            border: 1px solid rgba(191, 157, 97, 0.2);
         }
         
         .webhook-actions {
             white-space: nowrap;
+            display: flex;
+            gap: 5px;
+            flex-wrap: nowrap;
+            justify-content: flex-end;
         }
         
         /* Modal */
@@ -483,109 +556,169 @@ if (method_exists($webhookService, 'getUserWebhooks')) {
             height: 100%;
             overflow: auto;
             background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(3px);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         
         .modal-content {
             background-color: var(--primary);
-            margin: 10% auto;
+            margin: 8% auto;
             padding: 30px;
-            border-radius: 8px;
-            max-width: 600px;
+            border-radius: 12px;
+            width: 85%;
+            max-width: 550px;
             position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.4s ease;
+            border: 1px solid rgba(191, 157, 97, 0.3);
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         
         .close-modal {
             position: absolute;
-            top: 12px;
+            top: 15px;
             right: 20px;
-            color: #aaa;
+            color: rgba(255, 255, 255, 0.6);
             font-size: 24px;
             cursor: pointer;
+            transition: all 0.2s;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
         }
         
         .close-modal:hover {
-            color: var(--light);
+            color: var(--secondary);
+            background-color: rgba(255, 255, 255, 0.1);
         }
         
         .form-buttons {
             display: flex;
             justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
+            gap: 12px;
+            margin-top: 25px;
         }
         
         /* Tabs */
         .webhook-tabs {
-            background-color: var(--primary);
-            border-radius: 8px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
             overflow: hidden;
-            border-left: 4px solid var(--secondary);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin: 25px 0;
         }
         
         .tab-buttons {
             display: flex;
             background-color: rgba(0, 0, 0, 0.2);
+            padding: 0 5px;
         }
         
         .tab-button {
-            flex: 1;
-            padding: 15px;
+            padding: 15px 25px;
             text-align: center;
             background: none;
             border: none;
-            border-bottom: 3px solid transparent;
             cursor: pointer;
-            font-weight: bold;
-            color: #bbb;
+            font-weight: 500;
+            color: white;
+            position: relative;
+            transition: all 0.2s ease;
+            border-bottom: 3px solid transparent;
+            opacity: 0.7;
+        }
+        
+        .tab-button:hover {
+            opacity: 1;
+            background-color: rgba(255, 255, 255, 0.05);
         }
         
         .tab-button.active {
             color: var(--secondary);
             border-bottom-color: var(--secondary);
-            background-color: rgba(0, 0, 0, 0.1);
+            opacity: 1;
+            font-weight: 600;
         }
         
         .tab-content {
             display: none;
-            padding: 20px;
+            padding: 25px;
         }
         
         .tab-content.active {
             display: block;
+            animation: fadeIn 0.3s ease;
         }
         
         /* Back Link */
         .back-link {
-            display: inline-block;
-            margin-top: 20px;
+            display: inline-flex;
+            align-items: center;
+            margin-top: 25px;
             color: var(--secondary);
             text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 50px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+        
+        .back-link:hover {
+            background-color: rgba(191, 157, 97, 0.1);
+            transform: translateX(-3px);
         }
         
         .back-link i {
-            margin-right: 5px;
+            margin-right: 8px;
         }
         
         /* Responsive Adjustments */
-        @media (max-width: 767px) {
+        @media (max-width: 768px) {
             .webhook-container {
                 padding: 15px;
             }
             
             .tab-buttons {
-                flex-direction: column;
+                flex-wrap: wrap;
             }
             
             .tab-button {
-                border-bottom: none;
-                border-left: 3px solid transparent;
-                text-align: left;
-                padding: 12px;
+                padding: 12px 15px;
+                flex: 1;
+                text-align: center;
             }
             
-            .tab-button.active {
-                border-left-color: var(--secondary);
-                border-bottom: none;
+            .webhooks-table th, 
+            .webhooks-table td {
+                padding: 10px 12px;
+            }
+            
+            .webhook-actions {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+                margin: 15% auto;
+            }
+            
+            .active-webhook-selector {
+                flex-direction: column;
+                align-items: flex-start;
             }
             
             .webhooks-table th:nth-child(3),
@@ -596,51 +729,153 @@ if (method_exists($webhookService, 'getUserWebhooks')) {
         
         /* Help section styles */
         .webhook-guide {
-            padding: 20px;
+            margin-top: 20px;
+            padding: 25px;
+            background-color: var(--dark);
+            border: 1px solid rgba(191, 157, 97, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .webhook-guide h2 {
+            color: var(--secondary);
+            border-bottom: 1px solid rgba(191, 157, 97, 0.3);
+            padding-bottom: 12px;
+            margin-bottom: 25px;
+            font-size: 1.4rem;
         }
         
         .guide-section {
-            margin-bottom: 30px;
+            margin-bottom: 28px;
+            background-color: rgba(0, 0, 0, 0.15);
+            padding: 18px;
+            border-radius: 8px;
+            border-left: 3px solid var(--secondary);
+            text-align: left;
         }
         
         .guide-section h3 {
             color: var(--secondary);
-            margin-bottom: 15px;
-            border-bottom: 1px solid #444;
+            margin-bottom: 12px;
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(191, 157, 97, 0.2);
             padding-bottom: 8px;
         }
         
         .guide-section h3 i {
-            margin-right: 8px;
+            margin-right: 10px;
+            font-size: 1.2em;
         }
         
         .guide-section ol,
         .guide-section ul {
             margin-top: 10px;
             padding-left: 25px;
+            text-align: left;
         }
         
         .guide-section li {
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+            line-height: 1.5;
+            text-align: left;
         }
         
         .guide-section p {
             line-height: 1.6;
+            text-align: left;
+        }
+        
+        .guide-section strong {
+            color: var(--secondary);
         }
         
         /* Empty state */
         .no-webhooks {
             text-align: center;
             padding: 40px 20px;
-            color: #999;
+            background-color: rgba(0, 0, 0, 0.15);
+            border-radius: 12px;
+            margin: 20px 0;
         }
         
         .no-webhooks p {
             margin-bottom: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
         }
         
         .active-webhook-selector {
-            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            padding: 16px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(191, 157, 97, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .default-webhook-form {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+        
+        .default-webhook-form label {
+            margin-right: 12px;
+            color: var(--secondary);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .default-webhook-form select {
+            flex-grow: 1;
+            background-color: rgba(0, 0, 0, 0.3);
+            color: white;
+            border: 1px solid rgba(191, 157, 97, 0.5);
+            padding: 10px 15px;
+            border-radius: 8px;
+            min-width: 250px;
+            font-size: 1em;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23BF9D61' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            padding-right: 40px;
+            transition: all 0.2s ease;
+        }
+        
+        .default-webhook-form select:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 2px rgba(191, 157, 97, 0.25);
+            outline: none;
+        }
+        
+        @media (max-width: 768px) {
+            .active-webhook-selector {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .default-webhook-form {
+                flex-direction: column;
+                align-items: flex-start;
+                width: 100%;
+            }
+            
+            .default-webhook-form label {
+                margin-bottom: 10px;
+                margin-right: 0;
+            }
+            
+            .default-webhook-form select {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -753,7 +988,7 @@ if (method_exists($webhookService, 'getUserWebhooks')) {
                                                 </form>
                                             <?php endif; ?>
                                             
-                                            <button onclick="testWebhook(<?php echo $webhook['id']; ?>)" class="btn-icon" title="Test Webhook">
+                                            <button onclick="testWebhook(<?php echo $webhook['id']; ?>)" class="btn-icon test" title="Test Webhook">
                                                 <i class="fas fa-vial"></i>
                                             </button>
                                             
