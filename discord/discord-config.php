@@ -11,6 +11,11 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
+// Define API URL constant
+if (!defined('DISCORD_API_URL')) {
+    define('DISCORD_API_URL', 'https://discord.com/api/v10');
+}
+
 // Use the existing configuration by including it
 // This avoids duplicating sensitive credentials
 if (file_exists(__DIR__ . '/discord-config.php')) {
@@ -21,7 +26,6 @@ if (file_exists(__DIR__ . '/discord-config.php')) {
     if (!defined('DISCORD_CLIENT_ID')) define('DISCORD_CLIENT_ID', '');
     if (!defined('DISCORD_CLIENT_SECRET')) define('DISCORD_CLIENT_SECRET', '');
     if (!defined('DISCORD_REDIRECT_URI')) define('DISCORD_REDIRECT_URI', '');
-    if (!defined('DISCORD_API_URL')) define('DISCORD_API_URL', 'https://discord.com/api/v10');
     
     // Log the issue
     error_log('New UI could not find Discord configuration file');
