@@ -37,7 +37,7 @@ require_once __DIR__ . '/../discord/discord_service_new.php';
             </a>
         <?php else: ?>
             <!-- Show login option when not logged in -->
-            <a href="discord/discord-login_new.php" class="discord-menu-item">
+            <a href="discord/redirect_helper_new.php" class="discord-menu-item">
                 <i class="fab fa-discord"></i> Connect to Discord
             </a>
         <?php endif; ?>
