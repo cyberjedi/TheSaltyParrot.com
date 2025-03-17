@@ -10,6 +10,16 @@ require_once __DIR__ . '/../discord/discord_service.php';
 ?>
 <div class="topbar">
     <div class="topbar-container">
+        <!-- Navigation buttons -->
+        <div class="topbar-nav">
+            <a href="generators.php" class="topbar-nav-btn">
+                <i class="fas fa-dice"></i> Generators
+            </a>
+            <a href="#" class="topbar-nav-btn disabled">
+                <i class="fas fa-scroll"></i> Character Sheet
+            </a>
+        </div>
+        
         <!-- Discord connection button or user profile -->
         <div class="topbar-discord">
             <?php echo render_discord_user_profile(); ?>

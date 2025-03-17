@@ -23,6 +23,42 @@
     height: 100%;
 }
 
+/* Navigation buttons */
+.topbar-nav {
+    display: flex;
+    gap: 15px;
+}
+
+.topbar-nav-btn {
+    padding: 8px 15px;
+    color: var(--light);
+    text-decoration: none;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s ease;
+    font-weight: 500;
+}
+
+.topbar-nav-btn i {
+    margin-right: 8px;
+    color: var(--secondary);
+}
+
+.topbar-nav-btn:hover:not(.disabled) {
+    background-color: rgba(191, 157, 97, 0.1);
+}
+
+.topbar-nav-btn.active {
+    background-color: rgba(191, 157, 97, 0.2);
+    border-bottom: 2px solid var(--secondary);
+}
+
+.topbar-nav-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 /* Hamburger menu icon */
 .hamburger-menu {
     display: flex;
@@ -113,4 +149,18 @@
     font-size: 1.2rem;
     margin-bottom: 30px;
     color: var(--light);
+}
+
+.welcome-actions {
+    margin-top: 30px;
+}
+
+.welcome-actions .btn {
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+}
+
+.welcome-actions .btn:hover {
+    transform: translateY(-3px);
 }
