@@ -75,27 +75,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Function to refresh the active webhook status
-    function refreshWebhookStatus() {
-        fetch('/api/refresh_webhook_status.php')
-            .then(response => response.json())
-            .then(data => {
-                const webhookStatus = document.getElementById('webhook-status');
-                if (webhookStatus) {
-                    if (data.status === 'success') {
-                        webhookStatus.textContent = `${data.webhook.name} (#${data.webhook.channel})`;
-                    } else {
-                        webhookStatus.textContent = 'No active webhook';
-                    }
-                }
-            })
-            .catch(error => console.error('Error fetching webhook status:', error));
-    }
-
-    // Initial refresh when page loads
-    refreshWebhookStatus();
-    
-    // Refresh every 30 seconds
-    setInterval(refreshWebhookStatus, 30000);
+    // No need for AJAX refresh as the webhook status is directly rendered from PHP
 });
 </script>
