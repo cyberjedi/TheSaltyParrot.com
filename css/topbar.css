@@ -29,48 +29,24 @@
     gap: 15px;
 }
 
-.topbar-nav-btn {
+/* Styles for topbar buttons */
+.topbar-nav .btn {
     padding: 8px 15px;
-    color: var(--light);
-    text-decoration: none;
-    border-radius: 5px;
     display: flex;
     align-items: center;
-    transition: background-color 0.2s ease;
     font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    transition: all 0.2s ease-in-out;
 }
 
-.topbar-nav-btn i {
+.topbar-nav .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.topbar-nav .btn i {
     margin-right: 8px;
-    color: var(--secondary);
-}
-
-.topbar-nav-btn:hover:not(.disabled) {
-    background-color: rgba(191, 157, 97, 0.1);
-}
-
-.topbar-nav-btn.active {
-    background-color: rgba(191, 157, 97, 0.2);
-    border-bottom: 2px solid var(--secondary);
-}
-
-.topbar-nav-btn.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* Button style for navigation buttons */
-.topbar-nav-btn.btn-primary {
-    background-color: var(--secondary);
-    color: var(--dark);
-}
-
-.topbar-nav-btn.btn-primary i {
-    color: var(--dark);
-}
-
-.topbar-nav-btn.btn-primary:hover {
-    background-color: #a88a54;
 }
 
 /* Hamburger menu icon */

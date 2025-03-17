@@ -171,26 +171,26 @@ $current_page = 'generators';
         <!-- Output Window -->
         <div class="output-window">
             <div class="output-actions" id="output-actions" style="display: none;">
-                <button id="clear-output">
-                    <i class="fas fa-trash-alt"></i> Clear
+                <button id="clear-output" aria-label="Clear output" title="Clear output">
+                    <i class="fas fa-trash-alt"></i>
                 </button>
-                <button id="print-output">
-                    <i class="fas fa-print"></i> Print
+                <button id="print-output" aria-label="Print output" title="Print output">
+                    <i class="fas fa-print"></i>
                 </button>
                 <?php 
                 // Render Discord webhook modal and button
                 if (function_exists('render_discord_webhook_modal')) {
                     $sourceType = ''; // Will be set dynamically based on generator used
                     render_discord_webhook_modal('#output-display', $sourceType, false, '', [
-                        'button_text' => 'Share to Discord',
+                        'button_text' => '',
                         'button_icon' => 'fa-discord',
                         'button_class' => '',
                         'button_id' => 'share-discord'
                     ]);
                 } else {
                     // Fallback button if component is not available
-                    echo '<button id="share-discord" class="discord-share disabled">
-                        <i class="fab fa-discord"></i> Share to Discord
+                    echo '<button id="share-discord" class="discord-share disabled" aria-label="Share to Discord" title="Share to Discord">
+                        <i class="fab fa-discord"></i>
                     </button>';
                 }
                 ?>

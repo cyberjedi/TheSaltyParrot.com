@@ -17,10 +17,10 @@ require_once __DIR__ . '/../discord/discord_service.php';
         
         <!-- Navigation buttons moved to the right -->
         <div class="topbar-nav">
-            <a href="generators.php" class="topbar-nav-btn btn-primary">
+            <a href="generators.php" class="btn btn-primary">
                 <i class="fas fa-dice"></i> Generators
             </a>
-            <a href="character_sheet.php" class="topbar-nav-btn btn-primary">
+            <a href="character_sheet.php" class="btn btn-primary">
                 <i class="fas fa-scroll"></i> Character Sheet
             </a>
         </div>
