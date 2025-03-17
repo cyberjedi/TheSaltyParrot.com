@@ -231,8 +231,9 @@ function render_discord_user_profile() {
         // Silently fail, just like in sidebar.php
     }
     
-    // If we don't have an active webhook in session yet, attempt one more direct database query
-    if (!$active_webhook || !isset($active_webhook['webhook_name']) || !isset($active_webhook['channel_name'])) {
+    // If we don't have webhook information yet, attempt one more direct database query
+    $active_webhook = $_SESSION['active_webhook'] ?? null;
+    if (empty($default_webhook_name) || empty($default_channel_name)) {
         try {
             // Include the database connection
             if (file_exists(__DIR__ . '/../config/db_connect.php')) {

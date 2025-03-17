@@ -779,15 +779,8 @@ class WebhookService {
 function createWebhookService() {
     global $conn;
     
-    // Try to use new connection first
+    // If we have a valid connection, use it
     if (isset($conn) && $conn !== null) {
-        // Good, we have our new connection
-        return new WebhookService($conn);
-    }
-    
-    // Fall back to original connection if available
-    if (isset($conn) && $conn !== null) {
-        error_log('WebhookService: Using original database connection');
         return new WebhookService($conn);
     }
     
