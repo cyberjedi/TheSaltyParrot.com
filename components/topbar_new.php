@@ -82,10 +82,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const refreshWebhookUrl = (baseDir.includes('/discord')) ? '/discord/api/refresh_webhook_status.php' : '/api/refresh_webhook_status.php';
 
         fetch(refreshWebhookUrl)
-            .then(response => response.json())
-            .then(data => {
-                // Update the UI with the new webhook status
-                // Example: document.getElementById('webhook-status').innerText = data.status;
+            .then(response => response.text())
+            .then(text => {
+                try {
+                    const data = JSON.parse(text);
+                    // Update the UI with the new webhook status
+                    // Example: document.getElementById('webhook-status').innerText = data.status;
+                } catch (error) {
+                    console.error('Error parsing JSON:', error);
+                }
             })
             .catch(error => console.error('Error fetching webhook status:', error));
     }
