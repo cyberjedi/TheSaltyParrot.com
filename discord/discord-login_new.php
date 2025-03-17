@@ -1,18 +1,24 @@
 <?php
 // File: discord/discord-login_new.php
-// Clean implementation of Discord login functionality
-require_once 'discord-config.php';
+// Clean implementation of Discord login functionality for the new UI
+require_once 'discord-config_new.php';
 
-// Store original page in session for post-auth redirect
-$return_url = '../index_new.php';
+// Store the return URL in session
+$_SESSION['discord_new_ui_return'] = '../index_new.php';
 
-// Use HTTP_REFERER if available 
+// Use HTTP_REFERER if available
 if (isset($_SERVER['HTTP_REFERER'])) {
-    $return_url = $_SERVER['HTTP_REFERER'];
+    // Make sure it's a new UI page
+    if (strpos($_SERVER['HTTP_REFERER'], '_new') !== false) {
+        $_SESSION['discord_new_ui_return'] = $_SERVER['HTTP_REFERER'];
+    }
 }
 
-// Store in session for callback
-$_SESSION['discord_auth_referrer'] = $return_url;
+// Set a special flag to identify this auth request came from new UI
+$_SESSION['from_new_ui'] = true;
+
+// Log the authentication attempt
+error_log('Discord auth requested from new UI. Return URL: ' . $_SESSION['discord_new_ui_return']);
 
 // Generate a random state parameter to prevent CSRF attacks
 $state = bin2hex(random_bytes(16));

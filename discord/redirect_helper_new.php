@@ -11,19 +11,19 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 
 // Set cookie for 5 minutes to ensure we return to new UI after OAuth flow
-setcookie('tsp_new_ui_redirect', 'true', time() + 300, '/');
+setcookie('from_new_ui', 'true', time() + 300, '/');
 
 // Store original URL to return to after authentication
 if (isset($_GET['return_to'])) {
     $_SESSION['discord_new_ui_return'] = $_GET['return_to'];
 } else {
-    $_SESSION['discord_new_ui_return'] = '/index_new.php';
+    $_SESSION['discord_new_ui_return'] = '../index_new.php';
 }
 
 // Log the redirect
 error_log('Setting up new UI redirect to Discord OAuth. Return path: ' . $_SESSION['discord_new_ui_return']);
 
-// Redirect to the existing Discord login flow
-header('Location: discord-login.php');
+// Redirect to our new Discord login flow
+header('Location: discord-login_new.php');
 exit;
 ?>
