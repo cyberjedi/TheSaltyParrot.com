@@ -578,6 +578,18 @@ class WebhookServiceNew {
             $stmt->bindParam(':user_id', $this->userId);
             $stmt->execute();
             
+            // Get the updated webhook details and update the session
+            $webhookStmt = $this->conn->prepare("SELECT id, webhook_name, channel_name, is_default, is_active, server_id 
+                                                FROM discord_webhooks 
+                                                WHERE id = :id");
+            $webhookStmt->bindParam(':id', $webhookId);
+            $webhookStmt->execute();
+            $webhook = $webhookStmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($webhook) {
+                $_SESSION['active_webhook'] = $webhook;
+            }
+            
             return [
                 'status' => 'success',
                 'message' => 'Default webhook updated successfully'

@@ -89,7 +89,12 @@ function get_default_webhook_new() {
         return null;
     }
     
-    // Always check the database for the most current webhook setting
+    // Clear session cache if we're coming from the webhooks page to ensure fresh data
+    if (isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'], 'webhooks') !== false) {
+        unset($_SESSION['active_webhook']);
+    }
+    
+    // Check the database for the most current webhook setting
     try {
         // Include the database connection
         if (file_exists(__DIR__ . '/../config/db_connect.php')) {
@@ -196,6 +201,50 @@ function render_discord_user_profile() {
     
     // Get the active webhook from our improved function
     $active_webhook = get_default_webhook_new();
+    
+    // If we don't have an active webhook in session yet, attempt one more direct database query
+    if (!$active_webhook || !isset($active_webhook['webhook_name']) || !isset($active_webhook['channel_name'])) {
+        try {
+            // Include the database connection
+            if (file_exists(__DIR__ . '/../config/db_connect.php')) {
+                require_once __DIR__ . '/../config/db_connect.php';
+            } else {
+                require_once 'config/db_connect.php';
+            }
+            
+            global $conn;
+            if (isset($conn) && isset($_SESSION['discord_user']['id'])) {
+                $discord_id = $_SESSION['discord_user']['id'];
+                
+                // Get user ID
+                $userStmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
+                $userStmt->bindParam(':discord_id', $discord_id);
+                $userStmt->execute();
+                $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($userData) {
+                    $user_id = $userData['id'];
+                    
+                    // Try one more direct query for the default webhook
+                    $webhookStmt = $conn->prepare("SELECT id, webhook_name, channel_name, is_default, is_active, server_id
+                                                  FROM discord_webhooks 
+                                                  WHERE user_id = :user_id AND is_active = 1
+                                                  ORDER BY is_default DESC, last_updated DESC
+                                                  LIMIT 1");
+                    $webhookStmt->bindParam(':user_id', $user_id);
+                    $webhookStmt->execute();
+                    $active_webhook = $webhookStmt->fetch(PDO::FETCH_ASSOC);
+                    
+                    // Update session with this webhook
+                    if ($active_webhook) {
+                        $_SESSION['active_webhook'] = $active_webhook;
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            error_log('Error in direct webhook query: ' . $e->getMessage());
+        }
+    }
     
     // Build webhook info based on what we found
     $webhook_info = '';
