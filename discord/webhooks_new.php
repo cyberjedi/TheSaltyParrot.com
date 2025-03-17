@@ -129,9 +129,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && method_exists($webhookService, 'get
                 
                 $result = $webhookService->setDefaultWebhook($webhookId);
                 
-                // Store the active webhook ID in the session
-                $_SESSION['active_webhook_id'] = $webhookId;
-                
                 $message = $result['message'];
                 $messageType = $result['status'];
             } else {
