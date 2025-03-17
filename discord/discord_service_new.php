@@ -113,9 +113,9 @@ function get_default_webhook_new() {
             return null;
         }
         
-        // Get webhook from database - mapping webhook_name to server_name
+        // Get webhook from database
         $stmt = $conn->prepare("
-            SELECT id, webhook_name AS server_name, channel_name 
+            SELECT id, webhook_name, channel_name 
             FROM discord_webhooks 
             WHERE user_id = (SELECT id FROM discord_users WHERE discord_id = :discord_id)
             AND is_default = 1
@@ -162,10 +162,10 @@ function render_discord_user_profile() {
     $webhook = get_default_webhook_new();
     $webhook_info = '';
     
-    if ($webhook && isset($webhook['server_name']) && isset($webhook['channel_name'])) {
+    if ($webhook && isset($webhook['webhook_name']) && isset($webhook['channel_name'])) {
         $webhook_info = '<div class="discord-server">';
         $webhook_info .= '<span class="discord-status connected"></span>';
-        $webhook_info .= htmlspecialchars($webhook['server_name']) . ' / #' . htmlspecialchars($webhook['channel_name']);
+        $webhook_info .= htmlspecialchars($webhook['webhook_name']) . ' / #' . htmlspecialchars($webhook['channel_name']);
         $webhook_info .= '</div>';
     } else {
         $webhook_info = '<div class="discord-webhook-info">';
