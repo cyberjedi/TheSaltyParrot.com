@@ -19,6 +19,7 @@ if (session_status() == PHP_SESSION_NONE) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/topbar_new.css">
+    <link rel="stylesheet" href="css/discord_new.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <style>
         body {

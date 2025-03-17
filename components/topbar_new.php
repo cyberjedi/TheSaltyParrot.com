@@ -2,14 +2,17 @@
 /**
  * Topbar Navigation Component (New Design)
  * 
- * A minimalist topbar with hamburger menu for The Salty Parrot
+ * A minimalist topbar with hamburger menu and Discord integration
  */
+
+// Include Discord service
+require_once __DIR__ . '/../discord/discord_service_new.php';
 ?>
 <div class="topbar">
     <div class="topbar-container">
-        <!-- Logo could go here later -->
-        <div class="topbar-logo">
-            <!-- Placeholder for logo -->
+        <!-- Discord connection button or user profile -->
+        <div class="topbar-discord">
+            <?php echo render_discord_user_profile(); ?>
         </div>
         
         <!-- Hamburger menu icon -->
@@ -22,9 +25,22 @@
         </div>
     </div>
     
-    <!-- Dropdown menu (empty for now) -->
+    <!-- Dropdown menu with Discord options -->
     <div id="dropdown-menu" class="dropdown-menu">
-        <!-- Menu items will be added later -->
+        <?php if (is_discord_authenticated_new()): ?>
+            <!-- Show Discord-related options when logged in -->
+            <a href="discord/webhooks_new.php" class="discord-menu-item">
+                <i class="fas fa-cog"></i> Configure Webhooks
+            </a>
+            <a href="discord/discord-logout.php" class="discord-menu-item">
+                <i class="fas fa-sign-out-alt"></i> Disconnect Discord
+            </a>
+        <?php else: ?>
+            <!-- Show login option when not logged in -->
+            <a href="discord/discord-login_new.php" class="discord-menu-item">
+                <i class="fab fa-discord"></i> Connect to Discord
+            </a>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -38,6 +54,14 @@ document.addEventListener('DOMContentLoaded', function() {
         menuToggle.addEventListener('click', function() {
             dropdownMenu.classList.toggle('active');
             menuToggle.classList.toggle('active');
+        });
+        
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!menuToggle.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                dropdownMenu.classList.remove('active');
+                menuToggle.classList.remove('active');
+            }
         });
     }
 });
