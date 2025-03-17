@@ -1,6 +1,7 @@
 /**
  * Simple Discord Integration
  * A minimal, non-invasive Discord integration for character sheets
+ * Version 3.1 - Fixed to prevent interference with button clicks
  */
 
 // Use an immediately invoked function expression for clean scope
@@ -37,27 +38,31 @@
         console.groupEnd();
     };
     
-    // Wait for DOM to be ready
-    document.addEventListener('DOMContentLoaded', function() {
+    // Store the dice roll data for sharing
+    let currentRollData = null;
+    
+    // Function to initialize only once DOM is completely ready
+    function initDiscordIntegration() {
         log('Initializing Discord integration');
         
         // Find Discord button in dice roll modal
-        const discordButton = document.getElementById('send-roll-discord-btn');
-        
-        // Store the dice roll data for sharing
-        let currentRollData = null;
+        let discordButton = document.getElementById('send-roll-discord-btn');
         
         // Listen for the custom dice roll event from character sheet
-        document.addEventListener('characterDiceRoll', function(event) {
-            // Store roll data for Discord
-            currentRollData = event.detail;
-            log('Received dice roll event with data');
-        });
+        // Use a namespaced event handler to avoid conflicts
+        if (!window._discord_event_attached) {
+            // Only attach once
+            document.addEventListener('characterDiceRoll', function(event) {
+                // Store roll data for Discord
+                currentRollData = event.detail;
+                log('Received dice roll event with data');
+            });
+            window._discord_event_attached = true;
+        }
         
         // Set up the Discord button handler ONLY if it exists
         if (discordButton) {
             log('Found Discord button, setting up handler', 'info');
-            console.log('Discord button details:', discordButton);
             
             // Apply a data attribute to mark this as processed by Discord
             if (discordButton.hasAttribute('data-discord-handler')) {
@@ -71,12 +76,14 @@
             // Mark this button as having our handler
             discordButton.setAttribute('data-discord-handler', 'true');
             
-            // Simple click handler with extensive tracing
-            discordButton.addEventListener('click', function(event) {
+            // Critical: Use event delegation pattern to avoid capturing unrelated clicks
+            discordButton.addEventListener('click', function discordButtonHandler(event) {
+                // Stop event from bubbling to avoid triggering document handlers
+                event.stopPropagation();
+                
                 console.group('🎮 DISCORD BUTTON CLICKED');
                 console.log('Button:', this);
                 console.log('Event:', event);
-                traceEvent(event);
                 
                 // Skip if no roll data
                 if (!currentRollData) {
@@ -91,31 +98,32 @@
                     // Close dice roll modal
                     const diceRollModal = document.getElementById('dice-roll-modal');
                     if (diceRollModal) {
-                        console.log('Closing dice roll modal');
                         diceRollModal.style.display = 'none';
-                    } else {
-                        console.warn('Dice roll modal not found, nothing to close');
+                        diceRollModal.classList.remove('active');
                     }
                     
                     // Prepare Discord webhook content
                     const content = formatRollForDiscord(currentRollData);
-                    console.log('Formatted content for Discord:', content);
                     
                     // Update the content in the Discord modal
                     const contentElement = document.getElementById('attribute-roll-content');
                     if (contentElement) {
                         contentElement.innerHTML = content;
-                        console.log('Updated attribute roll content element');
                     } else {
-                        console.warn('Attribute roll content element not found');
+                        log('Attribute roll content element not found', 'warn');
                     }
                     
                     // Open Discord webhook modal
                     const webhookButton = document.getElementById('open-discord-modal');
                     if (webhookButton) {
-                        console.log('Found webhook button, clicking it:', webhookButton);
+                        // First, update the content that will be sent
+                        const contentElement = document.getElementById('attribute-roll-content');
+                        if (contentElement) {
+                            contentElement.innerHTML = content;
+                        }
+                        
+                        // Then trigger the discord webhook modal
                         webhookButton.click();
-                        console.log('Webhook button clicked');
                     } else {
                         log('Discord webhook button not found', 'error');
                         alert('Discord webhook not properly configured');
@@ -133,7 +141,7 @@
         } else {
             log('Discord button not found in page', 'warn');
         }
-    });
+    }
     
     // Format roll data for Discord
     function formatRollForDiscord(rollData) {
@@ -149,6 +157,14 @@
         `;
     }
     
+    // Wait for DOM to be ready - critical to ensure we don't start too early
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initDiscordIntegration);
+    } else {
+        // Small timeout to ensure everything else has loaded first
+        setTimeout(initDiscordIntegration, 100);
+    }
+    
     // Provide minimal backward compatibility
     window.updateCurrentRoll = function(rollData) {
         // Create and dispatch a custom event with the roll data
@@ -158,4 +174,16 @@
         });
         document.dispatchEvent(event);
     };
+    
+    // Also run initialization when page has completely loaded
+    window.addEventListener('load', function() {
+        // Give a little extra time for any other scripts to finish
+        setTimeout(function() {
+            log('Running post-load initialization', 'info');
+            initDiscordIntegration();
+        }, 500);
+    });
+    
+    // Flag for integration verification
+    window.discord_integration_version = '3.1';
 })();
