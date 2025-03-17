@@ -1,0 +1,66 @@
+<?php
+/**
+ * Database Connection for New UI
+ * 
+ * Handles database connection for the new UI components
+ * Reuses the same connection parameters as the original system
+ */
+
+// Start the session if not started
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Only create connection if one doesn't already exist
+if (!isset($conn_new)) {
+    try {
+        // Find and include the secure variables file
+        $possible_config_paths = [
+            $_SERVER['DOCUMENT_ROOT'] . '/../../private/secure_variables.php',
+            $_SERVER['DOCUMENT_ROOT'] . '/../private/secure_variables.php',
+            $_SERVER['DOCUMENT_ROOT'] . '/private/secure_variables.php',
+            dirname(__FILE__) . '/../../private/secure_variables.php'
+        ];
+        
+        $config = null;
+        foreach ($possible_config_paths as $path) {
+            if (file_exists($path)) {
+                $config = require_once($path);
+                break;
+            }
+        }
+        
+        if ($config === null) {
+            throw new Exception('Database configuration file not found');
+        }
+        
+        // Extract DB credentials
+        $db_host = $config['db']['host'] ?? 'localhost';
+        $db_name = $config['db']['name'] ?? 'thesaltyparrot';
+        $db_user = $config['db']['user'] ?? '';
+        $db_pass = $config['db']['pass'] ?? '';
+        
+        // Create PDO connection
+        $conn_new = new PDO(
+            "mysql:host=$db_host;dbname=$db_name;charset=utf8mb4",
+            $db_user,
+            $db_pass,
+            [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false
+            ]
+        );
+        
+        // Create a global hook to alias $conn_new to $conn for compatibility in some contexts
+        $GLOBALS['conn_new'] = $conn_new;
+        
+    } catch (PDOException $e) {
+        error_log('New UI DB Connection error: ' . $e->getMessage());
+        $conn_new = null;
+    } catch (Exception $e) {
+        error_log('New UI DB Config error: ' . $e->getMessage());
+        $conn_new = null;
+    }
+}
+?>

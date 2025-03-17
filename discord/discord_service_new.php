@@ -4,8 +4,13 @@
  * Provides helper functions for the new interface's Discord integration
  */
 
-// Reuse existing Discord configuration
-require_once 'discord-config.php';
+// Use our new UI Discord configuration
+if (file_exists(__DIR__ . '/discord-config_new.php')) {
+    require_once __DIR__ . '/discord-config_new.php';
+} else {
+    // Fallback for when we're included from another directory
+    require_once 'discord/discord-config_new.php';
+}
 
 /**
  * Check if user is authenticated with Discord
@@ -13,7 +18,15 @@ require_once 'discord-config.php';
  * @return bool True if authenticated
  */
 function is_discord_authenticated_new() {
-    return is_discord_authenticated();
+    // Make sure is_discord_authenticated() exists
+    if (function_exists('is_discord_authenticated')) {
+        return is_discord_authenticated();
+    }
+    
+    // Fallback implementation if the original function isn't available
+    return isset($_SESSION['discord_user']) && 
+           isset($_SESSION['discord_access_token']) && 
+           isset($_SESSION['discord_token_expires']);
 }
 
 /**
@@ -22,7 +35,7 @@ function is_discord_authenticated_new() {
  * @return array|null User data or null if not authenticated
  */
 function get_discord_user_new() {
-    if (!is_discord_authenticated()) {
+    if (!is_discord_authenticated_new()) {
         return null;
     }
     
@@ -72,12 +85,27 @@ function get_discord_username($user) {
  * @return array|null Webhook data or null if none found
  */
 function get_default_webhook_new() {
-    if (!is_discord_authenticated()) {
+    if (!is_discord_authenticated_new()) {
         return null;
     }
     
     try {
-        require_once '../config/db_connect.php';
+        // Use our new database connection
+        if (file_exists(__DIR__ . '/../config/db_connect_new.php')) {
+            require_once __DIR__ . '/../config/db_connect_new.php';
+        } else {
+            require_once 'config/db_connect_new.php';
+        }
+        
+        // Safe access to our new connection
+        global $conn_new;
+        if (!isset($conn_new)) {
+            error_log('New UI database connection not available');
+            return null;
+        }
+        
+        // Alias to local variable for code clarity
+        $conn = $conn_new;
         
         // Get Discord user ID from session
         $discord_id = $_SESSION['discord_user']['id'] ?? null;
