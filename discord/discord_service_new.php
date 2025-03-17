@@ -113,17 +113,17 @@ function get_default_webhook_new() {
             return null;
         }
         
-        // Get webhook from database
+        // Get webhook from database - mapping webhook_name to server_name
         $stmt = $conn->prepare("
-            SELECT id, server_name, channel_name 
+            SELECT id, webhook_name AS server_name, channel_name 
             FROM discord_webhooks 
             WHERE user_id = (SELECT id FROM discord_users WHERE discord_id = :discord_id)
             AND is_default = 1
+            AND is_active = 1
             LIMIT 1
         ");
         $stmt->bindParam(':discord_id', $discord_id);
         $stmt->execute();
-        
         return $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (Exception $e) {
         error_log('Error fetching default webhook: ' . $e->getMessage());
@@ -162,7 +162,7 @@ function render_discord_user_profile() {
     $webhook = get_default_webhook_new();
     $webhook_info = '';
     
-    if ($webhook) {
+    if ($webhook && isset($webhook['server_name']) && isset($webhook['channel_name'])) {
         $webhook_info = '<div class="discord-server">';
         $webhook_info .= '<span class="discord-status connected"></span>';
         $webhook_info .= htmlspecialchars($webhook['server_name']) . ' / #' . htmlspecialchars($webhook['channel_name']);
