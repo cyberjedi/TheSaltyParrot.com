@@ -884,7 +884,7 @@ if (method_exists($webhookService, 'getUserWebhooks')) {
     <?php include '../components/topbar.php'; ?>
     
     <!-- Main Content Area -->
-    <main class="main-content-new">
+    <main class="main-content">
         <div class="webhook-container">
             <h1 class="webhook-title">Discord Webhook Configuration</h1>
             

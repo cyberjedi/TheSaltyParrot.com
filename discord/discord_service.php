@@ -18,12 +18,7 @@ if (file_exists(__DIR__ . '/discord-config.php')) {
  * @return bool True if authenticated
  */
 function is_discord_authenticated() {
-    // Make sure is_discord_authenticated() exists
-    if (function_exists('is_discord_authenticated')) {
-        return is_discord_authenticated();
-    }
-    
-    // Fallback implementation if the original function isn't available
+    // Simple check for session variables indicating Discord authentication
     return isset($_SESSION['discord_user']) && 
            isset($_SESSION['discord_access_token']) && 
            isset($_SESSION['discord_token_expires']);

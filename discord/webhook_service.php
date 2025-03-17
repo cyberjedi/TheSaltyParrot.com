@@ -777,7 +777,7 @@ class WebhookService {
  * @return WebhookService
  */
 function createWebhookService() {
-    global $conn, $conn;
+    global $conn;
     
     // Try to use new connection first
     if (isset($conn) && $conn !== null) {
