@@ -77,25 +77,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to refresh the active webhook status
     function refreshWebhookStatus() {
-        // Determine correct path for refresh webhook status based on current directory
-        const baseDir = window.location.pathname;
-        const refreshWebhookUrl = (baseDir.includes('/discord')) ? '/discord/api/refresh_webhook_status.php' : '/api/refresh_webhook_status.php';
-
-        fetch(refreshWebhookUrl)
-            .then(response => response.text())
-            .then(text => {
-                try {
-                    const data = JSON.parse(text);
-                    // Update the UI with the new webhook status
-                    // Example: document.getElementById('webhook-status').innerText = data.status;
-                } catch (error) {
-                    console.error('Error parsing JSON:', error);
+        fetch('/api/refresh_webhook_status.php')
+            .then(response => response.json())
+            .then(data => {
+                const webhookStatus = document.getElementById('webhook-status');
+                if (webhookStatus) {
+                    if (data.status === 'success') {
+                        webhookStatus.textContent = `${data.webhook.name} (#${data.webhook.channel})`;
+                    } else {
+                        webhookStatus.textContent = 'No active webhook';
+                    }
                 }
             })
             .catch(error => console.error('Error fetching webhook status:', error));
     }
 
-    // Refresh webhook status when the page loads
+    // Initial refresh when page loads
     refreshWebhookStatus();
+    
+    // Refresh every 30 seconds
+    setInterval(refreshWebhookStatus, 30000);
 });
 </script>
