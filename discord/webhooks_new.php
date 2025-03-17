@@ -50,30 +50,53 @@ if (!is_discord_authenticated_new()) {
 $user = get_discord_user_new();
 
 // Initialize webhook service
-$webhookService = createWebhookServiceNew();
+try {
+    $webhookService = createWebhookServiceNew();
+    
+    // Verify the service was created successfully
+    if (!$webhookService) {
+        throw new Exception('Failed to create webhook service');
+    }
+} catch (Exception $e) {
+    // Log the error
+    error_log('Error initializing webhook service: ' . $e->getMessage());
+    
+    // Set error message
+    $message = 'There was a problem connecting to the database. Please try again later.';
+    $messageType = 'error';
+    
+    // Create empty service object to prevent errors
+    $webhookService = new stdClass();
+    $webhookService->getUserWebhooks = function() { return []; };
+}
 
 // Initialize variables
-$message = '';
-$messageType = '';
+$message = $message ?? '';
+$messageType = $messageType ?? '';
 $webhooks = [];
 
 // Process form submissions
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && method_exists($webhookService, 'getUserWebhooks')) {
     // Add webhook form submission
     if (isset($_POST['action']) && $_POST['action'] === 'add_webhook') {
         if (empty($_POST['webhook_url'])) {
             $message = 'Please enter a Discord webhook URL.';
             $messageType = 'error';
         } else {
-            $webhookUrl = trim($_POST['webhook_url']);
-            $webhookName = !empty($_POST['webhook_name']) ? $_POST['webhook_name'] : 'The Salty Parrot';
-            $channelName = !empty($_POST['channel_name']) ? $_POST['channel_name'] : 'general';
-            $webhookDescription = !empty($_POST['webhook_description']) ? $_POST['webhook_description'] : '';
-            
-            $result = $webhookService->addWebhook($webhookUrl, $webhookName, $channelName, $webhookDescription);
-            
-            $message = $result['message'];
-            $messageType = $result['status'];
+            if (method_exists($webhookService, 'addWebhook')) {
+                $webhookUrl = trim($_POST['webhook_url']);
+                $webhookName = !empty($_POST['webhook_name']) ? $_POST['webhook_name'] : 'The Salty Parrot';
+                $channelName = !empty($_POST['channel_name']) ? $_POST['channel_name'] : 'general';
+                $webhookDescription = !empty($_POST['webhook_description']) ? $_POST['webhook_description'] : '';
+                
+                $result = $webhookService->addWebhook($webhookUrl, $webhookName, $channelName, $webhookDescription);
+                
+                $message = $result['message'];
+                $messageType = $result['status'];
+            } else {
+                $message = 'The webhook service is currently unavailable. Please try again later.';
+                $messageType = 'error';
+            }
         }
     }
     // Import shared webhook
@@ -82,12 +105,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Please enter a webhook sharing code.';
             $messageType = 'error';
         } else {
-            $sharingCode = trim($_POST['sharing_code']);
-            
-            $result = $webhookService->importSharedWebhook($sharingCode);
-            
-            $message = $result['message'];
-            $messageType = $result['status'];
+            if (method_exists($webhookService, 'importSharedWebhook')) {
+                $sharingCode = trim($_POST['sharing_code']);
+                
+                $result = $webhookService->importSharedWebhook($sharingCode);
+                
+                $message = $result['message'];
+                $messageType = $result['status'];
+            } else {
+                $message = 'The webhook service is currently unavailable. Please try again later.';
+                $messageType = 'error';
+            }
         }
     }
     // Set default webhook
@@ -96,12 +124,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Missing webhook ID.';
             $messageType = 'error';
         } else {
-            $webhookId = $_POST['webhook_id'];
-            
-            $result = $webhookService->setDefaultWebhook($webhookId);
-            
-            $message = $result['message'];
-            $messageType = $result['status'];
+            if (method_exists($webhookService, 'setDefaultWebhook')) {
+                $webhookId = $_POST['webhook_id'];
+                
+                $result = $webhookService->setDefaultWebhook($webhookId);
+                
+                $message = $result['message'];
+                $messageType = $result['status'];
+            } else {
+                $message = 'The webhook service is currently unavailable. Please try again later.';
+                $messageType = 'error';
+            }
         }
     }
     // Update webhook details
@@ -110,15 +143,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Missing webhook ID.';
             $messageType = 'error';
         } else {
-            $webhookId = $_POST['webhook_id'];
-            $webhookName = $_POST['webhook_name'];
-            $channelName = $_POST['channel_name'];
-            $webhookDescription = $_POST['webhook_description'] ?? '';
-            
-            $result = $webhookService->updateWebhook($webhookId, $webhookName, $channelName, $webhookDescription);
-            
-            $message = $result['message'];
-            $messageType = $result['status'];
+            if (method_exists($webhookService, 'updateWebhook')) {
+                $webhookId = $_POST['webhook_id'];
+                $webhookName = $_POST['webhook_name'];
+                $channelName = $_POST['channel_name'];
+                $webhookDescription = $_POST['webhook_description'] ?? '';
+                
+                $result = $webhookService->updateWebhook($webhookId, $webhookName, $channelName, $webhookDescription);
+                
+                $message = $result['message'];
+                $messageType = $result['status'];
+            } else {
+                $message = 'The webhook service is currently unavailable. Please try again later.';
+                $messageType = 'error';
+            }
         }
     }
     // Delete webhook
@@ -127,12 +165,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Missing webhook ID.';
             $messageType = 'error';
         } else {
-            $webhookId = $_POST['webhook_id'];
-            
-            $result = $webhookService->deleteWebhook($webhookId);
-            
-            $message = $result['message'];
-            $messageType = $result['status'];
+            if (method_exists($webhookService, 'deleteWebhook')) {
+                $webhookId = $_POST['webhook_id'];
+                
+                $result = $webhookService->deleteWebhook($webhookId);
+                
+                $message = $result['message'];
+                $messageType = $result['status'];
+            } else {
+                $message = 'The webhook service is currently unavailable. Please try again later.';
+                $messageType = 'error';
+            }
         }
     }
 }
@@ -171,7 +214,21 @@ if (isset($_SESSION['discord_access_token'])) {
 }
 
 // Get user's webhooks
-$webhooks = $webhookService->getUserWebhooks();
+if (method_exists($webhookService, 'getUserWebhooks')) {
+    try {
+        $webhooks = $webhookService->getUserWebhooks();
+    } catch (Exception $e) {
+        error_log('Error getting webhooks: ' . $e->getMessage());
+        $webhooks = [];
+        
+        if (empty($message)) {
+            $message = 'There was an error fetching your webhooks. Please try again later.';
+            $messageType = 'error';
+        }
+    }
+} else {
+    $webhooks = [];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">

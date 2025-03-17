@@ -14,12 +14,14 @@ if (session_status() == PHP_SESSION_NONE) {
 // Only create connection if one doesn't already exist
 if (!isset($conn_new)) {
     try {
-        // Find and include the secure variables file
+        // Find and include the secure variables file - use same paths as original
         $possible_config_paths = [
-            $_SERVER['DOCUMENT_ROOT'] . '/../../private/secure_variables.php',
-            $_SERVER['DOCUMENT_ROOT'] . '/../private/secure_variables.php',
-            $_SERVER['DOCUMENT_ROOT'] . '/private/secure_variables.php',
-            dirname(__FILE__) . '/../../private/secure_variables.php'
+            '/home/theshfmb/private/secure_variables.php', // Production
+            dirname(__DIR__) . '/private/secure_variables.php', // Relative path
+            $_SERVER['DOCUMENT_ROOT'] . '/private/secure_variables.php', // Document root
+            __DIR__ . '/../private/secure_variables.php', // Local development
+            $_SERVER['DOCUMENT_ROOT'] . '/../private/secure_variables.php', // Alt production
+            $_SERVER['DOCUMENT_ROOT'] . '/../../private/secure_variables.php' // Another alt production
         ];
         
         $config = null;
@@ -34,11 +36,20 @@ if (!isset($conn_new)) {
             throw new Exception('Database configuration file not found');
         }
         
-        // Extract DB credentials
-        $db_host = $config['db']['host'] ?? 'localhost';
-        $db_name = $config['db']['name'] ?? 'thesaltyparrot';
-        $db_user = $config['db']['user'] ?? '';
-        $db_pass = $config['db']['pass'] ?? '';
+        // Extract DB credentials - handle both formats for compatibility
+        if (isset($config['db'])) {
+            // New format with 'db' namespace
+            $db_host = $config['db']['host'] ?? 'localhost';
+            $db_name = $config['db']['name'] ?? 'thesaltyparrot';
+            $db_user = $config['db']['user'] ?? '';
+            $db_pass = $config['db']['pass'] ?? '';
+        } else {
+            // Original format from db_connect.php
+            $db_host = $config['host'] ?? 'localhost';
+            $db_name = $config['dbname'] ?? 'thesaltyparrot';
+            $db_user = $config['username'] ?? '';
+            $db_pass = $config['password'] ?? '';
+        }
         
         // Create PDO connection
         $conn_new = new PDO(

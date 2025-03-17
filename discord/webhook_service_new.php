@@ -34,10 +34,41 @@ class WebhookServiceNew {
     /**
      * Constructor - initializes the service with database connection
      * 
-     * @param PDO $conn Database connection
+     * @param PDO|null $conn Database connection
      */
-    public function __construct($conn) {
+    public function __construct($conn = null) {
+        // Handle null connection
+        if ($conn === null) {
+            // Try to ensure we have the global database connection
+            global $conn_new;
+            
+            // If still null, try to establish connection directly
+            if ($conn_new === null) {
+                // Try both possible include paths for the db_connect file
+                if (file_exists(__DIR__ . '/../config/db_connect_new.php')) {
+                    include_once __DIR__ . '/../config/db_connect_new.php';
+                } elseif (file_exists(__DIR__ . '/../config/db_connect.php')) {
+                    include_once __DIR__ . '/../config/db_connect.php';
+                    // If only original connection is available, use it
+                    if (isset($GLOBALS['conn']) && !isset($GLOBALS['conn_new'])) {
+                        $GLOBALS['conn_new'] = $GLOBALS['conn'];
+                    }
+                }
+                
+                $conn = $GLOBALS['conn_new'] ?? null;
+            } else {
+                $conn = $conn_new;
+            }
+        }
+        
         $this->conn = $conn;
+        
+        // Log connection status for debugging
+        if ($this->conn === null) {
+            error_log('WebhookServiceNew: Database connection is null');
+        } else {
+            error_log('WebhookServiceNew: Database connection established');
+        }
         
         // Set Discord user ID if authenticated
         if (isset($_SESSION['discord_user']) && isset($_SESSION['discord_user']['id'])) {
@@ -55,6 +86,12 @@ class WebhookServiceNew {
         try {
             if (!$this->discordId) return false;
             
+            // Check if we have a valid database connection
+            if (!$this->conn) {
+                error_log('WebhookServiceNew - No database connection available for setting user ID');
+                return false;
+            }
+            
             $stmt = $this->conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
             $stmt->bindParam(':discord_id', $this->discordId);
             $stmt->execute();
@@ -68,6 +105,9 @@ class WebhookServiceNew {
             return false;
         } catch (PDOException $e) {
             error_log('WebhookServiceNew - Error getting user ID: ' . $e->getMessage());
+            return false;
+        } catch (Exception $e) {
+            error_log('WebhookServiceNew - General error getting user ID: ' . $e->getMessage());
             return false;
         }
     }
@@ -105,6 +145,12 @@ class WebhookServiceNew {
         try {
             if (!$this->userId) return $webhooks;
             
+            // Check if we have a valid database connection
+            if (!$this->conn) {
+                error_log('WebhookServiceNew - No database connection available for getting webhooks');
+                return $webhooks;
+            }
+            
             $stmt = $this->conn->prepare("SELECT * FROM discord_webhooks 
                                          WHERE user_id = :user_id AND is_active = 1 
                                          ORDER BY is_default DESC, last_updated DESC");
@@ -113,6 +159,8 @@ class WebhookServiceNew {
             $webhooks = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log('WebhookServiceNew - Error fetching webhooks: ' . $e->getMessage());
+        } catch (Exception $e) {
+            error_log('WebhookServiceNew - General error fetching webhooks: ' . $e->getMessage());
         }
         
         return $webhooks;
@@ -126,6 +174,12 @@ class WebhookServiceNew {
     public function getDefaultWebhook() {
         try {
             if (!$this->userId) return null;
+            
+            // Check if we have a valid database connection
+            if (!$this->conn) {
+                error_log('WebhookServiceNew - No database connection available for getting default webhook');
+                return null;
+            }
             
             // First try to get default webhook
             $stmt = $this->conn->prepare("SELECT id, webhook_name, channel_name, is_default FROM discord_webhooks 
@@ -148,6 +202,9 @@ class WebhookServiceNew {
             return $webhook ?: null;
         } catch (PDOException $e) {
             error_log('WebhookServiceNew - Error getting default webhook: ' . $e->getMessage());
+            return null;
+        } catch (Exception $e) {
+            error_log('WebhookServiceNew - General error getting default webhook: ' . $e->getMessage());
             return null;
         }
     }
@@ -708,8 +765,34 @@ class WebhookServiceNew {
  * @return WebhookServiceNew
  */
 function createWebhookServiceNew() {
-    global $conn_new;
+    global $conn_new, $conn;
     
-    return new WebhookServiceNew($conn_new);
+    // Try to use new connection first
+    if (isset($conn_new) && $conn_new !== null) {
+        // Good, we have our new connection
+        return new WebhookServiceNew($conn_new);
+    }
+    
+    // Fall back to original connection if available
+    if (isset($conn) && $conn !== null) {
+        error_log('WebhookServiceNew: Using original database connection');
+        return new WebhookServiceNew($conn);
+    }
+    
+    // If no connection is available, try to establish one using original db_connect
+    // This is more likely to work on the production server
+    if (!isset($conn) && file_exists(__DIR__ . '/../config/db_connect.php')) {
+        error_log('WebhookServiceNew: Including original db_connect.php');
+        include_once __DIR__ . '/../config/db_connect.php';
+        
+        if (isset($conn) && $conn !== null) {
+            error_log('WebhookServiceNew: Successfully got connection from original db_connect.php');
+            return new WebhookServiceNew($conn);
+        }
+    }
+    
+    // Last resort - let the constructor try to establish a connection
+    error_log('WebhookServiceNew: No existing connection found, creating new one');
+    return new WebhookServiceNew();
 }
 ?>
