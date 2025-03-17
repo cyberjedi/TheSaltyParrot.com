@@ -158,19 +158,66 @@ function render_discord_user_profile() {
     $avatar_url = get_discord_avatar_url($user);
     $username = get_discord_username($user);
     
-    // Get default webhook info
-    $webhook = get_default_webhook_new();
+    // Direct database query to get the actual default webhook
     $webhook_info = '';
-    
-    if ($webhook && isset($webhook['channel_name'])) {
-        $webhook_info = '<div class="discord-server">';
-        $webhook_info .= '<span class="discord-status connected"></span>';
-        // Use webhook_name as primary display name 
-        $displayName = isset($webhook['webhook_name']) ? $webhook['webhook_name'] : 
-                      (isset($webhook['server_name']) ? $webhook['server_name'] : 'Discord');
-        $webhook_info .= htmlspecialchars($displayName) . ' / #' . htmlspecialchars($webhook['channel_name']);
-        $webhook_info .= '</div>';
-    } else {
+    try {
+        // Use our new database connection
+        if (file_exists(__DIR__ . '/../config/db_connect_new.php')) {
+            require_once __DIR__ . '/../config/db_connect_new.php';
+        } else {
+            require_once 'config/db_connect_new.php';
+        }
+        
+        global $conn_new;
+        if (isset($conn_new) && isset($_SESSION['discord_user']['id'])) {
+            $discord_id = $_SESSION['discord_user']['id'];
+            
+            // First get user ID
+            $userStmt = $conn_new->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
+            $userStmt->bindParam(':discord_id', $discord_id);
+            $userStmt->execute();
+            $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($userData && isset($userData['id'])) {
+                $user_id = $userData['id'];
+                
+                // Now get the active default webhook
+                $stmt = $conn_new->prepare("
+                    SELECT webhook_name, channel_name 
+                    FROM discord_webhooks 
+                    WHERE user_id = :user_id 
+                    AND is_default = 1 
+                    AND is_active = 1 
+                    LIMIT 1
+                ");
+                $stmt->bindParam(':user_id', $user_id);
+                $stmt->execute();
+                $webhook = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($webhook && isset($webhook['webhook_name']) && isset($webhook['channel_name'])) {
+                    $webhook_info = '<div class="discord-server">';
+                    $webhook_info .= '<span class="discord-status connected"></span>';
+                    $webhook_info .= htmlspecialchars($webhook['webhook_name']) . ' / #' . htmlspecialchars($webhook['channel_name']);
+                    $webhook_info .= '</div>';
+                } else {
+                    $webhook_info = '<div class="discord-webhook-info">';
+                    $webhook_info .= '<span class="discord-status disconnected"></span>';
+                    $webhook_info .= 'No webhook configured';
+                    $webhook_info .= '</div>';
+                }
+            } else {
+                $webhook_info = '<div class="discord-webhook-info">';
+                $webhook_info .= '<span class="discord-status disconnected"></span>';
+                $webhook_info .= 'No webhook configured';
+                $webhook_info .= '</div>';
+            }
+        } else {
+            $webhook_info = '<div class="discord-webhook-info">';
+            $webhook_info .= '<span class="discord-status disconnected"></span>';
+            $webhook_info .= 'No webhook configured';
+            $webhook_info .= '</div>';
+        }
+    } catch (Exception $e) {
         $webhook_info = '<div class="discord-webhook-info">';
         $webhook_info .= '<span class="discord-status disconnected"></span>';
         $webhook_info .= 'No webhook configured';
