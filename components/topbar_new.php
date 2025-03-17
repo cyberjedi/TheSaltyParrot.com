@@ -77,7 +77,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to refresh the active webhook status
     function refreshWebhookStatus() {
-        fetch('/discord/api/refresh_webhook_status.php')
+        // Determine correct path for refresh webhook status based on current directory
+        const baseDir = window.location.pathname;
+        const refreshWebhookUrl = (baseDir.includes('/discord')) ? '/discord/api/refresh_webhook_status.php' : '/api/refresh_webhook_status.php';
+
+        fetch(refreshWebhookUrl)
             .then(response => response.json())
             .then(data => {
                 // Update the UI with the new webhook status
