@@ -29,15 +29,25 @@ require_once __DIR__ . '/../discord/discord_service_new.php';
     <div id="dropdown-menu" class="dropdown-menu">
         <?php if (is_discord_authenticated_new()): ?>
             <!-- Show Discord-related options when logged in -->
-            <a href="discord/webhooks_new.php" class="discord-menu-item">
+            <?php 
+                // Determine correct path for webhook management based on current directory
+                $baseDir = dirname($_SERVER['PHP_SELF']);
+                $webhooksUrl = (strpos($baseDir, '/discord') === 0) ? 'webhooks_new.php' : 'discord/webhooks_new.php';
+                $logoutUrl = (strpos($baseDir, '/discord') === 0) ? 'discord-logout.php' : 'discord/discord-logout.php';
+            ?>
+            <a href="<?php echo $webhooksUrl; ?>" class="discord-menu-item">
                 <i class="fas fa-cog"></i> Configure Webhooks
             </a>
-            <a href="discord/discord-logout.php" class="discord-menu-item">
+            <a href="<?php echo $logoutUrl; ?>" class="discord-menu-item">
                 <i class="fas fa-sign-out-alt"></i> Disconnect Discord
             </a>
         <?php else: ?>
             <!-- Show login option when not logged in -->
-            <a href="discord/redirect_helper_new.php" class="discord-menu-item">
+            <?php 
+                // Determine correct path for auth based on current directory
+                $authUrl = (strpos($baseDir, '/discord') === 0) ? 'simple_auth_new.php' : 'discord/simple_auth_new.php';
+            ?>
+            <a href="<?php echo $authUrl; ?>" class="discord-menu-item">
                 <i class="fab fa-discord"></i> Connect to Discord
             </a>
         <?php endif; ?>

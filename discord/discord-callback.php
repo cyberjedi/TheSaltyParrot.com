@@ -5,8 +5,12 @@
 require_once 'discord-config.php';
 require_once '../config/db_connect.php';
 
-// Get redirect URL (either referring page or default to index)
-$redirect_url = isset($_SESSION['discord_auth_referrer']) ? $_SESSION['discord_auth_referrer'] : '../index.php';
+// Check if request came from new UI and set redirect accordingly
+$from_new_ui = isset($_SESSION['from_new_ui']) && $_SESSION['from_new_ui'] === true;
+$redirect_url = $from_new_ui ? '../index_new.php' : (isset($_SESSION['discord_auth_referrer']) ? $_SESSION['discord_auth_referrer'] : '../index.php');
+
+// Log the redirect for debugging
+error_log('Discord callback. From new UI: ' . ($from_new_ui ? 'Yes' : 'No') . '. Redirecting to: ' . $redirect_url);
 
 // Helper function to render error page
 function renderErrorPage($error_message) {
@@ -92,8 +96,9 @@ if (!isset($_GET['state']) || !isset($_SESSION['discord_oauth_state']) || $_GET[
     renderErrorPage('Invalid state parameter. Please try again.');
 }
 
-// Clear the state from session
+// Clear the state and from_new_ui flag from session
 unset($_SESSION['discord_oauth_state']);
+unset($_SESSION['from_new_ui']);
 
 // Check for the authorization code
 if (!isset($_GET['code'])) {
@@ -292,17 +297,17 @@ error_log('Discord auth success. User ID: ' . $_SESSION['discord_user']['id']);
             setTimeout(function() {
                 // If this window was opened by another window, close it and refresh parent
                 if (window.opener && !window.opener.closed) {
-                    // Try to reload the parent window
+                    // Try to redirect the parent window
                     try {
-                        window.opener.location.reload();
+                        window.opener.location.href = '<?php echo $redirect_url; ?>';
                     } catch(e) {
-                        console.error("Could not reload parent window:", e);
+                        console.error("Could not redirect parent window:", e);
                     }
                     // Close this popup
                     window.close();
                 } else {
-                    // If not in a popup, redirect to index
-                    window.location.href = '../index.php';
+                    // If not in a popup, redirect to the appropriate page
+                    window.location.href = '<?php echo $redirect_url; ?>';
                 }
             }, 1500);
         };

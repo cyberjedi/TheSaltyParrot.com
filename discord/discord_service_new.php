@@ -137,7 +137,7 @@ function get_default_webhook_new() {
  * @return string HTML for button
  */
 function render_discord_connect_button() {
-    $button = '<a href="discord/redirect_helper_new.php" class="discord-connect-button">';
+    $button = '<a href="discord/simple_auth_new.php" class="discord-connect-button">';
     $button .= '<i class="fab fa-discord"></i> Connect to Discord';
     $button .= '</a>';
     
