@@ -119,19 +119,40 @@ $current_page = 'generators';
         }
         
         .output-actions button {
-            padding: 8px 12px;
-            background-color: var(--dark);
-            border: 1px solid var(--secondary);
-            color: var(--light);
-            border-radius: 4px;
+            background: none;
+            border: none;
+            color: var(--secondary);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
             cursor: pointer;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
-            gap: 5px;
+            justify-content: center;
+            font-size: 16px;
+        }
+        
+        .output-actions button.delete {
+            color: #d9534f;
+        }
+        
+        .output-actions button.test {
+            color: #5865F2; /* Discord Blue */
         }
         
         .output-actions button:hover {
-            background-color: rgba(191, 157, 97, 0.1);
+            background-color: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .output-actions button#clear-output:hover {
+            background-color: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+        
+        .output-actions button#share-discord:hover {
+            background-color: rgba(88, 101, 242, 0.2);
         }
         
         /* Responsive adjustments */
@@ -171,7 +192,7 @@ $current_page = 'generators';
         <!-- Output Window -->
         <div class="output-window">
             <div class="output-actions" id="output-actions" style="display: none;">
-                <button id="clear-output" aria-label="Clear output" title="Clear output">
+                <button id="clear-output" class="delete" aria-label="Clear output" title="Clear output">
                     <i class="fas fa-trash-alt"></i>
                 </button>
                 <button id="print-output" aria-label="Print output" title="Print output">
@@ -184,12 +205,12 @@ $current_page = 'generators';
                     render_discord_webhook_modal('#output-display', $sourceType, false, '', [
                         'button_text' => '',
                         'button_icon' => 'fa-discord',
-                        'button_class' => '',
+                        'button_class' => 'test',
                         'button_id' => 'share-discord'
                     ]);
                 } else {
                     // Fallback button if component is not available
-                    echo '<button id="share-discord" class="discord-share disabled" aria-label="Share to Discord" title="Share to Discord">
+                    echo '<button id="share-discord" class="test discord-share disabled" aria-label="Share to Discord" title="Share to Discord">
                         <i class="fab fa-discord"></i>
                     </button>';
                 }
