@@ -74,5 +74,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Function to refresh the active webhook status
+    function refreshWebhookStatus() {
+        fetch('/path/to/your/api/endpoint')
+            .then(response => response.json())
+            .then(data => {
+                // Update the UI with the new webhook status
+                // Example: document.getElementById('webhook-status').innerText = data.status;
+            })
+            .catch(error => console.error('Error fetching webhook status:', error));
+    }
+
+    // Refresh webhook status when the page loads
+    refreshWebhookStatus();
 });
 </script>
