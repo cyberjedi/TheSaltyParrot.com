@@ -27,6 +27,7 @@
     padding: 18px;
     border-radius: 8px;
     border-left: 3px solid var(--secondary);
+    text-align: left;
 }
 
 .guide-section h3 {
@@ -45,11 +46,17 @@
 .guide-section ul, .guide-section ol {
     padding-left: 25px;
     margin-bottom: 15px;
+    text-align: left;
 }
 
 .guide-section li {
     margin-bottom: 10px;
     line-height: 1.5;
+    text-align: left;
+}
+
+.guide-section p {
+    text-align: left;
 }
 
 .guide-section strong {
@@ -162,6 +169,8 @@
     white-space: nowrap;
     display: flex;
     gap: 5px;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
 }
 
 .inline-form {
@@ -182,6 +191,10 @@
     justify-content: center;
 }
 
+.btn-icon.test {
+    color: #5865F2; /* Discord Blue */
+}
+
 .btn-icon:hover {
     background-color: rgba(255, 255, 255, 0.1);
     transform: translateY(-2px);
@@ -190,6 +203,10 @@
 .btn-icon.delete:hover {
     background-color: rgba(244, 67, 54, 0.2);
     color: #f44336;
+}
+
+.btn-icon.test:hover {
+    background-color: rgba(88, 101, 242, 0.2);
 }
 
 /* Tab Styles */

@@ -724,7 +724,7 @@ $base_path = '../';
                                                 </form>
                                             <?php endif; ?>
                                             
-                                            <button onclick="testWebhook(<?php echo $webhook['id']; ?>)" class="btn-icon" title="Test Webhook">
+                                            <button onclick="testWebhook(<?php echo $webhook['id']; ?>)" class="btn-icon test" title="Test Webhook">
                                                 <i class="fas fa-vial"></i>
                                             </button>
                                             
