@@ -46,11 +46,7 @@ if (session_status() == PHP_SESSION_NONE) {
             <p class="welcome-message">
                 Your PIRATE BORG companion for nautical adventures
             </p>
-            <div class="welcome-actions">
-                <a href="generators.php" class="btn btn-primary">
-                    <i class="fas fa-dice"></i> Explore Generators
-                </a>
-            </div>
+            <!-- Welcome actions removed as requested -->
         </div>
     </main>
     

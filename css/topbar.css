@@ -59,6 +59,20 @@
     cursor: not-allowed;
 }
 
+/* Button style for navigation buttons */
+.topbar-nav-btn.btn-primary {
+    background-color: var(--secondary);
+    color: var(--dark);
+}
+
+.topbar-nav-btn.btn-primary i {
+    color: var(--dark);
+}
+
+.topbar-nav-btn.btn-primary:hover {
+    background-color: #a88a54;
+}
+
 /* Hamburger menu icon */
 .hamburger-menu {
     display: flex;
@@ -109,10 +123,23 @@
     border-bottom: 2px solid var(--secondary);
     display: none;
     box-shadow: -5px 5px 10px rgba(0, 0, 0, 0.2);
+    padding: 10px 0;
 }
 
 .dropdown-menu.active {
     display: block;
+}
+
+.dropdown-section {
+    margin-bottom: 15px;
+}
+
+.dropdown-section h3 {
+    font-size: 0.9rem;
+    color: var(--secondary);
+    padding: 5px 15px;
+    margin-bottom: 5px;
+    border-bottom: 1px solid rgba(191, 157, 97, 0.3);
 }
 
 /* Main content adjustment to accommodate topbar */
