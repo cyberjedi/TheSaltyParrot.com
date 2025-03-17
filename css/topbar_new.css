@@ -1,0 +1,116 @@
+/**
+ * Topbar styles for the new design
+ */
+
+/* Topbar container */
+.topbar {
+    background-color: var(--primary);
+    color: var(--light);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    z-index: 1000;
+    border-bottom: 2px solid var(--secondary);
+}
+
+.topbar-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    height: 100%;
+}
+
+/* Hamburger menu icon */
+.hamburger-menu {
+    display: flex;
+    align-items: center;
+}
+
+.menu-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 24px;
+    padding: 0;
+    width: 30px;
+}
+
+.hamburger-line {
+    background-color: var(--secondary);
+    height: 3px;
+    width: 100%;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+/* Hamburger menu animation when active */
+.menu-toggle.active .hamburger-line:nth-child(1) {
+    transform: translateY(10px) rotate(45deg);
+}
+
+.menu-toggle.active .hamburger-line:nth-child(2) {
+    opacity: 0;
+}
+
+.menu-toggle.active .hamburger-line:nth-child(3) {
+    transform: translateY(-10px) rotate(-45deg);
+}
+
+/* Dropdown menu */
+.dropdown-menu {
+    background-color: var(--primary);
+    position: absolute;
+    top: 60px;
+    right: 0;
+    width: 250px;
+    border-left: 2px solid var(--secondary);
+    border-bottom: 2px solid var(--secondary);
+    display: none;
+    box-shadow: -5px 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+.dropdown-menu.active {
+    display: block;
+}
+
+/* Main content adjustment to accommodate topbar */
+.main-content-new {
+    margin-top: 60px;
+    min-height: calc(100vh - 60px);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+/* Welcome message styling */
+.welcome-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.welcome-logo {
+    max-width: 300px;
+    margin-bottom: 20px;
+}
+
+.welcome-title {
+    color: var(--secondary);
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
+
+.welcome-message {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    color: var(--light);
+}
