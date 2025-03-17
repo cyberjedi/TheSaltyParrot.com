@@ -7,6 +7,19 @@
 
 // Include Discord service
 require_once __DIR__ . '/../discord/discord_service_new.php';
+
+session_start();
+$active_webhook_id = isset($_SESSION['active_webhook_id']) ? $_SESSION['active_webhook_id'] : null;
+$active_webhook = 'No active webhook';
+
+// Fetch the active webhook details from the database
+if ($active_webhook_id) {
+    // Assuming you have a function to get webhook details by ID
+    $webhook = getWebhookById($active_webhook_id);
+    if ($webhook) {
+        $active_webhook = htmlspecialchars($webhook['webhook_name']) . ' (#' . htmlspecialchars($webhook['channel_name']) . ')';
+    }
+}
 ?>
 <div class="topbar">
     <div class="topbar-container">
@@ -52,6 +65,7 @@ require_once __DIR__ . '/../discord/discord_service_new.php';
             </a>
         <?php endif; ?>
     </div>
+    <p>Active Webhook: <?php echo $active_webhook; ?></p>
 </div>
 
 <script>
