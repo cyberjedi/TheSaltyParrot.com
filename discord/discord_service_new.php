@@ -199,8 +199,42 @@ function render_discord_user_profile() {
     $avatar_url = get_discord_avatar_url($user);
     $username = get_discord_username($user);
     
-    // Get the active webhook from our improved function
-    $active_webhook = get_default_webhook_new();
+    // Use the same direct database query approach as in sidebar.php
+    $default_webhook_name = '';
+    $default_channel_name = '';
+    
+    try {
+        // Include the database connection
+        if (file_exists(__DIR__ . '/../config/db_connect.php')) {
+            require_once __DIR__ . '/../config/db_connect.php';
+        } else {
+            require_once 'config/db_connect.php';
+        }
+        
+        // Get the database user ID based on Discord ID
+        $discord_id = $user['id'];
+        $userStmt = $conn->prepare("SELECT id FROM discord_users WHERE discord_id = :discord_id");
+        $userStmt->bindParam(':discord_id', $discord_id);
+        $userStmt->execute();
+        $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($userData) {
+            $user_id = $userData['id'];
+            
+            // Get default webhook directly, just like sidebar.php
+            $webhookStmt = $conn->prepare("SELECT webhook_name, channel_name FROM discord_webhooks WHERE user_id = :user_id AND is_default = 1 LIMIT 1");
+            $webhookStmt->bindParam(':user_id', $user_id);
+            $webhookStmt->execute();
+            $webhook = $webhookStmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($webhook) {
+                $default_webhook_name = $webhook['webhook_name'];
+                $default_channel_name = $webhook['channel_name'];
+            }
+        }
+    } catch (Exception $e) {
+        // Silently fail, just like in sidebar.php
+    }
     
     // If we don't have an active webhook in session yet, attempt one more direct database query
     if (!$active_webhook || !isset($active_webhook['webhook_name']) || !isset($active_webhook['channel_name'])) {
@@ -248,10 +282,10 @@ function render_discord_user_profile() {
     
     // Build webhook info based on what we found
     $webhook_info = '';
-    if ($active_webhook && isset($active_webhook['webhook_name']) && isset($active_webhook['channel_name'])) {
+    if (!empty($default_webhook_name) && !empty($default_channel_name)) {
         $webhook_info = '<div class="discord-server">';
         $webhook_info .= '<span class="discord-status connected"></span>';
-        $webhook_info .= htmlspecialchars($active_webhook['webhook_name']) . ' / #' . htmlspecialchars($active_webhook['channel_name']);
+        $webhook_info .= htmlspecialchars($default_webhook_name) . ' / #' . htmlspecialchars($default_channel_name);
         $webhook_info .= '</div>';
     } else {
         $webhook_info = '<div class="discord-webhook-info">';
