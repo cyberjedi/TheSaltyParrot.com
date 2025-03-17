@@ -69,12 +69,12 @@ TSP_DEBUG.traceClickEvent = function(event) {
 };
 
 /**
- * Detect potential issues in the page
+ * Detect potential issues in the page - simplified version that doesn't trigger clicks
  */
 TSP_DEBUG.detectIssues = function() {
     console.group('🔍 Issue Detection');
     
-    // Check for critical buttons
+    // Simply log buttons without testing them
     const criticalButtons = [
         'edit-character-btn',
         'switch-character-btn', 
@@ -83,7 +83,7 @@ TSP_DEBUG.detectIssues = function() {
         'send-roll-discord-btn'
     ];
     
-    console.log('Checking critical buttons:');
+    console.log('Checking critical buttons (no clicking):');
     criticalButtons.forEach(function(id) {
         const button = document.getElementById(id);
         if (!button) {
@@ -91,52 +91,15 @@ TSP_DEBUG.detectIssues = function() {
             return;
         }
         
-        console.log(`Button #${id} found:`, button);
-        console.log(`- Visible:`, button.offsetParent !== null);
-        console.log(`- Disabled:`, button.disabled);
-        console.log(`- Has inline onclick:`, button.hasAttribute('onclick'));
-        
-        // Test if clicks actually work
-        let clickWorks = false;
-        const originalClick = HTMLElement.prototype.click;
-        
-        HTMLElement.prototype.click = function() {
-            if (this === button) {
-                clickWorks = true;
-            }
-            return originalClick.apply(this, arguments);
-        };
-        
-        // Try clicking the button
-        try {
-            button.click();
-        } catch (e) {
-            console.error(`Error clicking button #${id}:`, e);
-        }
-        
-        // Restore original click method
-        HTMLElement.prototype.click = originalClick;
-        
-        console.log(`- Click works:`, clickWorks);
+        console.log(`Button #${id} found: ${button.id}`);
+        console.log(`- Visible: ${button.offsetParent !== null}`);
+        console.log(`- Disabled: ${button.disabled}`);
+        console.log(`- Has inline onclick: ${button.hasAttribute('onclick')}`);
+        console.log(`- Has data-has-handler: ${button.getAttribute('data-has-handler')}`);
     });
     
-    // Check for event handler issues
+    // Check for event handler issues without actually firing events
     console.log('Checking for event handler issues:');
-    
-    // Test event bubbling
-    const testDiv = document.createElement('div');
-    document.body.appendChild(testDiv);
-    
-    let eventBubbled = false;
-    document.body.addEventListener('customtest', function() {
-        eventBubbled = true;
-    });
-    
-    const testEvent = new CustomEvent('customtest', { bubbles: true });
-    testDiv.dispatchEvent(testEvent);
-    
-    console.log('Event bubbling works:', eventBubbled);
-    document.body.removeChild(testDiv);
     
     // Check for inline handlers
     const elementsWithHandlers = document.querySelectorAll('[onclick], [onchange], [onsubmit]');
