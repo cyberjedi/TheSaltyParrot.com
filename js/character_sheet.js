@@ -14,23 +14,7 @@ function csDebug(message, type = 'log') {
     }
 }
 
-// Add extra tracing for click events throughout the page
-if (window.CS_DEBUG) {
-    // This will help us see ALL clicks and which elements they're targeting
-    document.addEventListener('click', function(event) {
-        console.log('========== CLICK EVENT DETECTED ==========');
-        console.log('Click target:', event.target);
-        console.log('Click target ID:', event.target.id);
-        console.log('Click target tag:', event.target.tagName);
-        console.log('Click target classes:', event.target.className);
-        console.log('Click event was cancelled:', event.defaultPrevented);
-        console.log('Click event phase:', 
-            event.eventPhase === 1 ? 'CAPTURING' : 
-            event.eventPhase === 2 ? 'AT_TARGET' : 
-            event.eventPhase === 3 ? 'BUBBLING' : 'UNKNOWN');
-        console.log('=========================================');
-    }, true); // Capture phase to detect even if event is stopped in bubbling
-}
+// Remove global click tracing to avoid console spam
 
 // Track script loads to detect duplicates
 if (typeof window.characterSheetLoadCount === 'undefined') {

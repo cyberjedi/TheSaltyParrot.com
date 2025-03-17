@@ -33,9 +33,19 @@ TSP_DEBUG.init = function() {
  * Trace click events happening in the document
  */
 TSP_DEBUG.traceClickEvent = function(event) {
+    // Skip test or debug events that may be fired programmatically
+    if (event.target.id === 'test-event-propagation-btn') {
+        return;
+    }
+    
     const target = event.target;
     const closestButton = target.closest('button');
     const closestLink = target.closest('a');
+    
+    // Only log if the target is an interactive element or has a handler
+    if (!closestButton && !closestLink && !target.matches('button, a, [onclick], [data-has-handler="true"]')) {
+        return;
+    }
     
     console.group('🔍 Click Event Detected');
     console.log('Target element:', target);
@@ -54,21 +64,7 @@ TSP_DEBUG.traceClickEvent = function(event) {
     }
     
     console.log('Event prevented:', event.defaultPrevented);
-    console.log('Stop propagation called:', (function() {
-        const originalStopPropagation = Event.prototype.stopPropagation;
-        let wasCalled = false;
-        
-        Event.prototype.stopPropagation = function() {
-            wasCalled = true;
-            return originalStopPropagation.apply(this, arguments);
-        };
-        
-        setTimeout(function() {
-            Event.prototype.stopPropagation = originalStopPropagation;
-        }, 0);
-        
-        return wasCalled;
-    })());
+    console.log('Stop propagation called:', false); // Simplified to avoid modifying prototype
     console.groupEnd();
 };
 
@@ -188,12 +184,4 @@ TSP_DEBUG.injectTestButton = function() {
 // Initialize on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', function() {
     TSP_DEBUG.init();
-    
-    // Inject a test button if there are issues
-    setTimeout(function() {
-        const anyButtonWorks = document.querySelectorAll('button').length > 0;
-        if (!anyButtonWorks) {
-            TSP_DEBUG.injectTestButton();
-        }
-    }, 2000);
 });
