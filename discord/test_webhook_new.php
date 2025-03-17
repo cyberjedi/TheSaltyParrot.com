@@ -10,9 +10,22 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Include required files
-require_once 'discord_service_new.php';
-require_once 'webhook_service_new.php';
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Include required files with path handling
+if (file_exists(__DIR__ . '/discord_service_new.php')) {
+    require_once __DIR__ . '/discord_service_new.php';
+} else {
+    require_once 'discord/discord_service_new.php';
+}
+
+if (file_exists(__DIR__ . '/webhook_service_new.php')) {
+    require_once __DIR__ . '/webhook_service_new.php';
+} else {
+    require_once 'discord/webhook_service_new.php';
+}
 
 // Check if user is authenticated
 if (!is_discord_authenticated_new()) {

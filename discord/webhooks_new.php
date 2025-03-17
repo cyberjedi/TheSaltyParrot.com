@@ -5,16 +5,39 @@
  * Allows users to configure Discord webhooks for the application
  */
 
+// Enable error reporting to diagnose issues
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // Start the session if not started
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Include required files
-require_once 'discord-config_new.php';
-require_once '../config/db_connect_new.php';
-require_once 'discord_service_new.php';
-require_once 'webhook_service_new.php';
+// Include required files with path handling
+if (file_exists(__DIR__ . '/discord-config_new.php')) {
+    require_once __DIR__ . '/discord-config_new.php';
+} else {
+    require_once 'discord/discord-config_new.php';
+}
+
+if (file_exists(__DIR__ . '/../config/db_connect_new.php')) {
+    require_once __DIR__ . '/../config/db_connect_new.php';
+} else {
+    require_once 'config/db_connect_new.php';
+}
+
+if (file_exists(__DIR__ . '/discord_service_new.php')) {
+    require_once __DIR__ . '/discord_service_new.php';
+} else {
+    require_once 'discord/discord_service_new.php';
+}
+
+if (file_exists(__DIR__ . '/webhook_service_new.php')) {
+    require_once __DIR__ . '/webhook_service_new.php';
+} else {
+    require_once 'discord/webhook_service_new.php';
+}
 
 // Redirect to login if not authenticated
 if (!is_discord_authenticated_new()) {

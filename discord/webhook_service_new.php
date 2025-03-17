@@ -5,8 +5,23 @@
  * Handles all Discord webhook operations for the new interface
  */
 
-require_once 'discord-config_new.php';
-require_once '../config/db_connect_new.php';
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Load dependencies with path handling
+if (file_exists(__DIR__ . '/discord-config_new.php')) {
+    require_once __DIR__ . '/discord-config_new.php';
+} else {
+    require_once 'discord/discord-config_new.php';
+}
+
+// Handle different directory contexts for database connection
+if (file_exists(__DIR__ . '/../config/db_connect_new.php')) {
+    require_once __DIR__ . '/../config/db_connect_new.php';
+} else {
+    require_once 'config/db_connect_new.php';
+}
 
 /**
  * WebhookService class for the new UI
