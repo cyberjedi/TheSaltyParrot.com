@@ -151,272 +151,153 @@
                 ctx.restore();
             }
             
-            // Generate curved boundaries between regions
+            // Generate boundaries using Voronoi principles
             function drawRegionBoundaries(dicePositions) {
-                // Create a simplified version of a Voronoi diagram
-                const resolution = 5; // Check every 5 pixels
-                const boundaryThreshold = 8; // Maximum difference in distance to be considered a boundary
+                // For cleaner lines, let's use an approach that creates proper region boundaries
+                // based on Voronoi diagram principles
                 
-                // Create a grid to track boundary points
-                const boundaryPoints = [];
-                const cellSize = 8; // Size of grid cells
-                const gridCols = Math.ceil(canvas.width / cellSize);
-                const gridRows = Math.ceil(canvas.height / cellSize);
-                const grid = Array(gridRows).fill().map(() => Array(gridCols).fill(null));
+                // Store region information
+                const regions = [];
                 
-                // Identify boundary points
-                for (let x = 0; x < canvas.width; x += resolution) {
-                    for (let y = 0; y < canvas.height; y += resolution) {
-                        // Find the two closest dice to this point
-                        let closest = -1;
-                        let secondClosest = -1;
+                // Assign each pixel to the closest dice center to identify regions
+                const pixelData = new Array(canvas.width * canvas.height).fill(-1);
+                
+                for (let x = 0; x < canvas.width; x++) {
+                    for (let y = 0; y < canvas.height; y++) {
                         let minDist = Infinity;
-                        let secondMinDist = Infinity;
+                        let closestRegion = -1;
                         
                         for (let i = 0; i < dicePositions.length; i++) {
                             const pos = dicePositions[i];
                             const dist = Math.sqrt(Math.pow(x - pos.x, 2) + Math.pow(y - pos.y, 2));
                             
                             if (dist < minDist) {
-                                secondMinDist = minDist;
-                                secondClosest = closest;
                                 minDist = dist;
-                                closest = i;
-                            } else if (dist < secondMinDist) {
-                                secondMinDist = dist;
-                                secondClosest = i;
+                                closestRegion = i;
                             }
                         }
                         
-                        // If we're almost equidistant to two dice, we're on a boundary
-                        if (closest !== -1 && secondClosest !== -1) {
-                            const diff = secondMinDist - minDist;
-                            if (diff < boundaryThreshold) {
-                                // Small random variation for natural look
-                                const noisedX = x + (Math.random() - 0.5) * 3;
-                                const noisedY = y + (Math.random() - 0.5) * 3;
-                                
-                                // Add to boundary points
-                                boundaryPoints.push({
-                                    x: noisedX,
-                                    y: noisedY,
-                                    region1: closest,
-                                    region2: secondClosest
-                                });
-                                
-                                // Store in grid for faster access
-                                const gridX = Math.floor(noisedX / cellSize);
-                                const gridY = Math.floor(noisedY / cellSize);
-                                if (gridX >= 0 && gridX < gridCols && gridY >= 0 && gridY < gridRows) {
-                                    if (!grid[gridY][gridX]) {
-                                        grid[gridY][gridX] = [];
-                                    }
-                                    grid[gridY][gridX].push(boundaryPoints.length - 1);
-                                }
+                        const pixelIndex = y * canvas.width + x;
+                        pixelData[pixelIndex] = closestRegion;
+                    }
+                }
+                
+                // Find boundary pixels where adjacent pixels belong to different regions
+                const boundaryPixels = new Set();
+                
+                for (let x = 1; x < canvas.width - 1; x++) {
+                    for (let y = 1; y < canvas.height - 1; y++) {
+                        const currentRegion = pixelData[y * canvas.width + x];
+                        
+                        // Check neighboring pixels (4-connected neighbors)
+                        const neighbors = [
+                            pixelData[y * canvas.width + (x - 1)],      // left
+                            pixelData[y * canvas.width + (x + 1)],      // right
+                            pixelData[(y - 1) * canvas.width + x],      // top
+                            pixelData[(y + 1) * canvas.width + x]       // bottom
+                        ];
+                        
+                        // If any neighbor belongs to a different region, this is a boundary
+                        for (const neighbor of neighbors) {
+                            if (neighbor !== currentRegion && currentRegion !== -1 && neighbor !== -1) {
+                                boundaryPixels.add(`${x},${y}`);
+                                break;
                             }
                         }
                     }
                 }
                 
-                // Group boundary points into contiguous lines
-                const lines = [];
-                const used = new Set();
+                // Convert boundary pixels to connected paths
+                const boundaryList = [...boundaryPixels].map(coord => {
+                    const [x, y] = coord.split(',').map(Number);
+                    return { x, y };
+                });
                 
-                // Function to find nearby points
-                function getNearbyPoints(point, radius) {
-                    const nearby = [];
-                    const centerX = Math.floor(point.x / cellSize);
-                    const centerY = Math.floor(point.y / cellSize);
-                    const searchRadius = Math.ceil(radius / cellSize) + 1;
+                // Simple clustering to group nearby boundary pixels
+                const pathSegments = [];
+                const visited = new Set();
+                
+                // Function to find neighboring boundary pixels
+                function getNeighbors(point, radius = 2) {
+                    const neighbors = [];
                     
-                    // Search the grid cells around this point
-                    for (let dy = -searchRadius; dy <= searchRadius; dy++) {
-                        for (let dx = -searchRadius; dx <= searchRadius; dx++) {
-                            const gridX = centerX + dx;
-                            const gridY = centerY + dy;
-                            
-                            if (gridX >= 0 && gridX < gridCols && gridY >= 0 && gridY < gridRows && grid[gridY][gridX]) {
-                                for (const idx of grid[gridY][gridX]) {
-                                    if (!used.has(idx)) {
-                                        const otherPoint = boundaryPoints[idx];
-                                        const dist = Math.sqrt(Math.pow(point.x - otherPoint.x, 2) + Math.pow(point.y - otherPoint.y, 2));
-                                        if (dist <= radius) {
-                                            nearby.push(idx);
-                                        }
-                                    }
-                                }
-                            }
+                    for (let i = 0; i < boundaryList.length; i++) {
+                        if (visited.has(i)) continue;
+                        
+                        const other = boundaryList[i];
+                        const dist = Math.sqrt(Math.pow(point.x - other.x, 2) + Math.pow(point.y - other.y, 2));
+                        
+                        if (dist <= radius) {
+                            neighbors.push({ index: i, point: other, distance: dist });
                         }
                     }
                     
-                    return nearby;
+                    // Sort by distance
+                    return neighbors.sort((a, b) => a.distance - b.distance);
                 }
                 
-                // Function to trace a line from a starting point
-                function traceLine(startIndex) {
-                    const line = [boundaryPoints[startIndex]];
-                    used.add(startIndex);
+                // Build path segments by following adjacent boundary pixels
+                for (let i = 0; i < boundaryList.length; i++) {
+                    if (visited.has(i)) continue;
                     
-                    // Trace in both directions
-                    let currentIndex = startIndex;
+                    const segment = [boundaryList[i]];
+                    visited.add(i);
+                    
+                    // Trace path in both directions
+                    let current = boundaryList[i];
                     let keepGoing = true;
                     
-                    // Forward direction
                     while (keepGoing) {
-                        const current = boundaryPoints[currentIndex];
-                        const nearby = getNearbyPoints(current, 15);
-                        
-                        if (nearby.length > 0) {
-                            // Find the point that forms the most natural continuation
-                            let bestIdx = nearby[0];
-                            let bestScore = Infinity;
-                            
-                            if (line.length >= 2) {
-                                // Try to maintain direction
-                                const prev = line[line.length - 2];
-                                const currentDir = {
-                                    x: current.x - prev.x,
-                                    y: current.y - prev.y
-                                };
-                                
-                                for (const idx of nearby) {
-                                    const next = boundaryPoints[idx];
-                                    const nextDir = {
-                                        x: next.x - current.x,
-                                        y: next.y - current.y
-                                    };
-                                    
-                                    // Dot product to measure alignment
-                                    const dot = currentDir.x * nextDir.x + currentDir.y * nextDir.y;
-                                    const score = 1 - dot / (Math.sqrt(currentDir.x * currentDir.x + currentDir.y * currentDir.y) * 
-                                                            Math.sqrt(nextDir.x * nextDir.x + nextDir.y * nextDir.y));
-                                    
-                                    if (score < bestScore) {
-                                        bestScore = score;
-                                        bestIdx = idx;
-                                    }
-                                }
-                            }
-                            
-                            currentIndex = bestIdx;
-                            line.push(boundaryPoints[currentIndex]);
-                            used.add(currentIndex);
+                        const neighbors = getNeighbors(current);
+                        if (neighbors.length > 0) {
+                            const next = neighbors[0];
+                            segment.push(next.point);
+                            visited.add(next.index);
+                            current = next.point;
                         } else {
+                            keepGoing = false;
+                        }
+                        
+                        // Prevent endless loops
+                        if (segment.length > 1000) {
                             keepGoing = false;
                         }
                     }
                     
-                    return line;
-                }
-                
-                // Create lines from boundary points
-                for (let i = 0; i < boundaryPoints.length; i++) {
-                    if (!used.has(i)) {
-                        const line = traceLine(i);
-                        if (line.length > 5) { // Skip very short lines
-                            lines.push(line);
-                        }
+                    if (segment.length > 5) {
+                        pathSegments.push(segment);
                     }
                 }
                 
-                // Draw the boundary lines
-                ctx.strokeStyle = 'black';
-                ctx.lineWidth = 1.5;
+                // Simplify paths (reduce number of points)
+                const simplifiedSegments = pathSegments.map(segment => {
+                    // Only keep every Nth point for smoother lines
+                    const simplified = [];
+                    for (let i = 0; i < segment.length; i += 3) {
+                        simplified.push(segment[i]);
+                    }
+                    return simplified;
+                });
                 
-                for (const line of lines) {
-                    if (line.length < 2) continue;
+                // Draw the boundaries as single, solid dark grey lines
+                ctx.strokeStyle = '#444'; // Dark grey
+                ctx.lineWidth = 1.2;
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
+                
+                for (const segment of simplifiedSegments) {
+                    if (segment.length < 2) continue;
                     
                     ctx.beginPath();
-                    ctx.moveTo(line[0].x, line[0].y);
+                    ctx.moveTo(segment[0].x, segment[0].y);
                     
-                    // Draw as a smooth curve using quadratic curves for short segments
-                    for (let i = 1; i < line.length; i++) {
-                        // For smoother curves, use control points
-                        if (i < line.length - 1) {
-                            // Calculate control point (midpoint)
-                            const cp = {
-                                x: (line[i].x + line[i+1].x) / 2,
-                                y: (line[i].y + line[i+1].y) / 2
-                            };
-                            ctx.quadraticCurveTo(line[i].x, line[i].y, cp.x, cp.y);
-                        } else {
-                            // For the last point
-                            ctx.lineTo(line[i].x, line[i].y);
-                        }
+                    // Use curve interpolation for smooth boundaries
+                    for (let i = 1; i < segment.length; i++) {
+                        ctx.lineTo(segment[i].x, segment[i].y);
                     }
                     
                     ctx.stroke();
                 }
-                
-                // Connect lines to the edges of the map with subtle curves
-                // This is a simplified approach to ensure all regions are closed
-                const edgeConnections = 15; // Number of edge connections to create
-                
-                ctx.beginPath();
-                
-                // Create connections to map edges
-                for (let i = 0; i < edgeConnections; i++) {
-                    // Choose a random position on the edge
-                    const side = Math.floor(Math.random() * 4);
-                    let startX, startY;
-                    
-                    // Pick a random point on one of the four sides
-                    switch (side) {
-                        case 0: // Top
-                            startX = Math.random() * canvas.width;
-                            startY = 0;
-                            break;
-                        case 1: // Right
-                            startX = canvas.width;
-                            startY = Math.random() * canvas.height;
-                            break;
-                        case 2: // Bottom
-                            startX = Math.random() * canvas.width;
-                            startY = canvas.height;
-                            break;
-                        case 3: // Left
-                            startX = 0;
-                            startY = Math.random() * canvas.height;
-                            break;
-                    }
-                    
-                    // Find the closest die
-                    let closestDie = null;
-                    let minDist = Infinity;
-                    
-                    for (const pos of dicePositions) {
-                        const dist = Math.sqrt(Math.pow(startX - pos.x, 2) + Math.pow(startY - pos.y, 2));
-                        if (dist < minDist) {
-                            minDist = dist;
-                            closestDie = pos;
-                        }
-                    }
-                    
-                    if (closestDie) {
-                        // Draw a gentle curve from the edge to near the die
-                        ctx.moveTo(startX, startY);
-                        
-                        // Find a point near the die but not right on it
-                        const angle = Math.atan2(closestDie.y - startY, closestDie.x - startX);
-                        const distance = Math.sqrt(Math.pow(closestDie.x - startX, 2) + Math.pow(closestDie.y - startY, 2));
-                        const offsetDistance = distance * 0.3; // Don't go all the way to the die
-                        
-                        const endX = startX + Math.cos(angle) * (distance - offsetDistance);
-                        const endY = startY + Math.sin(angle) * (distance - offsetDistance);
-                        
-                        // Create a control point for the curve
-                        const midX = (startX + endX) / 2;
-                        const midY = (startY + endY) / 2;
-                        
-                        // Add some randomness to the control point
-                        const ctrlX = midX + (Math.random() - 0.5) * (distance * 0.3);
-                        const ctrlY = midY + (Math.random() - 0.5) * (distance * 0.3);
-                        
-                        ctx.quadraticCurveTo(ctrlX, ctrlY, endX, endY);
-                    }
-                }
-                
-                ctx.stroke();
             }
             
             // Generate the terrain
