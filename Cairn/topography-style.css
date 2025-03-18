@@ -17,8 +17,14 @@ h1 {
 }
 .map-container {
     position: relative;
-    border: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     background-color: white;
+}
+.map-container canvas {
+    border: 1px solid #333;
+    margin-bottom: 5px;
 }
 .controls {
     display: flex;
