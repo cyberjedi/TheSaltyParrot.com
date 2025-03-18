@@ -58,66 +58,85 @@ function rollD20() {
     return Math.floor(Math.random() * 20);  // 0-19 for array index
 }
 
-// Draw a triangle landmark marker
+// Draw a landmark marker circle
 function drawLandmarkTriangle(ctx, x, y, number) {
-    const size = 30; // Size of the triangle
-    
-    // Draw black triangle
+    // Draw black circle
     ctx.fillStyle = 'black';
+    const radius = 15;
     ctx.beginPath();
-    ctx.moveTo(x, y - size/2); // Top
-    ctx.lineTo(x - size/2, y + size/2); // Bottom left
-    ctx.lineTo(x + size/2, y + size/2); // Bottom right
-    ctx.closePath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
     ctx.fill();
     
     // Draw number inside
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 16px Arial';
+    ctx.font = 'bold 14px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(number, x, y);
 }
 
-// Create a landmark reference table at the bottom of the map
+// Create a landmark reference table below the map
 function createLandmarkTable(ctx, mapData) {
-    const tableTop = mapData.height - 110; // Position from the bottom
-    const tableWidth = mapData.width - 40;
-    const cellWidth = tableWidth / 3;
-    const rowHeight = 25;
+    // Save the map content
+    const mapImageData = ctx.getImageData(0, 0, mapData.width, mapData.height);
+    
+    // Create a new canvas for the table
+    const tableCanvas = document.createElement('canvas');
+    tableCanvas.width = mapData.width;
+    tableCanvas.height = 120; // Height for the table
+    tableCanvas.id = 'landmarkTable';
+    
+    // Remove existing table if it exists
+    const existingTable = document.getElementById('landmarkTable');
+    if (existingTable) {
+        existingTable.remove();
+    }
+    
+    // Append the table canvas to the container
+    const mapContainer = document.querySelector('.map-container');
+    mapContainer.appendChild(tableCanvas);
+    
+    // Get table context
+    const tableCtx = tableCanvas.getContext('2d');
     
     // Draw table background
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.fillRect(20, tableTop, tableWidth, 110);
-    ctx.strokeStyle = 'black';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(20, tableTop, tableWidth, 110);
+    tableCtx.fillStyle = 'white';
+    tableCtx.fillRect(0, 0, tableCanvas.width, tableCanvas.height);
+    tableCtx.strokeStyle = 'black';
+    tableCtx.lineWidth = 1;
+    tableCtx.strokeRect(0, 0, tableCanvas.width, tableCanvas.height);
     
     // Draw table header
-    ctx.fillStyle = 'black';
-    ctx.font = 'bold 16px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('LANDMARK REFERENCE', mapData.width / 2, tableTop + 15);
+    tableCtx.fillStyle = 'black';
+    tableCtx.font = 'bold 16px Arial';
+    tableCtx.textAlign = 'center';
+    tableCtx.fillText('LANDMARK REFERENCE', tableCanvas.width / 2, 20);
     
     // Draw table rows
-    ctx.font = '14px Arial';
-    ctx.textAlign = 'left';
+    tableCtx.font = '14px Arial';
+    tableCtx.textAlign = 'left';
     
     // Layout in columns
     const numLandmarks = mapData.dice.length;
-    const landmarksPerColumn = Math.ceil(numLandmarks / 3);
+    const columns = 3;
+    const landmarksPerColumn = Math.ceil(numLandmarks / columns);
+    const cellWidth = tableCanvas.width / columns;
+    const rowHeight = 25;
     
     for (let i = 0; i < numLandmarks; i++) {
         const die = mapData.dice[i];
         const column = Math.floor(i / landmarksPerColumn);
         const row = i % landmarksPerColumn;
         
-        const x = 30 + column * cellWidth;
-        const y = tableTop + 40 + row * rowHeight;
+        const x = 20 + column * cellWidth;
+        const y = 45 + row * rowHeight;
         
         // Draw row
-        ctx.fillText(`${i+1}. ${die.landmark}`, x, y);
+        tableCtx.fillText(`${i+1}. ${die.landmark}`, x, y);
     }
+    
+    // Restore the map content
+    ctx.putImageData(mapImageData, 0, 0);
 }
 
 // Roll on terrain type tables and place terrain and landmark information
