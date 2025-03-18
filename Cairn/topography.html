@@ -43,23 +43,6 @@
         button:hover {
             background-color: #333;
         }
-        .legend {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 20px;
-            justify-content: center;
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border: 1px solid #000;
-        }
     </style>
 </head>
 <body>
@@ -74,25 +57,6 @@
         <div class="map-container">
             <canvas id="mapCanvas" width="800" height="600"></canvas>
         </div>
-        
-        <div class="legend">
-            <div class="legend-item">
-                <div class="legend-color" style="background-color: #c3e6a3;"></div>
-                <span>Easy Terrain (1-3)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background-color: #92c165;"></div>
-                <span>Tough Terrain (4-5)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background-color: #5a7c3d;"></div>
-                <span>Perilous Terrain (6)</span>
-            </div>
-            <div class="legend-item">
-                <div style="font-size: 24px;">▲</div>
-                <span>Landmark</span>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -106,23 +70,14 @@
             let mapData = {
                 width: canvas.width,
                 height: canvas.height,
-                terrain: [],
-                landmarks: []
-            };
-            
-            // Terrain colors
-            const terrainColors = {
-                easy: '#c3e6a3',    // Light green
-                tough: '#92c165',   // Medium green
-                perilous: '#5a7c3d' // Dark green
+                dice: []
             };
             
             // Clear the map
             function clearMap() {
                 ctx.fillStyle = 'white';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                mapData.terrain = [];
-                mapData.landmarks = [];
+                mapData.dice = [];
             }
             
             // Roll a die
@@ -130,26 +85,21 @@
                 return Math.floor(Math.random() * 6) + 1;
             }
             
-            // Get terrain type based on die roll
-            function getTerrainType(dieValue) {
-                if (dieValue <= 3) return 'easy';
-                if (dieValue <= 5) return 'tough';
-                return 'perilous';
-            }
-            
             // Generate random dice positions on the map
             function generateDicePositions(numDice) {
                 const positions = [];
-                const minDistance = 100; // Minimum distance between dice
+                const minDistance = 120; // Minimum distance between dice
+                const margin = 70;       // Margin from the edges
                 
                 for (let i = 0; i < numDice; i++) {
                     let x, y, tooClose;
+                    let attempts = 0;
                     
                     // Try to find a position that's not too close to existing dice
                     do {
                         tooClose = false;
-                        x = 50 + Math.random() * (canvas.width - 100);
-                        y = 50 + Math.random() * (canvas.height - 100);
+                        x = margin + Math.random() * (canvas.width - 2 * margin);
+                        y = margin + Math.random() * (canvas.height - 2 * margin);
                         
                         for (const pos of positions) {
                             const distance = Math.sqrt(Math.pow(x - pos.x, 2) + Math.pow(y - pos.y, 2));
@@ -157,6 +107,13 @@
                                 tooClose = true;
                                 break;
                             }
+                        }
+                        
+                        attempts++;
+                        // If we can't find a good position after many attempts, reduce our constraints
+                        if (attempts > 50) {
+                            minDistance *= 0.9;
+                            attempts = 0;
                         }
                     } while (tooClose);
                     
@@ -169,8 +126,8 @@
             // Draw a die on the canvas
             function drawDie(x, y, value) {
                 // Draw die square
-                ctx.fillStyle = '#d0d0d0';
-                ctx.strokeStyle = '#333';
+                ctx.fillStyle = 'white';
+                ctx.strokeStyle = 'black';
                 ctx.lineWidth = 2;
                 
                 // Rotate die slightly for visual interest
@@ -180,11 +137,12 @@
                 ctx.rotate(rotation);
                 
                 // Draw die
-                ctx.fillRect(-20, -20, 40, 40);
-                ctx.strokeRect(-20, -20, 40, 40);
+                const dieSize = 40;
+                ctx.fillRect(-dieSize/2, -dieSize/2, dieSize, dieSize);
+                ctx.strokeRect(-dieSize/2, -dieSize/2, dieSize, dieSize);
                 
                 // Draw die value
-                ctx.fillStyle = '#333';
+                ctx.fillStyle = 'black';
                 ctx.font = '24px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
@@ -193,126 +151,110 @@
                 ctx.restore();
             }
             
-            // Generate terrain boundaries using Voronoi-like approach
-            function generateTerrainBoundaries(dicePositions, diceValues) {
-                // Store terrain regions
-                const regions = dicePositions.map((pos, index) => ({
-                    x: pos.x,
-                    y: pos.y,
-                    type: getTerrainType(diceValues[index]),
-                    value: diceValues[index]
-                }));
+            // Draw dividing lines between regions
+            function drawRegionDividers(dicePositions) {
+                // Create a set of points to make curvy lines between regions
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 2;
                 
-                // Draw terrain colors using pixel-by-pixel approach
-                const pixelData = new Array(canvas.width * canvas.height);
+                // Generate random control points for curves
+                const controlPoints = [];
+                const numControlPoints = 15;
                 
-                // First determine which region each pixel belongs to
-                for (let x = 0; x < canvas.width; x++) {
-                    for (let y = 0; y < canvas.height; y++) {
-                        // Find closest dice center
-                        let minDist = Infinity;
-                        let closestRegionIndex = -1;
+                for (let i = 0; i < numControlPoints; i++) {
+                    controlPoints.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height
+                    });
+                }
+                
+                // Draw curved lines separating regions
+                ctx.beginPath();
+                
+                // Create lines connecting regions
+                for (let i = 0; i < dicePositions.length; i++) {
+                    for (let j = i + 1; j < dicePositions.length; j++) {
+                        const p1 = dicePositions[i];
+                        const p2 = dicePositions[j];
                         
-                        for (let i = 0; i < regions.length; i++) {
-                            const region = regions[i];
-                            const dist = Math.sqrt(Math.pow(x - region.x, 2) + Math.pow(y - region.y, 2));
-                            if (dist < minDist) {
-                                minDist = dist;
-                                closestRegionIndex = i;
+                        // Find midpoint between dice
+                        const midX = (p1.x + p2.x) / 2;
+                        const midY = (p1.y + p2.y) / 2;
+                        
+                        // Find a perpendicular line and extend it
+                        const dx = p2.x - p1.x;
+                        const dy = p2.y - p1.y;
+                        
+                        // Perpendicular vector
+                        const perpX = -dy;
+                        const perpY = dx;
+                        
+                        // Normalize and scale
+                        const length = Math.sqrt(perpX * perpX + perpY * perpY);
+                        const normPerpX = perpX / length;
+                        const normPerpY = perpY / length;
+                        
+                        // Find random control points along this perpendicular
+                        const scale = 300 + Math.random() * 200;
+                        
+                        // Start point
+                        const startX = midX + normPerpX * scale;
+                        const startY = midY + normPerpY * scale;
+                        
+                        // End point
+                        const endX = midX - normPerpX * scale;
+                        const endY = midY - normPerpY * scale;
+                        
+                        // Draw curve
+                        ctx.moveTo(startX, startY);
+                        
+                        // Find closest control points
+                        let cp1 = null, cp2 = null;
+                        let minDist1 = Infinity, minDist2 = Infinity;
+                        
+                        for (const cp of controlPoints) {
+                            const distToStart = Math.sqrt(Math.pow(cp.x - startX, 2) + Math.pow(cp.y - startY, 2));
+                            const distToEnd = Math.sqrt(Math.pow(cp.x - endX, 2) + Math.pow(cp.y - endY, 2));
+                            
+                            if (distToStart < minDist1) {
+                                minDist1 = distToStart;
+                                cp1 = cp;
+                            }
+                            
+                            if (distToEnd < minDist2) {
+                                minDist2 = distToEnd;
+                                cp2 = cp;
                             }
                         }
                         
-                        // Store region index for this pixel
-                        const pixelIndex = y * canvas.width + x;
-                        pixelData[pixelIndex] = closestRegionIndex;
-                        
-                        // Color based on terrain type
-                        if (closestRegionIndex !== -1) {
-                            const region = regions[closestRegionIndex];
-                            ctx.fillStyle = terrainColors[region.type];
-                            ctx.fillRect(x, y, 1, 1);
+                        // Draw bezier curve with control points
+                        if (cp1 && cp2) {
+                            ctx.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, endX, endY);
+                        } else {
+                            ctx.lineTo(endX, endY);
                         }
                     }
                 }
                 
-                // Draw boundaries between ALL regions, regardless of terrain type
-                ctx.strokeStyle = '#333';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                
-                // Check for boundary pixels
-                for (let x = 1; x < canvas.width - 1; x++) {
-                    for (let y = 1; y < canvas.height - 1; y++) {
-                        const pixelIndex = y * canvas.width + x;
-                        const currentRegionIndex = pixelData[pixelIndex];
-                        
-                        // Check surrounding pixels
-                        const leftPixel = pixelData[y * canvas.width + (x - 1)];
-                        const rightPixel = pixelData[y * canvas.width + (x + 1)];
-                        const topPixel = pixelData[(y - 1) * canvas.width + x];
-                        const bottomPixel = pixelData[(y + 1) * canvas.width + x];
-                        
-                        // If any surrounding pixel belongs to a different region, this is a boundary
-                        // We compare region indices, not terrain types
-                        if (currentRegionIndex !== -1 && 
-                            (leftPixel !== currentRegionIndex || 
-                             rightPixel !== currentRegionIndex || 
-                             topPixel !== currentRegionIndex || 
-                             bottomPixel !== currentRegionIndex)) {
-                            
-                            // Draw only some pixels to avoid overly thick lines
-                            if ((x + y) % 2 === 0) {
-                                ctx.moveTo(x, y);
-                                ctx.lineTo(x, y);
-                            }
-                        }
-                    }
+                // Add some extra dividing lines extending to the edges
+                for (let i = 0; i < 5; i++) {
+                    const p = controlPoints[i % controlPoints.length];
+                    
+                    // Random angle
+                    const angle = Math.random() * Math.PI * 2;
+                    const length = Math.max(canvas.width, canvas.height);
+                    
+                    const endX = p.x + Math.cos(angle) * length;
+                    const endY = p.y + Math.sin(angle) * length;
+                    
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(endX, endY);
                 }
                 
                 ctx.stroke();
-                return regions;
-            }
-               
-            
-            // Generate landmarks for each terrain region
-            function addLandmarks(regions) {
-                // Clear dice and add landmark symbols (triangles)
-                for (const region of regions) {
-                    // Mock landmark name based on terrain type
-                    let landmarkName = '';
-                    if (region.type === 'easy') {
-                        landmarkName = 'Grasslands';
-                    } else if (region.type === 'tough') {
-                        landmarkName = 'Marshlands';
-                    } else {
-                        landmarkName = 'Mountains';
-                    }
-                    
-                    // Add landmark to data
-                    mapData.landmarks.push({
-                        x: region.x,
-                        y: region.y,
-                        name: landmarkName,
-                        terrainType: region.type
-                    });
-                    
-                    // Draw landmark triangle
-                    ctx.fillStyle = 'white';
-                    ctx.strokeStyle = '#333';
-                    ctx.lineWidth = 2;
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(region.x, region.y - 15);
-                    ctx.lineTo(region.x - 15, region.y + 15);
-                    ctx.lineTo(region.x + 15, region.y + 15);
-                    ctx.closePath();
-                    
-                    ctx.fill();
-                    ctx.stroke();
-                }
             }
             
-            // Generate the complete terrain
+            // Generate the terrain
             function generateTerrain() {
                 clearMap();
                 
@@ -325,45 +267,20 @@
                 // Step 3: Roll values for each die
                 const diceValues = dicePositions.map(() => rollDie());
                 
-                // Step 4: Draw dice
+                // Store dice data
+                mapData.dice = dicePositions.map((pos, index) => ({
+                    x: pos.x,
+                    y: pos.y,
+                    value: diceValues[index]
+                }));
+                
+                // Step 4: Draw dividing lines between regions
+                drawRegionDividers(dicePositions);
+                
+                // Step 5: Draw dice on top
                 dicePositions.forEach((pos, i) => {
                     drawDie(pos.x, pos.y, diceValues[i]);
                 });
-                
-                // Step 5: Generate terrain boundaries
-                const regions = generateTerrainBoundaries(dicePositions, diceValues);
-                
-                // Store terrain information
-                mapData.terrain = regions;
-                
-                // Step 6: Add landmarks
-                setTimeout(() => {
-                    addLandmarks(regions);
-                    
-                    // Label the regions with terrain type
-                    regions.forEach(region => {
-                        ctx.fillStyle = '#333';
-                        ctx.font = 'bold 14px Arial';
-                        ctx.textAlign = 'center';
-                        
-                        // Calculate position below the landmark
-                        const textY = region.y + 40;
-                        
-                        let terrainName = '';
-                        if (region.type === 'easy') {
-                            const options = ['Plains', 'Grasslands', 'Meadows', 'Valleys'];
-                            terrainName = options[Math.floor(Math.random() * options.length)];
-                        } else if (region.type === 'tough') {
-                            const options = ['Forests', 'Marshlands', 'Hills', 'Deserts'];
-                            terrainName = options[Math.floor(Math.random() * options.length)];
-                        } else {
-                            const options = ['Mountains', 'Crags', 'Peaks', 'Wastelands'];
-                            terrainName = options[Math.floor(Math.random() * options.length)];
-                        }
-                        
-                        ctx.fillText(terrainName, region.x, textY);
-                    });
-                }, 500);
             }
             
             // Initialize
