@@ -1,3 +1,39 @@
+<!--
+======================================================================================
+CAIRN RPG MAP GENERATOR - TOPOGRAPHY MODULE
+======================================================================================
+
+This module implements Step 1 of the Cairn RPG map generation process: Terrain Generation.
+
+HOW IT WORKS:
+1. Roll 1d6 to determine how many dice to place on the map
+2. Place these dice at random positions with sufficient spacing
+3. Roll values for each die (1-6)
+4. Generate region boundaries between dice using a modified Voronoi diagram approach:
+   - Assign each pixel to its closest die region
+   - Find boundary pixels where regions meet
+   - Connect boundary pixels into continuous paths
+   - Simplify and draw as dark grey lines
+5. Display the dice on top of the map
+
+TECHNICAL APPROACH:
+- Uses HTML5 Canvas for drawing
+- Implements dice placement with minimum distance requirements
+- Uses a pixel-based approach to identify region boundaries
+- Connects boundary pixels into paths using a nearest-neighbor algorithm
+- Renders clean, single lines between regions
+
+This represents the foundation of the map generation process. In future steps (not implemented 
+here), these regions would be assigned terrain types based on the dice values:
+- 1-3: Easy terrain (plains, grasslands, etc.)
+- 4-5: Tough terrain (forests, hills, etc.)
+- 6: Perilous terrain (mountains, swamps, etc.)
+
+Each region would also receive a landmark, and the map would be further developed with
+rivers, points of interest, and paths between locations.
+======================================================================================
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
