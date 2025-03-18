@@ -206,33 +206,36 @@
                 // Draw terrain colors using pixel-by-pixel approach
                 const pixelData = new Array(canvas.width * canvas.height);
                 
+                // First determine which region each pixel belongs to
                 for (let x = 0; x < canvas.width; x++) {
                     for (let y = 0; y < canvas.height; y++) {
                         // Find closest dice center
                         let minDist = Infinity;
-                        let closestRegion = null;
+                        let closestRegionIndex = -1;
                         
-                        for (const region of regions) {
+                        for (let i = 0; i < regions.length; i++) {
+                            const region = regions[i];
                             const dist = Math.sqrt(Math.pow(x - region.x, 2) + Math.pow(y - region.y, 2));
                             if (dist < minDist) {
                                 minDist = dist;
-                                closestRegion = region;
+                                closestRegionIndex = i;
                             }
                         }
                         
                         // Store region index for this pixel
                         const pixelIndex = y * canvas.width + x;
-                        pixelData[pixelIndex] = closestRegion ? regions.indexOf(closestRegion) : -1;
+                        pixelData[pixelIndex] = closestRegionIndex;
                         
                         // Color based on terrain type
-                        if (closestRegion) {
-                            ctx.fillStyle = terrainColors[closestRegion.type];
+                        if (closestRegionIndex !== -1) {
+                            const region = regions[closestRegionIndex];
+                            ctx.fillStyle = terrainColors[region.type];
                             ctx.fillRect(x, y, 1, 1);
                         }
                     }
                 }
                 
-                // Draw boundaries
+                // Draw boundaries between ALL regions, regardless of terrain type
                 ctx.strokeStyle = '#333';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
@@ -241,7 +244,7 @@
                 for (let x = 1; x < canvas.width - 1; x++) {
                     for (let y = 1; y < canvas.height - 1; y++) {
                         const pixelIndex = y * canvas.width + x;
-                        const currentRegion = pixelData[pixelIndex];
+                        const currentRegionIndex = pixelData[pixelIndex];
                         
                         // Check surrounding pixels
                         const leftPixel = pixelData[y * canvas.width + (x - 1)];
@@ -250,21 +253,17 @@
                         const bottomPixel = pixelData[(y + 1) * canvas.width + x];
                         
                         // If any surrounding pixel belongs to a different region, this is a boundary
-                        if (leftPixel !== currentRegion || rightPixel !== currentRegion || 
-                            topPixel !== currentRegion || bottomPixel !== currentRegion) {
+                        // We compare region indices, not terrain types
+                        if (currentRegionIndex !== -1 && 
+                            (leftPixel !== currentRegionIndex || 
+                             rightPixel !== currentRegionIndex || 
+                             topPixel !== currentRegionIndex || 
+                             bottomPixel !== currentRegionIndex)) {
                             
-                            // Only draw if pixels are from different regions (not just undefined areas)
-                            if (currentRegion !== -1 && 
-                               ((leftPixel !== -1 && leftPixel !== currentRegion) || 
-                                (rightPixel !== -1 && rightPixel !== currentRegion) || 
-                                (topPixel !== -1 && topPixel !== currentRegion) || 
-                                (bottomPixel !== -1 && bottomPixel !== currentRegion))) {
-                                
-                                // Draw only every few pixels to create a smoother line
-                                if ((x + y) % 3 === 0) {
-                                    ctx.moveTo(x, y);
-                                    ctx.lineTo(x, y);
-                                }
+                            // Draw only some pixels to avoid overly thick lines
+                            if ((x + y) % 2 === 0) {
+                                ctx.moveTo(x, y);
+                                ctx.lineTo(x, y);
                             }
                         }
                     }
@@ -272,7 +271,7 @@
                 
                 ctx.stroke();
                 return regions;
-            }   
+            }
                
             
             // Generate landmarks for each terrain region
