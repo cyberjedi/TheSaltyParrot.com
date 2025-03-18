@@ -11,26 +11,32 @@ HOW IT WORKS:
 3. Roll values for each die (1-6)
 4. Generate region boundaries between dice using a modified Voronoi diagram approach:
    - Assign each pixel to its closest die region
+   - Calculate centroid (true center) of each region for optimal text placement
    - Find boundary pixels where regions meet
    - Connect boundary pixels into continuous paths
    - Simplify and draw as dark grey lines
 5. Display the dice on top of the map
+6. Roll on terrain and landmark tables based on dice values:
+   - 1-3: Easy terrain (plains, grasslands, etc.)
+   - 4-5: Tough terrain (forests, hills, etc.)
+   - 6: Perilous terrain (mountains, swamps, etc.)
+   - Two separate d20 rolls determine the specific terrain and landmark for each region
+   - Text is optimally positioned at region centroids with collision avoidance
 
 TECHNICAL APPROACH:
 - Uses HTML5 Canvas for drawing
 - Implements dice placement with minimum distance requirements
 - Uses a pixel-based approach to identify region boundaries
+- Calculates true region centroids for optimal text placement
 - Connects boundary pixels into paths using a nearest-neighbor algorithm
 - Renders clean, single lines between regions
+- Uses semi-transparent backgrounds behind text for readability
+- Implements an intelligent text positioning system that:
+  * Places text at region centroids when possible
+  * Avoids text overlapping with other text
+  * Keeps text within canvas boundaries
+  * Uses fallback positions when needed
 
-This represents the foundation of the map generation process. In future steps (not implemented 
-here), these regions would be assigned terrain types based on the dice values:
-- 1-3: Easy terrain (plains, grasslands, etc.)
-- 4-5: Tough terrain (forests, hills, etc.)
-- 6: Perilous terrain (mountains, swamps, etc.)
-
-Each region would also receive a landmark, and the map would be further developed with
-rivers, points of interest, and paths between locations.
 ======================================================================================
 -->
 
