@@ -4,6 +4,9 @@
 
 // Add water sources to the map
 function addWaterSources(ctx, mapData) {
+    // Keep the landmark reference table intact
+    const tableData = ctx.getImageData(20, mapData.height - 110, mapData.width - 40, 110);
+    
     // Find the highest and lowest elevation points
     const getElevationRank = (terrain) => {
         if (terrain === 'perilous') return 3;
@@ -28,6 +31,9 @@ function addWaterSources(ctx, mapData) {
     
     // Create river path
     drawRiver(ctx, highestCentroid, lowestCentroid);
+    
+    // Restore the landmark reference table
+    ctx.putImageData(tableData, 20, mapData.height - 110);
 }
 
 // Draw a river from highest to lowest elevation
