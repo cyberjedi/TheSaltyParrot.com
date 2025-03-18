@@ -39,3 +39,18 @@ button:hover {
 button.next-step {
     background-color: #0066cc;
 }
+/* Style for landmark reference table */
+.landmark-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+.landmark-table th, .landmark-table td {
+    padding: 8px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+.landmark-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
