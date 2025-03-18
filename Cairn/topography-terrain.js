@@ -205,102 +205,7 @@ function rollOnTerrainTables(ctx, mapData) {
     // Redraw region boundaries
     drawRegionBoundaries(ctx, mapData.dice.map(die => ({ x: die.x, y: die.y })), mapData);
     
-    // Track placed labels to avoid overlap
-    const placedLabels = [];
-    
-    // Helper function to check if a new label would overlap existing ones
-    function wouldOverlap(x, y, width, height) {
-        for (const label of placedLabels) {
-            // Simple rectangular collision detection
-            if (x < label.x + label.width &&
-                x + width > label.x &&
-                y < label.y + label.height &&
-                y + height > label.y) {
-                return true;
-            }
-        }
-        return false;
-    }
-    
-    // Helper function to find best position for a label using region centroid
-    function findBestPosition(dieIndex, textWidth, textHeight) {
-        // Check if we have a calculated centroid for this region
-        if (mapData.regionCentroids && mapData.regionCentroids[dieIndex]) {
-            const centroid = mapData.regionCentroids[dieIndex];
-            
-            // Position the text centered at the centroid
-            const x = centroid.x - textWidth / 2;
-            const y = centroid.y - textHeight / 2;
-            
-            // Ensure position is within canvas bounds
-            const adjustedX = Math.max(10, Math.min(mapData.width - textWidth - 10, x));
-            const adjustedY = Math.max(textHeight - 10, Math.min(mapData.height - 120 - textHeight - 10, y));
-            
-            // If not overlapping with other labels, use this centroid position
-            if (!wouldOverlap(adjustedX, adjustedY, textWidth, textHeight)) {
-                return { x: adjustedX, y: adjustedY, centroid };
-            }
-            
-            // Try positions around the centroid
-            const offsets = [
-                { x: 0, y: -textHeight - 30 },  // Above
-                { x: 0, y: textHeight + 30 },   // Below
-                { x: -textWidth - 30, y: 0 },   // Left
-                { x: textWidth + 30, y: 0 },    // Right
-                { x: -textWidth - 30, y: -textHeight - 30 }, // Top-left
-                { x: textWidth + 30, y: -textHeight - 30 },  // Top-right
-                { x: -textWidth - 30, y: textHeight + 30 },  // Bottom-left
-                { x: textWidth + 30, y: textHeight + 30 }    // Bottom-right
-            ];
-            
-            for (const offset of offsets) {
-                const posX = centroid.x + offset.x;
-                const posY = centroid.y + offset.y;
-                
-                // Ensure position is within canvas bounds and above the table area
-                if (posX >= 10 && posX + textWidth <= mapData.width - 10 &&
-                    posY >= textHeight - 10 && posY + textHeight <= mapData.height - 120 - 10) {
-                        
-                    if (!wouldOverlap(posX, posY, textWidth, textHeight)) {
-                        return { x: posX, y: posY, centroid };
-                    }
-                }
-            }
-        }
-        
-        // Fallback to using the die position
-        const die = mapData.dice[dieIndex];
-        
-        // Try different offsets from the die position
-        const possiblePositions = [
-            { x: die.x - textWidth/2, y: die.y + 40 },               // Below triangle
-            { x: die.x - textWidth - 10, y: die.y - textHeight/2 },  // Left
-            { x: die.x + 10, y: die.y - textHeight/2 },              // Right
-            { x: die.x - textWidth - 10, y: die.y + 40 },            // Bottom-left
-            { x: die.x + 10, y: die.y + 40 }                         // Bottom-right
-        ];
-        
-        // Ensure position is within canvas bounds and above the table area
-        const validPositions = possiblePositions.filter(pos => 
-            pos.x >= 10 && 
-            pos.x + textWidth <= mapData.width - 10 &&
-            pos.y >= textHeight - 10 && 
-            pos.y + textHeight <= mapData.height - 120 - 10
-        );
-        
-        // Find first position that doesn't overlap
-        for (const pos of validPositions) {
-            if (!wouldOverlap(pos.x, pos.y, textWidth, textHeight)) {
-                return { x: pos.x, y: pos.y, centroid: { x: die.x, y: die.y } };
-            }
-        }
-        
-        // If all positions overlap, return the first valid one anyway
-        return validPositions[0] || 
-               { x: die.x - textWidth/2, y: die.y + 40, centroid: { x: die.x, y: die.y } };
-    }
-    
-    // For each die, replace with terrain and landmark info
+    // Process all the terrain and landmark information
     mapData.dice.forEach((die, dieIndex) => {
         const terrainType = getTerrainType(die.value);
         
@@ -316,62 +221,50 @@ function rollOnTerrainTables(ctx, mapData) {
         die.terrainType = terrainType;
         die.terrain = terrainResult;
         die.landmark = landmarkResult;
+    });
+    
+    // Process all landmarks and terrain names in a specific order
+    mapData.dice.forEach((die, dieIndex) => {
+        const centroid = mapData.regionCentroids[dieIndex];
+        if (!centroid) return;
         
-        // Prepare text
-        const terrainText = terrainResult;
+        // Draw the landmark circle first
+        drawLandmarkTriangle(ctx, centroid.x, centroid.y, dieIndex + 1);
         
-        // Measure text
-        ctx.font = 'bold 16px Arial';
-        const terrainWidth = ctx.measureText(terrainText).width;
-        
-        const textWidth = terrainWidth + 20;
-        const textHeight = 20; // Approximate height for the line
-        
-        // Find best position for this label using region centroid
-        const position = findBestPosition(dieIndex, textWidth, textHeight);
-        
-        // Draw the landmark circle (at the centroid position)
-        drawLandmarkTriangle(ctx, position.centroid.x, position.centroid.y, dieIndex + 1);
-        
-        // Register this label to avoid future overlaps
-        placedLabels.push({
-            x: position.x,
-            y: position.y,
-            width: textWidth,
-            height: textHeight
-        });
-        
-        // Draw text with background and rounded corners for better readability
-        // Create background with rounded corners
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-        // Draw rounded rectangle
-        ctx.beginPath();
-        const radius = 5;
-        const padding = 5;
-        ctx.moveTo(position.x - padding + radius, position.y - 20);
-        ctx.lineTo(position.x - padding + textWidth + padding - radius, position.y - 20);
-        ctx.quadraticCurveTo(position.x - padding + textWidth + padding, position.y - 20, position.x - padding + textWidth + padding, position.y - 20 + radius);
-        ctx.lineTo(position.x - padding + textWidth + padding, position.y - 20 + textHeight + padding - radius);
-        ctx.quadraticCurveTo(position.x - padding + textWidth + padding, position.y - 20 + textHeight + padding, position.x - padding + textWidth + padding - radius, position.y - 20 + textHeight + padding);
-        ctx.lineTo(position.x - padding + radius, position.y - 20 + textHeight + padding);
-        ctx.quadraticCurveTo(position.x - padding, position.y - 20 + textHeight + padding, position.x - padding, position.y - 20 + textHeight + padding - radius);
-        ctx.lineTo(position.x - padding, position.y - 20 + radius);
-        ctx.quadraticCurveTo(position.x - padding, position.y - 20, position.x - padding + radius, position.y - 20);
-        ctx.closePath();
-        ctx.fill();
-        
-        // Add subtle border
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        
-        // Draw terrain text
-        ctx.fillStyle = 'black';
-        ctx.font = 'bold 16px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText(terrainText, position.x, position.y);
+        // Then draw terrain name to the RIGHT of the landmark
+        drawTerrainNameRight(ctx, centroid.x, centroid.y, die.terrain);
     });
     
     // Create landmark reference table at the bottom
     createLandmarkTable(ctx, mapData);
+}
+
+// Draw a terrain name to the RIGHT of a landmark point
+function drawTerrainNameRight(ctx, x, y, name) {
+    ctx.font = 'bold 14px Arial';
+    const textWidth = ctx.measureText(name).width;
+    
+    // Position text box to the right of the landmark with padding
+    const textX = x + 25; // 25px gap between landmark and text
+    const textY = y;
+    
+    // Draw background with rounded corners
+    const padding = 6;
+    const textHeight = 16;
+    ctx.fillStyle = 'white';
+    
+    // Draw rounded rectangle background
+    roundRect(ctx, textX - padding, textY - 10, textWidth + (padding * 2), textHeight + (padding * 2), 5);
+    ctx.fill();
+    
+    // Add subtle border
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    
+    // Draw text
+    ctx.fillStyle = 'black';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(name, textX, textY);
 }
