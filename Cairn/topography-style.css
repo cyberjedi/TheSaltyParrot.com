@@ -17,17 +17,15 @@ h1 {
 }
 .map-container {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    width: 800px;
     background-color: transparent;
-    margin-bottom: 20px;
+    margin-bottom: 0;
 }
 .map-container canvas {
     border: 1px solid #333;
-    margin-bottom: 10px;
     background-color: white;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: block;
 }
 .controls {
     display: flex;
@@ -47,19 +45,4 @@ button:hover {
 }
 button.next-step {
     background-color: #0066cc;
-}
-/* Style for landmark reference table */
-.landmark-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-.landmark-table th, .landmark-table td {
-    padding: 8px;
-    text-align: left;
-    border: 1px solid #ddd;
-}
-.landmark-table th {
-    background-color: #f2f2f2;
-    font-weight: bold;
 }
