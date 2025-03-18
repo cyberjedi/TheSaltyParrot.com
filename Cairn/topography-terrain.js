@@ -77,14 +77,14 @@ function drawLandmarkTriangle(ctx, x, y, number) {
 
 // Create a modern landmark reference table below the map
 function createLandmarkTable(ctx, mapData) {
-    // Save the map content
-    const mapImageData = ctx.getImageData(0, 0, mapData.width, mapData.height);
-    
     // Create a new canvas for the table
     const tableCanvas = document.createElement('canvas');
-    tableCanvas.width = mapData.width;
+    tableCanvas.width = 600; // Fixed width for the table
     tableCanvas.height = 120; // Height for the table
     tableCanvas.id = 'landmarkTable';
+    tableCanvas.style.marginTop = '10px'; // Add margin between map and table
+    tableCanvas.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)'; // Add shadow for depth
+    tableCanvas.style.borderRadius = '8px'; // Rounded corners
     
     // Remove existing table if it exists
     const existingTable = document.getElementById('landmarkTable');
@@ -92,57 +92,54 @@ function createLandmarkTable(ctx, mapData) {
         existingTable.remove();
     }
     
+    // Create a container div for better positioning
+    const tableContainer = document.createElement('div');
+    tableContainer.style.width = '100%';
+    tableContainer.style.display = 'flex';
+    tableContainer.style.justifyContent = 'center';
+    tableContainer.style.marginTop = '20px';
+    tableContainer.id = 'tableContainer';
+    
+    // Remove existing container if it exists
+    const existingContainer = document.getElementById('tableContainer');
+    if (existingContainer) {
+        existingContainer.remove();
+    }
+    
     // Append the table canvas to the container
+    tableContainer.appendChild(tableCanvas);
+    
+    // Append the container after the map container
     const mapContainer = document.querySelector('.map-container');
-    mapContainer.appendChild(tableCanvas);
+    mapContainer.parentNode.insertBefore(tableContainer, mapContainer.nextSibling);
     
     // Get table context
     const tableCtx = tableCanvas.getContext('2d');
     
     // Draw modern table with shadow for depth
-    tableCtx.shadowColor = 'rgba(0, 0, 0, 0.2)';
-    tableCtx.shadowBlur = 10;
-    tableCtx.shadowOffsetX = 0;
-    tableCtx.shadowOffsetY = 3;
-    
-    // Draw table background with rounded corners
     tableCtx.fillStyle = 'white';
-    const width = tableCanvas.width * 0.9; // 90% of canvas width for centering
-    const x = (tableCanvas.width - width) / 2;
-    roundRect(tableCtx, x, 10, width, 100, 8);
-    tableCtx.fill();
-    
-    // Reset shadow for text
-    tableCtx.shadowColor = 'transparent';
-    tableCtx.shadowBlur = 0;
-    tableCtx.shadowOffsetX = 0;
-    tableCtx.shadowOffsetY = 0;
+    tableCtx.fillRect(0, 0, tableCanvas.width, tableCanvas.height);
     
     // Draw table header with background
-    tableCtx.fillStyle = '#4a4a4a';
-    roundRect(tableCtx, x, 10, width, 30, { tl: 8, tr: 8, bl: 0, br: 0 });
-    tableCtx.fill();
+    tableCtx.fillStyle = '#444444';
+    tableCtx.fillRect(0, 0, tableCanvas.width, 30);
     
     // Draw header text
     tableCtx.fillStyle = 'white';
     tableCtx.font = 'bold 16px Arial';
     tableCtx.textAlign = 'center';
-    tableCtx.fillText('LANDMARK REFERENCE', tableCanvas.width / 2, 30);
+    tableCtx.fillText('LANDMARK REFERENCE', tableCanvas.width / 2, 20);
     
     // Draw table content
     tableCtx.fillStyle = '#333333';
     tableCtx.font = '14px Arial';
     tableCtx.textAlign = 'left';
     
-    // Layout in columns - get available space after header
-    const contentAreaX = x + 20;
-    const contentAreaY = 50;
-    const contentWidth = width - 40;
-    
+    // Layout in columns
     const numLandmarks = mapData.dice.length;
     const columns = 3;
     const landmarksPerColumn = Math.ceil(numLandmarks / columns);
-    const cellWidth = contentWidth / columns;
+    const cellWidth = tableCanvas.width / columns;
     const rowHeight = 25;
     
     // Draw each landmark item
@@ -151,8 +148,8 @@ function createLandmarkTable(ctx, mapData) {
         const column = Math.floor(i / landmarksPerColumn);
         const row = i % landmarksPerColumn;
         
-        const itemX = contentAreaX + column * cellWidth;
-        const itemY = contentAreaY + row * rowHeight;
+        const itemX = 20 + column * cellWidth;
+        const itemY = 50 + row * rowHeight;
         
         // Draw landmark number with circle
         tableCtx.fillStyle = 'black';
@@ -171,9 +168,6 @@ function createLandmarkTable(ctx, mapData) {
         tableCtx.textAlign = 'left';
         tableCtx.fillText(die.landmark, itemX + 20, itemY);
     }
-    
-    // Restore the map content
-    ctx.putImageData(mapImageData, 0, 0);
 }
 
 // Helper function to draw rounded rectangles
