@@ -154,12 +154,15 @@
             // Generate curved boundaries between regions
             function drawRegionBoundaries(dicePositions) {
                 // Create a simplified version of a Voronoi diagram
-                const resolution = 4; // Check every 4 pixels
-                const noiseLevel = 20; // Random noise to add to boundaries for organic feel
+                const resolution = 5; // Check every 5 pixels
+                const boundaryThreshold = 8; // Maximum difference in distance to be considered a boundary
                 
-                // First, determine region ownership for each cell
-                // For simplicity, we'll just use a grid approach
-                const boundaries = new Set();
+                // Create a grid to track boundary points
+                const boundaryPoints = [];
+                const cellSize = 8; // Size of grid cells
+                const gridCols = Math.ceil(canvas.width / cellSize);
+                const gridRows = Math.ceil(canvas.height / cellSize);
+                const grid = Array(gridRows).fill().map(() => Array(gridCols).fill(null));
                 
                 // Identify boundary points
                 for (let x = 0; x < canvas.width; x += resolution) {
@@ -188,71 +191,201 @@
                         // If we're almost equidistant to two dice, we're on a boundary
                         if (closest !== -1 && secondClosest !== -1) {
                             const diff = secondMinDist - minDist;
-                            if (diff < 10) {
-                                // Add some noise to make the boundary more natural
-                                const noisedX = x + (Math.random() - 0.5) * noiseLevel;
-                                const noisedY = y + (Math.random() - 0.5) * noiseLevel;
+                            if (diff < boundaryThreshold) {
+                                // Small random variation for natural look
+                                const noisedX = x + (Math.random() - 0.5) * 3;
+                                const noisedY = y + (Math.random() - 0.5) * 3;
                                 
-                                // Add to boundaries
-                                boundaries.add(`${Math.round(noisedX)},${Math.round(noisedY)}`);
+                                // Add to boundary points
+                                boundaryPoints.push({
+                                    x: noisedX,
+                                    y: noisedY,
+                                    region1: closest,
+                                    region2: secondClosest
+                                });
+                                
+                                // Store in grid for faster access
+                                const gridX = Math.floor(noisedX / cellSize);
+                                const gridY = Math.floor(noisedY / cellSize);
+                                if (gridX >= 0 && gridX < gridCols && gridY >= 0 && gridY < gridRows) {
+                                    if (!grid[gridY][gridX]) {
+                                        grid[gridY][gridX] = [];
+                                    }
+                                    grid[gridY][gridX].push(boundaryPoints.length - 1);
+                                }
                             }
                         }
                     }
                 }
                 
-                // Draw the boundaries
-                ctx.strokeStyle = 'black';
-                ctx.lineWidth = 1;
+                // Group boundary points into contiguous lines
+                const lines = [];
+                const used = new Set();
                 
-                for (const point of boundaries) {
-                    const [x, y] = point.split(',').map(Number);
+                // Function to find nearby points
+                function getNearbyPoints(point, radius) {
+                    const nearby = [];
+                    const centerX = Math.floor(point.x / cellSize);
+                    const centerY = Math.floor(point.y / cellSize);
+                    const searchRadius = Math.ceil(radius / cellSize) + 1;
                     
-                    // Small dots that together form lines
+                    // Search the grid cells around this point
+                    for (let dy = -searchRadius; dy <= searchRadius; dy++) {
+                        for (let dx = -searchRadius; dx <= searchRadius; dx++) {
+                            const gridX = centerX + dx;
+                            const gridY = centerY + dy;
+                            
+                            if (gridX >= 0 && gridX < gridCols && gridY >= 0 && gridY < gridRows && grid[gridY][gridX]) {
+                                for (const idx of grid[gridY][gridX]) {
+                                    if (!used.has(idx)) {
+                                        const otherPoint = boundaryPoints[idx];
+                                        const dist = Math.sqrt(Math.pow(point.x - otherPoint.x, 2) + Math.pow(point.y - otherPoint.y, 2));
+                                        if (dist <= radius) {
+                                            nearby.push(idx);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    return nearby;
+                }
+                
+                // Function to trace a line from a starting point
+                function traceLine(startIndex) {
+                    const line = [boundaryPoints[startIndex]];
+                    used.add(startIndex);
+                    
+                    // Trace in both directions
+                    let currentIndex = startIndex;
+                    let keepGoing = true;
+                    
+                    // Forward direction
+                    while (keepGoing) {
+                        const current = boundaryPoints[currentIndex];
+                        const nearby = getNearbyPoints(current, 15);
+                        
+                        if (nearby.length > 0) {
+                            // Find the point that forms the most natural continuation
+                            let bestIdx = nearby[0];
+                            let bestScore = Infinity;
+                            
+                            if (line.length >= 2) {
+                                // Try to maintain direction
+                                const prev = line[line.length - 2];
+                                const currentDir = {
+                                    x: current.x - prev.x,
+                                    y: current.y - prev.y
+                                };
+                                
+                                for (const idx of nearby) {
+                                    const next = boundaryPoints[idx];
+                                    const nextDir = {
+                                        x: next.x - current.x,
+                                        y: next.y - current.y
+                                    };
+                                    
+                                    // Dot product to measure alignment
+                                    const dot = currentDir.x * nextDir.x + currentDir.y * nextDir.y;
+                                    const score = 1 - dot / (Math.sqrt(currentDir.x * currentDir.x + currentDir.y * currentDir.y) * 
+                                                            Math.sqrt(nextDir.x * nextDir.x + nextDir.y * nextDir.y));
+                                    
+                                    if (score < bestScore) {
+                                        bestScore = score;
+                                        bestIdx = idx;
+                                    }
+                                }
+                            }
+                            
+                            currentIndex = bestIdx;
+                            line.push(boundaryPoints[currentIndex]);
+                            used.add(currentIndex);
+                        } else {
+                            keepGoing = false;
+                        }
+                    }
+                    
+                    return line;
+                }
+                
+                // Create lines from boundary points
+                for (let i = 0; i < boundaryPoints.length; i++) {
+                    if (!used.has(i)) {
+                        const line = traceLine(i);
+                        if (line.length > 5) { // Skip very short lines
+                            lines.push(line);
+                        }
+                    }
+                }
+                
+                // Draw the boundary lines
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 1.5;
+                
+                for (const line of lines) {
+                    if (line.length < 2) continue;
+                    
                     ctx.beginPath();
-                    ctx.arc(x, y, 0.5, 0, Math.PI * 2);
+                    ctx.moveTo(line[0].x, line[0].y);
+                    
+                    // Draw as a smooth curve using quadratic curves for short segments
+                    for (let i = 1; i < line.length; i++) {
+                        // For smoother curves, use control points
+                        if (i < line.length - 1) {
+                            // Calculate control point (midpoint)
+                            const cp = {
+                                x: (line[i].x + line[i+1].x) / 2,
+                                y: (line[i].y + line[i+1].y) / 2
+                            };
+                            ctx.quadraticCurveTo(line[i].x, line[i].y, cp.x, cp.y);
+                        } else {
+                            // For the last point
+                            ctx.lineTo(line[i].x, line[i].y);
+                        }
+                    }
+                    
                     ctx.stroke();
                 }
                 
-                // Connect boundaries to the edge of the map
-                const edgePoints = [];
-                const numEdgePoints = 12; // Number of points to extend from edges
+                // Connect lines to the edges of the map with subtle curves
+                // This is a simplified approach to ensure all regions are closed
+                const edgeConnections = 15; // Number of edge connections to create
                 
-                // Add random edge connection points
-                for (let i = 0; i < numEdgePoints; i++) {
-                    // Pick a random side
+                ctx.beginPath();
+                
+                // Create connections to map edges
+                for (let i = 0; i < edgeConnections; i++) {
+                    // Choose a random position on the edge
                     const side = Math.floor(Math.random() * 4);
-                    let x, y;
+                    let startX, startY;
                     
+                    // Pick a random point on one of the four sides
                     switch (side) {
                         case 0: // Top
-                            x = Math.random() * canvas.width;
-                            y = 0;
+                            startX = Math.random() * canvas.width;
+                            startY = 0;
                             break;
                         case 1: // Right
-                            x = canvas.width;
-                            y = Math.random() * canvas.height;
+                            startX = canvas.width;
+                            startY = Math.random() * canvas.height;
                             break;
                         case 2: // Bottom
-                            x = Math.random() * canvas.width;
-                            y = canvas.height;
+                            startX = Math.random() * canvas.width;
+                            startY = canvas.height;
                             break;
                         case 3: // Left
-                            x = 0;
-                            y = Math.random() * canvas.height;
+                            startX = 0;
+                            startY = Math.random() * canvas.height;
                             break;
                     }
                     
-                    edgePoints.push({ x, y });
-                }
-                
-                // Find the closest dice to each edge point
-                ctx.lineWidth = 2;
-                for (const edge of edgePoints) {
+                    // Find the closest die
                     let closestDie = null;
                     let minDist = Infinity;
                     
                     for (const pos of dicePositions) {
-                        const dist = Math.sqrt(Math.pow(edge.x - pos.x, 2) + Math.pow(edge.y - pos.y, 2));
+                        const dist = Math.sqrt(Math.pow(startX - pos.x, 2) + Math.pow(startY - pos.y, 2));
                         if (dist < minDist) {
                             minDist = dist;
                             closestDie = pos;
@@ -260,23 +393,30 @@
                     }
                     
                     if (closestDie) {
-                        // Draw a curved path from edge to the die
-                        ctx.beginPath();
-                        ctx.moveTo(edge.x, edge.y);
+                        // Draw a gentle curve from the edge to near the die
+                        ctx.moveTo(startX, startY);
                         
-                        // Control points for the curve
-                        const midX = (edge.x + closestDie.x) / 2;
-                        const midY = (edge.y + closestDie.y) / 2;
+                        // Find a point near the die but not right on it
+                        const angle = Math.atan2(closestDie.y - startY, closestDie.x - startX);
+                        const distance = Math.sqrt(Math.pow(closestDie.x - startX, 2) + Math.pow(closestDie.y - startY, 2));
+                        const offsetDistance = distance * 0.3; // Don't go all the way to the die
                         
-                        // Add some randomness to control points
-                        const ctrlX = midX + (Math.random() - 0.5) * 100;
-                        const ctrlY = midY + (Math.random() - 0.5) * 100;
+                        const endX = startX + Math.cos(angle) * (distance - offsetDistance);
+                        const endY = startY + Math.sin(angle) * (distance - offsetDistance);
                         
-                        // Draw a quadratic curve
-                        ctx.quadraticCurveTo(ctrlX, ctrlY, closestDie.x, closestDie.y);
-                        ctx.stroke();
+                        // Create a control point for the curve
+                        const midX = (startX + endX) / 2;
+                        const midY = (startY + endY) / 2;
+                        
+                        // Add some randomness to the control point
+                        const ctrlX = midX + (Math.random() - 0.5) * (distance * 0.3);
+                        const ctrlY = midY + (Math.random() - 0.5) * (distance * 0.3);
+                        
+                        ctx.quadraticCurveTo(ctrlX, ctrlY, endX, endY);
                     }
                 }
+                
+                ctx.stroke();
             }
             
             // Generate the terrain
