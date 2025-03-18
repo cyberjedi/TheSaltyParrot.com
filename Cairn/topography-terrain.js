@@ -75,7 +75,7 @@ function drawLandmarkTriangle(ctx, x, y, number) {
     ctx.fillText(number, x, y);
 }
 
-// Create a landmark reference table below the map
+// Create a modern landmark reference table below the map
 function createLandmarkTable(ctx, mapData) {
     // Save the map content
     const mapImageData = ctx.getImageData(0, 0, mapData.width, mapData.height);
@@ -99,44 +99,108 @@ function createLandmarkTable(ctx, mapData) {
     // Get table context
     const tableCtx = tableCanvas.getContext('2d');
     
-    // Draw table background
-    tableCtx.fillStyle = 'white';
-    tableCtx.fillRect(0, 0, tableCanvas.width, tableCanvas.height);
-    tableCtx.strokeStyle = 'black';
-    tableCtx.lineWidth = 1;
-    tableCtx.strokeRect(0, 0, tableCanvas.width, tableCanvas.height);
+    // Draw modern table with shadow for depth
+    tableCtx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+    tableCtx.shadowBlur = 10;
+    tableCtx.shadowOffsetX = 0;
+    tableCtx.shadowOffsetY = 3;
     
-    // Draw table header
-    tableCtx.fillStyle = 'black';
+    // Draw table background with rounded corners
+    tableCtx.fillStyle = 'white';
+    const width = tableCanvas.width * 0.9; // 90% of canvas width for centering
+    const x = (tableCanvas.width - width) / 2;
+    roundRect(tableCtx, x, 10, width, 100, 8);
+    tableCtx.fill();
+    
+    // Reset shadow for text
+    tableCtx.shadowColor = 'transparent';
+    tableCtx.shadowBlur = 0;
+    tableCtx.shadowOffsetX = 0;
+    tableCtx.shadowOffsetY = 0;
+    
+    // Draw table header with background
+    tableCtx.fillStyle = '#4a4a4a';
+    roundRect(tableCtx, x, 10, width, 30, { tl: 8, tr: 8, bl: 0, br: 0 });
+    tableCtx.fill();
+    
+    // Draw header text
+    tableCtx.fillStyle = 'white';
     tableCtx.font = 'bold 16px Arial';
     tableCtx.textAlign = 'center';
-    tableCtx.fillText('LANDMARK REFERENCE', tableCanvas.width / 2, 20);
+    tableCtx.fillText('LANDMARK REFERENCE', tableCanvas.width / 2, 30);
     
-    // Draw table rows
+    // Draw table content
+    tableCtx.fillStyle = '#333333';
     tableCtx.font = '14px Arial';
     tableCtx.textAlign = 'left';
     
-    // Layout in columns
+    // Layout in columns - get available space after header
+    const contentAreaX = x + 20;
+    const contentAreaY = 50;
+    const contentWidth = width - 40;
+    
     const numLandmarks = mapData.dice.length;
     const columns = 3;
     const landmarksPerColumn = Math.ceil(numLandmarks / columns);
-    const cellWidth = tableCanvas.width / columns;
+    const cellWidth = contentWidth / columns;
     const rowHeight = 25;
     
+    // Draw each landmark item
     for (let i = 0; i < numLandmarks; i++) {
         const die = mapData.dice[i];
         const column = Math.floor(i / landmarksPerColumn);
         const row = i % landmarksPerColumn;
         
-        const x = 20 + column * cellWidth;
-        const y = 45 + row * rowHeight;
+        const itemX = contentAreaX + column * cellWidth;
+        const itemY = contentAreaY + row * rowHeight;
         
-        // Draw row
-        tableCtx.fillText(`${i+1}. ${die.landmark}`, x, y);
+        // Draw landmark number with circle
+        tableCtx.fillStyle = 'black';
+        tableCtx.beginPath();
+        tableCtx.arc(itemX + 8, itemY - 5, 9, 0, Math.PI * 2);
+        tableCtx.fill();
+        
+        tableCtx.fillStyle = 'white';
+        tableCtx.font = 'bold 12px Arial';
+        tableCtx.textAlign = 'center';
+        tableCtx.fillText(i+1, itemX + 8, itemY - 2);
+        
+        // Draw landmark name
+        tableCtx.fillStyle = '#333333';
+        tableCtx.font = '14px Arial';
+        tableCtx.textAlign = 'left';
+        tableCtx.fillText(die.landmark, itemX + 20, itemY);
     }
     
     // Restore the map content
     ctx.putImageData(mapImageData, 0, 0);
+}
+
+// Helper function to draw rounded rectangles
+function roundRect(ctx, x, y, width, height, radius) {
+    if (typeof radius === 'undefined') {
+        radius = 5;
+    }
+    if (typeof radius === 'number') {
+        radius = {tl: radius, tr: radius, br: radius, bl: radius};
+    } else {
+        const defaultRadius = {tl: 0, tr: 0, br: 0, bl: 0};
+        for (let side in defaultRadius) {
+            radius[side] = radius[side] || defaultRadius[side];
+        }
+    }
+    
+    ctx.beginPath();
+    ctx.moveTo(x + radius.tl, y);
+    ctx.lineTo(x + width - radius.tr, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+    ctx.lineTo(x + width, y + height - radius.br);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
+    ctx.lineTo(x + radius.bl, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+    ctx.lineTo(x, y + radius.tl);
+    ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+    ctx.closePath();
 }
 
 // Roll on terrain type tables and place terrain and landmark information
@@ -272,7 +336,7 @@ function rollOnTerrainTables(ctx, mapData) {
         // Find best position for this label using region centroid
         const position = findBestPosition(dieIndex, textWidth, textHeight);
         
-        // Draw the landmark triangle (at the centroid position)
+        // Draw the landmark circle (at the centroid position)
         drawLandmarkTriangle(ctx, position.centroid.x, position.centroid.y, dieIndex + 1);
         
         // Register this label to avoid future overlaps
@@ -283,9 +347,29 @@ function rollOnTerrainTables(ctx, mapData) {
             height: textHeight
         });
         
-        // Draw semi-transparent background for better readability
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        ctx.fillRect(position.x - 5, position.y - 20, textWidth + 10, textHeight + 10);
+        // Draw text with background and rounded corners for better readability
+        // Create background with rounded corners
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        // Draw rounded rectangle
+        ctx.beginPath();
+        const radius = 5;
+        const padding = 5;
+        ctx.moveTo(position.x - padding + radius, position.y - 20);
+        ctx.lineTo(position.x - padding + textWidth + padding - radius, position.y - 20);
+        ctx.quadraticCurveTo(position.x - padding + textWidth + padding, position.y - 20, position.x - padding + textWidth + padding, position.y - 20 + radius);
+        ctx.lineTo(position.x - padding + textWidth + padding, position.y - 20 + textHeight + padding - radius);
+        ctx.quadraticCurveTo(position.x - padding + textWidth + padding, position.y - 20 + textHeight + padding, position.x - padding + textWidth + padding - radius, position.y - 20 + textHeight + padding);
+        ctx.lineTo(position.x - padding + radius, position.y - 20 + textHeight + padding);
+        ctx.quadraticCurveTo(position.x - padding, position.y - 20 + textHeight + padding, position.x - padding, position.y - 20 + textHeight + padding - radius);
+        ctx.lineTo(position.x - padding, position.y - 20 + radius);
+        ctx.quadraticCurveTo(position.x - padding, position.y - 20, position.x - padding + radius, position.y - 20);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Add subtle border
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
         
         // Draw terrain text
         ctx.fillStyle = 'black';
