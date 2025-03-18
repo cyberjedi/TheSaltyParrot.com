@@ -109,16 +109,78 @@ rivers, points of interest, and paths between locations.
                 dice: []
             };
             
+            // Terrain and landmark tables
+            const terrainTables = {
+                easy: [
+                    "Bluffs", "Dells", "Farmlands", "Fells", "Foothills", 
+                    "Glens", "Grasslands", "Gulleys", "Heaths", "Lowlands", 
+                    "Meadows", "Moors", "Pampas", "Pastures", "Plains", 
+                    "Plateaus", "Prairies", "Savannas", "Steppes", "Valleys"
+                ],
+                tough: [
+                    "Barrens", "Canyons", "Chaparral", "Coral Reefs", "Deserts", 
+                    "Dunes", "Estuaries", "Fens", "Forests", "Heathlands", 
+                    "Hills", "Mangroves", "Marshlands", "Moorlands", "Rainforests", 
+                    "Scrublands", "Taiga", "Thickets", "Tundra", "Woodlands"
+                ],
+                perilous: [
+                    "Alpine Meadows", "Bogs", "Boulders", "Caverns", "Cliffs", 
+                    "Craters", "Crevasses", "Geysers", "Glaciers", "Gorges", 
+                    "Hollows", "Ice Fields", "Jungles", "Lava Fields", "Mountains", 
+                    "Peatlands", "Quagmires", "Ravine", "Swamps", "Wastelands"
+                ]
+            };
+            
+            const landmarkTables = {
+                easy: [
+                    "Broken Sundial", "Circle of Menhirs", "Circular Maze", "Cloud Stairway", "Dead Aqueduct", 
+                    "Enormous Footprint", "Fallen Column", "False Oasis", "Giant's Throne", "Glittering Cascade", 
+                    "Golden Bridge", "Great Stone Face", "Great Waterwheel", "Heart Tree", "Opaque Lake", 
+                    "Petrified Forest", "Pit of Cold Fire", "Silver Face", "Sinkhole", "Titanic Gate"
+                ],
+                tough: [
+                    "Algae Falls", "Basalt Columns", "Behemoth Graveyard", "Canyon Bridge", "Cinder Cones", 
+                    "Half-Buried Ark", "Flame Pits", "Forest of Arrows", "Frozen Waterfall", "Fungal Forest", 
+                    "Hanging Valley", "Inverted Lighthouse", "Leviathan Bones", "Massive Crater", "Massive Dung Ball", 
+                    "Salt Flat Mirrors", "Shrouded Ziggurat", "Stalagmite Forest", "Sunken Colossus", "Titan's Table"
+                ],
+                perilous: [
+                    "Active Volcano", "Ammonia Caves", "Bone Mountain", "Crystalline Forest", "Dome of Darkness", 
+                    "Enormous Hive", "Floating Object", "Inactive Automaton", "Land Scar", "Large Vents", 
+                    "Magma Sculptures", "Man on the Mountain", "Meteor Garden", "Obsidian Needle", "Reverse Waterfall", 
+                    "River of Sulfur", "Siren Stones", "Sky-Root", "Titanic Ribcage", "Weeping Bubble"
+                ]
+            };
+            
             // Clear the map
             function clearMap() {
                 ctx.fillStyle = 'white';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 mapData.dice = [];
+                
+                // Reset buttons
+                document.getElementById('generateBtn').style.display = 'inline-block';
+                const rollTablesBtn = document.getElementById('rollTablesBtn');
+                if (rollTablesBtn) {
+                    rollTablesBtn.style.display = 'none';
+                }
             }
             
-            // Roll a die
+            // Roll a die (d6)
             function rollDie() {
                 return Math.floor(Math.random() * 6) + 1;
+            }
+            
+            // Roll d20
+            function rollD20() {
+                return Math.floor(Math.random() * 20);  // 0-19 for array index
+            }
+            
+            // Get terrain type based on die value
+            function getTerrainType(dieValue) {
+                if (dieValue <= 3) return "easy";
+                if (dieValue <= 5) return "tough";
+                return "perilous";
             }
             
             // Generate random dice positions on the map
@@ -336,6 +398,49 @@ rivers, points of interest, and paths between locations.
                 }
             }
             
+            // Roll on terrain type tables
+            function rollOnTerrainTables() {
+                // Clear the canvas except for region boundaries
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Redraw region boundaries
+                drawRegionBoundaries(mapData.dice.map(die => ({ x: die.x, y: die.y })));
+                
+                // For each die, replace with terrain and landmark info
+                mapData.dice.forEach(die => {
+                    const terrainType = getTerrainType(die.value);
+                    
+                    // Separate rolls for terrain and landmark
+                    const terrainRoll = rollD20();
+                    const landmarkRoll = rollD20();
+                    
+                    // Get terrain and landmark from tables
+                    const terrainResult = terrainTables[terrainType][terrainRoll];
+                    const landmarkResult = landmarkTables[terrainType][landmarkRoll];
+                    
+                    // Draw terrain and landmark text
+                    ctx.textAlign = 'left';
+                    ctx.fillStyle = 'black';
+                    
+                    // Calculate text position
+                    const textX = die.x - 75;
+                    
+                    // Draw type label with terrain
+                    ctx.font = 'bold 16px Arial';
+                    const typeLabel = terrainType.charAt(0).toUpperCase() + terrainType.slice(1);
+                    ctx.fillText(`${typeLabel}: ${terrainResult}`, textX, die.y - 10);
+                    
+                    // Draw landmark label
+                    ctx.font = 'bold 14px Arial';
+                    ctx.fillText('Landmark:', textX, die.y + 10);
+                    ctx.font = '14px Arial';
+                    ctx.fillText(landmarkResult, textX + 75, die.y + 10);
+                });
+                
+                // Hide the roll button after processing
+                document.getElementById('rollTablesBtn').style.display = 'none';
+            }
+            
             // Generate the terrain
             function generateTerrain() {
                 clearMap();
@@ -363,6 +468,21 @@ rivers, points of interest, and paths between locations.
                 dicePositions.forEach((pos, i) => {
                     drawDie(pos.x, pos.y, diceValues[i]);
                 });
+                
+                // Hide generate button and show the "Next Step" button
+                document.getElementById('generateBtn').style.display = 'none';
+                
+                // Create and add the "Roll on Terrain Tables" button if it doesn't exist
+                if (!document.getElementById('rollTablesBtn')) {
+                    const rollTablesBtn = document.createElement('button');
+                    rollTablesBtn.id = 'rollTablesBtn';
+                    rollTablesBtn.textContent = 'Next Step: Roll on Terrain Type Tables';
+                    rollTablesBtn.style.backgroundColor = '#0066cc';
+                    rollTablesBtn.addEventListener('click', rollOnTerrainTables);
+                    document.querySelector('.controls').appendChild(rollTablesBtn);
+                } else {
+                    document.getElementById('rollTablesBtn').style.display = 'inline-block';
+                }
             }
             
             // Initialize
