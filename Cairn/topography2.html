@@ -1,94 +1,18 @@
-// Initialize
-            clearMap();
-            
-            // Events
-            generateBtn.addEventListener('click', generateTerrain);
-            clearBtn.addEventListener('click', clearMap);
-        });
-    </script><!--
+<!--
 ======================================================================================
 CAIRN RPG MAP GENERATOR - TOPOGRAPHY MODULE
 ======================================================================================
 
-This module implements Step 1 of the Cairn RPG map generation process: Terrain Generation.
+This module implements the Cairn RPG map generation process: Terrain Generation.
 
 HOW IT WORKS:
 1. Roll 1d6 to determine how many dice to place on the map
 2. Place these dice at random positions with sufficient spacing
 3. Roll values for each die (1-6)
-4. Generate region boundaries between dice using a modified Voronoi diagram approach:
-   - Assign each pixel to its closest die region
-   - Calculate centroid (true center) of each region for optimal text placement
-   - Find boundary pixels where regions meet
-   - Connect boundary pixels into continuous paths
-   - Simplify and draw as dark grey lines
+4. Generate region boundaries between dice using a modified Voronoi diagram approach
 5. Display the dice on top of the map
-6. Roll on terrain and landmark tables based on dice values:
-   - 1-3: Easy terrain (plains, grasslands, etc.)
-   - 4-5: Tough terrain (forests, hills, etc.)
-   - 6: Perilous terrain (mountains, swamps, etc.)
-   - Two separate d20 rolls determine the specific terrain and landmark for each region
-   - Text is optimally positioned at region centroids with collision avoidance
-7. Add water sources (rivers and lakes):
-   - Identify highest and lowest elevation regions
-   - Draw a natural, winding river from highest to lowest point
-   - Occasionally add a lake at higher elevations
-
-TECHNICAL APPROACH:
-- Uses HTML5 Canvas for drawing
-- Implements dice placement with minimum distance requirements
-- Uses a pixel-based approach to identify region boundaries
-- Calculates true region centroids for optimal text placement
-- Connects boundary pixels into paths using a nearest-neighbor algorithm
-- Renders clean, single lines between regions
-- Uses semi-transparent backgrounds behind text for readability
-- Implements an intelligent text positioning system that:
-  * Places text at region centroids when possible
-  * Avoids text overlapping with other text
-  * Keeps text within canvas boundaries
-  * Uses fallback positions when needed
-- Creates natural-looking rivers using quadratic Bezier curves with random control points
-- Randomly places lakes along rivers when appropriate
-
-======================================================================================
---><!--
-======================================================================================
-CAIRN RPG MAP GENERATOR - TOPOGRAPHY MODULE
-======================================================================================
-
-This module implements Step 1 of the Cairn RPG map generation process: Terrain Generation.
-
-HOW IT WORKS:
-1. Roll 1d6 to determine how many dice to place on the map
-2. Place these dice at random positions with sufficient spacing
-3. Roll values for each die (1-6)
-4. Generate region boundaries between dice using a modified Voronoi diagram approach:
-   - Assign each pixel to its closest die region
-   - Calculate centroid (true center) of each region for optimal text placement
-   - Find boundary pixels where regions meet
-   - Connect boundary pixels into continuous paths
-   - Simplify and draw as dark grey lines
-5. Display the dice on top of the map
-6. Roll on terrain and landmark tables based on dice values:
-   - 1-3: Easy terrain (plains, grasslands, etc.)
-   - 4-5: Tough terrain (forests, hills, etc.)
-   - 6: Perilous terrain (mountains, swamps, etc.)
-   - Two separate d20 rolls determine the specific terrain and landmark for each region
-   - Text is optimally positioned at region centroids with collision avoidance
-
-TECHNICAL APPROACH:
-- Uses HTML5 Canvas for drawing
-- Implements dice placement with minimum distance requirements
-- Uses a pixel-based approach to identify region boundaries
-- Calculates true region centroids for optimal text placement
-- Connects boundary pixels into paths using a nearest-neighbor algorithm
-- Renders clean, single lines between regions
-- Uses semi-transparent backgrounds behind text for readability
-- Implements an intelligent text positioning system that:
-  * Places text at region centroids when possible
-  * Avoids text overlapping with other text
-  * Keeps text within canvas boundaries
-  * Uses fallback positions when needed
+6. Roll on terrain and landmark tables based on dice values
+7. Add water sources (rivers and lakes)
 
 ======================================================================================
 -->
@@ -165,7 +89,8 @@ TECHNICAL APPROACH:
             let mapData = {
                 width: canvas.width,
                 height: canvas.height,
-                dice: []
+                dice: [],
+                regionCentroids: []
             };
             
             // Terrain and landmark tables
@@ -216,12 +141,19 @@ TECHNICAL APPROACH:
                 ctx.fillStyle = 'white';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 mapData.dice = [];
+                mapData.regionCentroids = [];
                 
                 // Reset buttons
                 document.getElementById('generateBtn').style.display = 'inline-block';
+                
                 const rollTablesBtn = document.getElementById('rollTablesBtn');
                 if (rollTablesBtn) {
                     rollTablesBtn.style.display = 'none';
+                }
+                
+                const addWaterBtn = document.getElementById('addWaterBtn');
+                if (addWaterBtn) {
+                    addWaterBtn.style.display = 'none';
                 }
             }
             
@@ -307,8 +239,7 @@ TECHNICAL APPROACH:
                 
                 ctx.restore();
             }
-            
-            // Generate boundaries using Voronoi principles
+// Generate boundaries using Voronoi principles
             function drawRegionBoundaries(dicePositions) {
                 // For cleaner lines, let's use an approach that creates proper region boundaries
                 // based on Voronoi diagram principles
@@ -490,14 +421,6 @@ TECHNICAL APPROACH:
                     
                     ctx.stroke();
                 }
-                
-                // For debugging: visualize the centroids
-                // ctx.fillStyle = 'red';
-                // centroids.forEach(centroid => {
-                //     ctx.beginPath();
-                //     ctx.arc(centroid.x, centroid.y, 5, 0, Math.PI * 2);
-                //     ctx.fill();
-                // });
             }
             
             // Roll on terrain type tables
@@ -769,7 +692,8 @@ TECHNICAL APPROACH:
                         
                         ctx.quadraticCurveTo(cp.x, cp.y, end.x, end.y);
                     } else {
-                        // Middle segments connect to the midpoint between control points
+
+// Middle segments connect to the midpoint between control points
                         const next = controlPoints[i + 1];
                         const midX = (cp.x + next.x) / 2;
                         const midY = (cp.y + next.y) / 2;
@@ -880,26 +804,12 @@ TECHNICAL APPROACH:
                 }
             }
             
-            // Update the clear map function to reset the buttons
-            function clearMap() {
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                mapData.dice = [];
-                mapData.regionCentroids = [];
-                
-                // Reset buttons
-                document.getElementById('generateBtn').style.display = 'inline-block';
-                
-                const rollTablesBtn = document.getElementById('rollTablesBtn');
-                if (rollTablesBtn) {
-                    rollTablesBtn.style.display = 'none';
-                }
-                
-                const addWaterBtn = document.getElementById('addWaterBtn');
-                if (addWaterBtn) {
-                    addWaterBtn.style.display = 'none';
-                }
-            }
+            // Initialize
+            clearMap();
+            
+            // Events
+            generateBtn.addEventListener('click', generateTerrain);
+            clearBtn.addEventListener('click', clearMap);
         });
     </script>
 </body>
