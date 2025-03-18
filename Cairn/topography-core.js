@@ -8,8 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const generateBtn = document.getElementById('generateBtn');
     const clearBtn = document.getElementById('clearBtn');
     
-    // Set canvas height to accommodate the reference table at the bottom
-    canvas.height = 700; // Increased height to fit landmark table
+    // Keep standard canvas height since table is now below the canvas
+    canvas.height = 600;
     
     // Map data structure
     let mapData = {
