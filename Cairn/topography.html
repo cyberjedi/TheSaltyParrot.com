@@ -10,8 +10,8 @@ HOW IT WORKS:
 2. Place these dice at random positions with sufficient spacing
 3. Roll values for each die (1-6)
 4. Generate region boundaries between dice using a modified Voronoi diagram approach
-5. Display the dice on top of the map
-6. Roll on terrain and landmark tables based on dice values
+5. Replace dice with numbered triangles for landmarks and display terrain types
+6. Create a reference table for landmarks at the bottom of the map
 7. Add water sources (rivers and lakes)
 
 ======================================================================================
@@ -35,7 +35,7 @@ HOW IT WORKS:
         </div>
         
         <div class="map-container">
-            <canvas id="mapCanvas" width="800" height="600"></canvas>
+            <canvas id="mapCanvas" width="800" height="700"></canvas>
         </div>
     </div>
 
