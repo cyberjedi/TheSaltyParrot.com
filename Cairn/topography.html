@@ -406,6 +406,56 @@ rivers, points of interest, and paths between locations.
                 // Redraw region boundaries
                 drawRegionBoundaries(mapData.dice.map(die => ({ x: die.x, y: die.y })));
                 
+                // Track placed labels to avoid overlap
+                const placedLabels = [];
+                
+                // Helper function to check if a new label would overlap existing ones
+                function wouldOverlap(x, y, width, height) {
+                    for (const label of placedLabels) {
+                        // Simple rectangular collision detection
+                        if (x < label.x + label.width &&
+                            x + width > label.x &&
+                            y < label.y + label.height &&
+                            y + height > label.y) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                
+                // Helper function to find best position for a label
+                function findBestPosition(die, textWidth, textHeight) {
+                    // Try different offsets from the die position
+                    const possiblePositions = [
+                        { x: die.x - textWidth/2, y: die.y - textHeight - 10 },  // Above
+                        { x: die.x - textWidth/2, y: die.y + 10 },               // Below
+                        { x: die.x - textWidth - 10, y: die.y - textHeight/2 },  // Left
+                        { x: die.x + 10, y: die.y - textHeight/2 },              // Right
+                        { x: die.x - textWidth - 10, y: die.y - textHeight - 10 }, // Top-left
+                        { x: die.x + 10, y: die.y - textHeight - 10 },            // Top-right
+                        { x: die.x - textWidth - 10, y: die.y + 10 },             // Bottom-left
+                        { x: die.x + 10, y: die.y + 10 }                          // Bottom-right
+                    ];
+                    
+                    // Ensure position is within canvas bounds
+                    const validPositions = possiblePositions.filter(pos => 
+                        pos.x >= 10 && 
+                        pos.x + textWidth <= canvas.width - 10 &&
+                        pos.y >= textHeight && 
+                        pos.y + textHeight <= canvas.height - 10
+                    );
+                    
+                    // Find first position that doesn't overlap
+                    for (const pos of validPositions) {
+                        if (!wouldOverlap(pos.x, pos.y, textWidth, textHeight)) {
+                            return pos;
+                        }
+                    }
+                    
+                    // If all positions overlap, return the first valid one anyway
+                    return validPositions[0] || { x: die.x - textWidth/2, y: die.y - textHeight - 10 };
+                }
+                
                 // For each die, replace with terrain and landmark info
                 mapData.dice.forEach(die => {
                     const terrainType = getTerrainType(die.value);
@@ -418,23 +468,46 @@ rivers, points of interest, and paths between locations.
                     const terrainResult = terrainTables[terrainType][terrainRoll];
                     const landmarkResult = landmarkTables[terrainType][landmarkRoll];
                     
-                    // Draw terrain and landmark text
-                    ctx.textAlign = 'left';
-                    ctx.fillStyle = 'black';
-                    
-                    // Calculate text position
-                    const textX = die.x - 75;
-                    
-                    // Draw type label with terrain
-                    ctx.font = 'bold 16px Arial';
+                    // Prepare text
                     const typeLabel = terrainType.charAt(0).toUpperCase() + terrainType.slice(1);
-                    ctx.fillText(`${typeLabel}: ${terrainResult}`, textX, die.y - 10);
+                    const terrainText = `${typeLabel}: ${terrainResult}`;
+                    const landmarkText = `Landmark: ${landmarkResult}`;
                     
-                    // Draw landmark label
-                    ctx.font = 'bold 14px Arial';
-                    ctx.fillText('Landmark:', textX, die.y + 10);
+                    // Measure text
+                    ctx.font = 'bold 16px Arial';
+                    const terrainWidth = ctx.measureText(terrainText).width;
                     ctx.font = '14px Arial';
-                    ctx.fillText(landmarkResult, textX + 75, die.y + 10);
+                    const landmarkWidth = ctx.measureText(landmarkText).width;
+                    
+                    const textWidth = Math.max(terrainWidth, landmarkWidth) + 10;
+                    const textHeight = 40; // Approximate height for both lines
+                    
+                    // Find best position for this label
+                    const position = findBestPosition(die, textWidth, textHeight);
+                    
+                    // Register this label to avoid future overlaps
+                    placedLabels.push({
+                        x: position.x,
+                        y: position.y,
+                        width: textWidth,
+                        height: textHeight
+                    });
+                    
+                    // Draw semi-transparent background for better readability
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+                    ctx.fillRect(position.x - 5, position.y - 16, textWidth + 10, textHeight);
+                    
+                    // Draw terrain text
+                    ctx.fillStyle = 'black';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(terrainText, position.x, position.y);
+                    
+                    // Draw landmark text
+                    ctx.font = 'bold 14px Arial';
+                    ctx.fillText('Landmark:', position.x, position.y + 20);
+                    ctx.font = '14px Arial';
+                    ctx.fillText(landmarkResult, position.x + 75, position.y + 20);
                 });
                 
                 // Hide the roll button after processing
