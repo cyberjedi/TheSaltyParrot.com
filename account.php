@@ -152,37 +152,33 @@ $user = [
         }
 
         .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.6rem 1.2rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--accent);
+            color: #000;
             border: none;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            font-weight: 500;
+            border-radius: 4px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
-            text-decoration: none;
         }
 
-        .btn-primary {
-            background: var(--accent);
-            color: var(--dark);
-        }
-
-        .btn-primary:hover {
+        .btn:hover {
             background: var(--accent-hover);
             transform: translateY(-1px);
         }
 
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
         .btn-danger {
             background: #dc3545;
-            color: white;
+            color: #fff;
         }
 
         .btn-danger:hover {
             background: #c82333;
-            transform: translateY(-1px);
         }
 
         .btn-discord {
@@ -251,7 +247,7 @@ $user = [
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 4px;
             background: rgba(0, 0, 0, 0.3);
-            color: var(--light);
+            color: #fff;
             font-size: 0.95rem;
         }
 
@@ -268,7 +264,7 @@ $user = [
         .party-form button {
             padding: 0.75rem 1.5rem;
             background: var(--accent);
-            color: var(--dark);
+            color: #000;
             border: none;
             border-radius: 4px;
             font-weight: 600;

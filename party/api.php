@@ -6,7 +6,7 @@ require_once 'party-functions.php';
 header('Content-Type: application/json');
 
 // Check if user is authenticated
-if (!isset($_SESSION['firebase_token'])) {
+if (!isset($_SESSION['uid'])) {
     http_response_code(401);
     echo json_encode(['error' => 'Not authenticated']);
     exit;
