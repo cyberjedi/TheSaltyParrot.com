@@ -212,25 +212,8 @@ export function initDiscordAuth() {
     const state = Math.random().toString(36).substring(7);
     sessionStorage.setItem('discord_state', state);
 
-    // Build Discord OAuth URL
-    const authUrl = new URL('https://discord.com/api/oauth2/authorize');
-    authUrl.searchParams.append('client_id', DISCORD_CLIENT_ID);
-    authUrl.searchParams.append('redirect_uri', DISCORD_REDIRECT_URI);
-    authUrl.searchParams.append('response_type', 'code');
-    authUrl.searchParams.append('scope', DISCORD_SCOPE);
-    authUrl.searchParams.append('state', state);
-
-    // Open Discord auth in popup
-    const width = 600;
-    const height = 800;
-    const left = (window.innerWidth - width) / 2;
-    const top = (window.innerHeight - height) / 2;
-
-    window.open(
-        authUrl.toString(),
-        'Discord Auth',
-        `width=${width},height=${height},left=${left},top=${top}`
-    );
+    // Redirect to our login endpoint with state
+    window.location.href = `/discord/discord-login.php?state=${state}`;
 }
 
 /**

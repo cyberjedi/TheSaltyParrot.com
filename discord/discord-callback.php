@@ -43,8 +43,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Verify state parameter to prevent CSRF attacks
 if (!isset($_SESSION['discord_oauth_state']) || $state !== $_SESSION['discord_oauth_state']) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid state parameter']);
+    // Log the state mismatch for debugging
+    error_log('State mismatch. Session state: ' . ($_SESSION['discord_oauth_state'] ?? 'not set') . ', Received state: ' . $state);
+    
+    // Return error page that works in popup
+    ?>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Authentication Failed</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                text-align: center;
+                margin: 0;
+                padding: 20px;
+                background-color: #36393f;
+                color: #ffffff;
+            }
+            .container {
+                max-width: 500px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            h2 {
+                color: #f04747;
+                margin-bottom: 20px;
+            }
+            .error-icon {
+                font-size: 48px;
+                color: #f04747;
+                margin: 20px 0;
+            }
+            .message {
+                margin: 20px 0;
+                line-height: 1.5;
+            }
+        </style>
+        <script>
+            window.onload = function() {
+                // Close popup and reload parent after delay
+                setTimeout(function() {
+                    if (window.opener) {
+                        window.opener.location.reload();
+                    }
+                    window.close();
+                }, 3000);
+            };
+        </script>
+    </head>
+    <body>
+        <div class="container">
+            <h2>Authentication Failed</h2>
+            <div class="error-icon">✕</div>
+            <div class="message">
+                <p>Invalid authentication state. Please try again.</p>
+                <p>This window will close automatically...</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    <?php
     exit;
 }
 
