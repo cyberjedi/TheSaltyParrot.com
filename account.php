@@ -541,10 +541,10 @@ $user = [
                     <!-- Party Action Buttons -->
                     <div id="party-forms" style="display: none;">
                         <div class="party-actions">
-                            <button id="create-party-btn" class="btn btn-primary">
+                            <button id="create-party-btn" class="btn btn-danger">
                                 <i class="fas fa-plus"></i> Create Party
                             </button>
-                            <button id="join-party-btn" class="btn btn-primary">
+                            <button id="join-party-btn" class="btn btn-danger">
                                 <i class="fas fa-sign-in-alt"></i> Join Party
                             </button>
                         </div>
