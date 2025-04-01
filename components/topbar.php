@@ -73,29 +73,50 @@ require_once __DIR__ . '/../config/firebase-config.php';
                     <i class="fas fa-sign-out-alt"></i> Sign Out
                 </button>
             </div>
-        <?php else: ?>
-            <!-- Auth Options -->
-            <div class="dropdown-section">
-                <h3>Authentication</h3>
-                <button id="mobile-login-btn" class="menu-item">
-                    <i class="fas fa-sign-in-alt"></i> Login
-                </button>
-                <button id="mobile-signup-btn" class="menu-item">
-                    <i class="fas fa-user-plus"></i> Sign Up
-                </button>
-            </div>
         <?php endif; ?>
+    </div>
+</div>
+
+<!-- Auth Modal -->
+<div id="auth-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 id="auth-modal-title">Login</h2>
+        <form id="auth-form">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="button" id="google-auth-btn" class="btn btn-google">
+                <i class="fab fa-google"></i> Continue with Google
+            </button>
+        </form>
+        <div id="auth-error" class="error-message"></div>
     </div>
 </div>
 
 <script type="module">
 import { signOutUser } from '../js/firebase-auth.js';
+import { signInWithEmail, signUpWithEmail, signInWithGoogle } from '../js/firebase-auth.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     const menuToggle = document.getElementById('menu-toggle');
     const dropdownMenu = document.getElementById('dropdown-menu');
     const signoutBtn = document.getElementById('signout-btn');
     const mobileSignoutBtn = document.getElementById('mobile-signout-btn');
+    const loginBtn = document.getElementById('login-btn');
+    const signupBtn = document.getElementById('signup-btn');
+    const authModal = document.getElementById('auth-modal');
+    const closeBtn = document.querySelector('.close');
+    const authForm = document.getElementById('auth-form');
+    const authModalTitle = document.getElementById('auth-modal-title');
+    const googleAuthBtn = document.getElementById('google-auth-btn');
+    const authError = document.getElementById('auth-error');
     
     // Toggle menu
     menuToggle?.addEventListener('click', function() {
@@ -108,6 +129,66 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!menuToggle.contains(event.target) && !dropdownMenu.contains(event.target)) {
             dropdownMenu.classList.remove('active');
             menuToggle.classList.remove('active');
+        }
+    });
+
+    // Show modal
+    function showModal(isSignup = false) {
+        authModal.style.display = 'block';
+        authModalTitle.textContent = isSignup ? 'Sign Up' : 'Login';
+        authForm.dataset.mode = isSignup ? 'signup' : 'login';
+    }
+
+    // Hide modal
+    function hideModal() {
+        authModal.style.display = 'none';
+        authForm.reset();
+        authError.textContent = '';
+    }
+
+    // Event listeners for login/signup
+    loginBtn?.addEventListener('click', () => showModal(false));
+    signupBtn?.addEventListener('click', () => showModal(true));
+    closeBtn?.addEventListener('click', hideModal);
+    window.addEventListener('click', (e) => {
+        if (e.target === authModal) hideModal();
+    });
+
+    // Form submission
+    authForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const isSignup = authForm.dataset.mode === 'signup';
+
+        try {
+            const result = isSignup 
+                ? await signUpWithEmail(email, password)
+                : await signInWithEmail(email, password);
+
+            if (result.success) {
+                hideModal();
+                window.location.reload();
+            } else {
+                authError.textContent = result.error;
+            }
+        } catch (error) {
+            authError.textContent = error.message;
+        }
+    });
+
+    // Google auth
+    googleAuthBtn?.addEventListener('click', async () => {
+        try {
+            const result = await signInWithGoogle();
+            if (result.success) {
+                hideModal();
+                window.location.reload();
+            } else {
+                authError.textContent = result.error;
+            }
+        } catch (error) {
+            authError.textContent = error.message;
         }
     });
 
