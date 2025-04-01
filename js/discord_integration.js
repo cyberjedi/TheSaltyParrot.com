@@ -187,3 +187,86 @@
     // Flag for integration verification
     window.discord_integration_version = '3.1';
 })();
+
+/**
+ * Discord Integration
+ * 
+ * Handles Discord authentication and integration
+ */
+
+// Discord OAuth configuration
+const DISCORD_CLIENT_ID = 'YOUR_DISCORD_CLIENT_ID';
+const DISCORD_REDIRECT_URI = `${window.location.origin}/discord/discord-callback.php`;
+const DISCORD_SCOPE = 'identify email guilds';
+
+/**
+ * Initialize Discord authentication
+ */
+export function initDiscordAuth() {
+    // Generate random state for CSRF protection
+    const state = Math.random().toString(36).substring(7);
+    sessionStorage.setItem('discord_state', state);
+
+    // Build Discord OAuth URL
+    const authUrl = new URL('https://discord.com/api/oauth2/authorize');
+    authUrl.searchParams.append('client_id', DISCORD_CLIENT_ID);
+    authUrl.searchParams.append('redirect_uri', DISCORD_REDIRECT_URI);
+    authUrl.searchParams.append('response_type', 'code');
+    authUrl.searchParams.append('scope', DISCORD_SCOPE);
+    authUrl.searchParams.append('state', state);
+
+    // Open Discord auth in popup
+    const width = 600;
+    const height = 800;
+    const left = (window.innerWidth - width) / 2;
+    const top = (window.innerHeight - height) / 2;
+
+    window.open(
+        authUrl.toString(),
+        'Discord Auth',
+        `width=${width},height=${height},left=${left},top=${top}`
+    );
+}
+
+/**
+ * Handle Discord callback
+ * 
+ * @param {string} code Discord authorization code
+ * @param {string} state State parameter for CSRF protection
+ */
+export async function handleDiscordCallback(code, state) {
+    try {
+        // Verify state
+        const savedState = sessionStorage.getItem('discord_state');
+        if (state !== savedState) {
+            throw new Error('Invalid state parameter');
+        }
+
+        // Exchange code for token
+        const response = await fetch('/discord/discord-callback.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ code, state })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to exchange code for token');
+        }
+
+        const data = await response.json();
+        
+        // Clear state
+        sessionStorage.removeItem('discord_state');
+
+        // Close popup and refresh page
+        window.close();
+        window.opener.location.reload();
+
+        return { success: true, data };
+    } catch (error) {
+        console.error('Error handling Discord callback:', error);
+        return { success: false, error: error.message };
+    }
+}

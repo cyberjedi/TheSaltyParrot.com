@@ -9,6 +9,9 @@
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
+
+// Include Firebase configuration
+require_once 'config/firebase-config.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -46,13 +49,120 @@ if (session_status() == PHP_SESSION_NONE) {
             <p class="welcome-message">
                 Your PIRATE BORG companion for nautical adventures
             </p>
-            <!-- Welcome actions removed as requested -->
+            <?php if (!is_firebase_authenticated()): ?>
+                <div class="auth-buttons">
+                    <button id="login-btn" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </button>
+                    <button id="signup-btn" class="btn btn-secondary">
+                        <i class="fas fa-user-plus"></i> Sign Up
+                    </button>
+                </div>
+            <?php endif; ?>
         </div>
     </main>
+    
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="auth-modal-title">Login</h2>
+            <form id="auth-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+                <button type="button" id="google-auth-btn" class="btn btn-google">
+                    <i class="fab fa-google"></i> Continue with Google
+                </button>
+            </form>
+            <div id="auth-error" class="error-message"></div>
+        </div>
+    </div>
     
     <footer>
         <p>The Salty Parrot is an independent production by Stuart Greenwell. It is not affiliated with Limithron LLC. It is published under the PIRATE BORG Third Party License. PIRATE BORG is ©2022 Limithron LLC.</p>
         <p>&copy; 2025 The Salty Parrot</p>
     </footer>
+
+    <!-- Firebase Auth Script -->
+    <script type="module">
+        import { signInWithEmail, signUpWithEmail, signInWithGoogle } from './js/firebase-auth.js';
+
+        // Get DOM elements
+        const loginBtn = document.getElementById('login-btn');
+        const signupBtn = document.getElementById('signup-btn');
+        const authModal = document.getElementById('auth-modal');
+        const closeBtn = document.querySelector('.close');
+        const authForm = document.getElementById('auth-form');
+        const authModalTitle = document.getElementById('auth-modal-title');
+        const googleAuthBtn = document.getElementById('google-auth-btn');
+        const authError = document.getElementById('auth-error');
+
+        // Show modal
+        function showModal(isSignup = false) {
+            authModal.style.display = 'block';
+            authModalTitle.textContent = isSignup ? 'Sign Up' : 'Login';
+            authForm.dataset.mode = isSignup ? 'signup' : 'login';
+        }
+
+        // Hide modal
+        function hideModal() {
+            authModal.style.display = 'none';
+            authForm.reset();
+            authError.textContent = '';
+        }
+
+        // Event listeners
+        loginBtn?.addEventListener('click', () => showModal(false));
+        signupBtn?.addEventListener('click', () => showModal(true));
+        closeBtn?.addEventListener('click', hideModal);
+        window.addEventListener('click', (e) => {
+            if (e.target === authModal) hideModal();
+        });
+
+        // Form submission
+        authForm?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const isSignup = authForm.dataset.mode === 'signup';
+
+            try {
+                const result = isSignup 
+                    ? await signUpWithEmail(email, password)
+                    : await signInWithEmail(email, password);
+
+                if (result.success) {
+                    hideModal();
+                    window.location.reload();
+                } else {
+                    authError.textContent = result.error;
+                }
+            } catch (error) {
+                authError.textContent = error.message;
+            }
+        });
+
+        // Google auth
+        googleAuthBtn?.addEventListener('click', async () => {
+            try {
+                const result = await signInWithGoogle();
+                if (result.success) {
+                    hideModal();
+                    window.location.reload();
+                } else {
+                    authError.textContent = result.error;
+                }
+            } catch (error) {
+                authError.textContent = error.message;
+            }
+        });
+    </script>
 </body>
 </html>

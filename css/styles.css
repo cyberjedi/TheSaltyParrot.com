@@ -656,3 +656,180 @@ body {
 body, .main-content, .app-container, main {
     background-image: none !important;
 }
+
+/* Auth Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: var(--dark);
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    width: 80%;
+    max-width: 500px;
+    position: relative;
+    color: var(--light);
+}
+
+.close {
+    color: var(--light);
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    position: absolute;
+    right: 20px;
+    top: 10px;
+}
+
+.close:hover {
+    color: var(--accent);
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--light);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    background-color: var(--darker);
+    color: var(--light);
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.error-message {
+    color: #ff4444;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.btn-google {
+    background-color: #4285f4;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-google:hover {
+    background-color: #357abd;
+}
+
+.auth-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+/* Account Page Styles */
+.account-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.account-section {
+    background-color: var(--darker);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.account-section h2 {
+    color: var(--accent);
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+}
+
+.profile-info {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+.profile-picture {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent);
+}
+
+.profile-details {
+    flex: 1;
+}
+
+.profile-details p {
+    margin: 0.5rem 0;
+}
+
+.auth-options,
+.integration-options {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+.btn-discord {
+    background-color: #7289da;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-discord:hover {
+    background-color: #5b73c7;
+}
