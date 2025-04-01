@@ -35,13 +35,10 @@ if (!isset($data['uid']) || !isset($data['email']) || !isset($data['token'])) {
 }
 
 // Store user data in session
-$_SESSION['firebase_user'] = [
-    'uid' => $data['uid'],
-    'email' => $data['email'],
-    'displayName' => $data['displayName'] ?? null,
-    'photoURL' => $data['photoURL'] ?? null
-];
-
+$_SESSION['uid'] = $data['uid'];
+$_SESSION['email'] = $data['email'];
+$_SESSION['displayName'] = $data['displayName'] ?? null;
+$_SESSION['photoURL'] = $data['photoURL'] ?? null;
 $_SESSION['firebase_token'] = $data['token'];
 
 // Return success response

@@ -17,7 +17,7 @@ require_once 'config/firebase-config.php';
 require_once 'discord/discord-config.php';
 
 // Check if user is logged in
-if (!isset($_SESSION['firebase_token'])) {
+if (!isset($_SESSION['uid'])) {
     header('Location: index.php');
     exit;
 }
