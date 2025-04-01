@@ -73,6 +73,17 @@ require_once __DIR__ . '/../config/firebase-config.php';
                     <i class="fas fa-sign-out-alt"></i> Sign Out
                 </button>
             </div>
+        <?php else: ?>
+            <!-- Auth Options -->
+            <div class="dropdown-section">
+                <h3>Authentication</h3>
+                <button id="mobile-login-btn" class="menu-item">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+                <button id="mobile-signup-btn" class="menu-item">
+                    <i class="fas fa-user-plus"></i> Sign Up
+                </button>
+            </div>
         <?php endif; ?>
     </div>
 </div>
@@ -111,6 +122,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const mobileSignoutBtn = document.getElementById('mobile-signout-btn');
     const loginBtn = document.getElementById('login-btn');
     const signupBtn = document.getElementById('signup-btn');
+    const mobileLoginBtn = document.getElementById('mobile-login-btn');
+    const mobileSignupBtn = document.getElementById('mobile-signup-btn');
     const authModal = document.getElementById('auth-modal');
     const closeBtn = document.querySelector('.close');
     const authForm = document.getElementById('auth-form');
@@ -149,6 +162,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event listeners for login/signup
     loginBtn?.addEventListener('click', () => showModal(false));
     signupBtn?.addEventListener('click', () => showModal(true));
+    mobileLoginBtn?.addEventListener('click', () => {
+        showModal(false);
+        dropdownMenu.classList.remove('active');
+        menuToggle.classList.remove('active');
+    });
+    mobileSignupBtn?.addEventListener('click', () => {
+        showModal(true);
+        dropdownMenu.classList.remove('active');
+        menuToggle.classList.remove('active');
+    });
     closeBtn?.addEventListener('click', hideModal);
     window.addEventListener('click', (e) => {
         if (e.target === authModal) hideModal();
