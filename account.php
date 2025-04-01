@@ -60,58 +60,75 @@ $user = [
         }
 
         .profile-image {
-            width: 100px;
-            height: 100px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
             object-fit: cover;
-            border: 3px solid var(--accent);
+            border: 2px solid var(--accent);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .profile-image-placeholder {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            font-size: 2rem;
         }
 
         .profile-info h1 {
             margin: 0;
-            font-size: 2rem;
+            font-size: 1.8rem;
             color: var(--light);
+            font-weight: 500;
         }
 
         .profile-info p {
-            margin: 0.5rem 0 0;
+            margin: 0.25rem 0 0;
             color: var(--accent);
-            font-size: 1.1rem;
+            font-size: 1rem;
+            opacity: 0.8;
         }
 
         .account-section {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.03);
             border-radius: 8px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
         }
 
         .account-section h2 {
-            color: var(--accent);
+            color: var(--light);
             margin: 0 0 1rem;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
+            font-weight: 500;
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
 
         .account-section h2 i {
-            font-size: 1.2rem;
+            color: var(--accent);
+            font-size: 1.1rem;
         }
 
         .discord-status {
             display: flex;
             align-items: center;
             gap: 1rem;
-            padding: 1rem;
+            padding: 0.75rem;
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            margin-top: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
         }
 
         .discord-avatar {
-            width: 48px;
-            height: 48px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             object-fit: cover;
         }
@@ -123,23 +140,25 @@ $user = [
         .discord-info h3 {
             margin: 0;
             color: var(--light);
-            font-size: 1.1rem;
+            font-size: 1rem;
+            font-weight: 500;
         }
 
         .discord-info p {
-            margin: 0.25rem 0 0;
+            margin: 0.15rem 0 0;
             color: var(--accent);
             font-size: 0.9rem;
+            opacity: 0.8;
         }
 
         .btn {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
+            padding: 0.6rem 1.2rem;
             border: none;
             border-radius: 6px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -169,6 +188,7 @@ $user = [
         .btn-discord {
             background: #7289da;
             color: white;
+            width: auto;
         }
 
         .btn-discord:hover {
@@ -177,7 +197,7 @@ $user = [
         }
 
         .btn i {
-            font-size: 1.1rem;
+            font-size: 1rem;
         }
 
         @media (max-width: 768px) {
@@ -190,12 +210,14 @@ $user = [
                 flex-direction: column;
                 text-align: center;
                 gap: 1rem;
+                padding-bottom: 1rem;
             }
 
             .discord-status {
-                flex-direction: column;
-                text-align: center;
-                gap: 0.5rem;
+                flex-direction: row;
+                text-align: left;
+                gap: 0.75rem;
+                padding: 0.75rem;
             }
 
             .btn {
@@ -212,7 +234,13 @@ $user = [
     <main class="main-content">
         <div class="account-container">
             <div class="account-header">
-                <img src="<?php echo $user['photoURL'] ?? 'assets/default-avatar.png'; ?>" alt="Profile" class="profile-image">
+                <?php if ($user['photoURL']): ?>
+                    <img src="<?php echo htmlspecialchars($user['photoURL']); ?>" alt="Profile" class="profile-image" onerror="this.outerHTML='<div class=\'profile-image-placeholder\'><i class=\'fas fa-user\'></i></div>'">
+                <?php else: ?>
+                    <div class="profile-image-placeholder">
+                        <i class="fas fa-user"></i>
+                    </div>
+                <?php endif; ?>
                 <div class="profile-info">
                     <h1><?php echo htmlspecialchars($user['displayName']); ?></h1>
                     <p><?php echo htmlspecialchars($user['email']); ?></p>
@@ -228,12 +256,17 @@ $user = [
 
             <div class="account-section">
                 <h2><i class="fab fa-discord"></i> Discord Integration</h2>
-                <?php if (isset($_SESSION['discord_user'])): ?>
+                <?php if (isset($_SESSION['discord_user']) && isset($_SESSION['discord_user']['avatar_url'])): ?>
                     <div class="discord-status">
-                        <img src="<?php echo $_SESSION['discord_user']['avatar_url']; ?>" alt="Discord Avatar" class="discord-avatar">
+                        <img 
+                            src="<?php echo htmlspecialchars($_SESSION['discord_user']['avatar_url']); ?>" 
+                            alt="Discord Avatar" 
+                            class="discord-avatar"
+                            onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'"
+                        >
                         <div class="discord-info">
                             <h3><?php echo htmlspecialchars($_SESSION['discord_user']['username']); ?></h3>
-                            <p>Connected as <?php echo htmlspecialchars($_SESSION['discord_user']['username']); ?></p>
+                            <p>Connected</p>
                         </div>
                     </div>
                     <a href="discord/discord-logout.php" class="btn btn-danger">
@@ -258,29 +291,27 @@ $user = [
         window.DISCORD_CLIENT_ID = '<?php echo DISCORD_CLIENT_ID; ?>';
     </script>
     <script type="module">
-        import { signOutUser } from './js/firebase-auth.js';
         import { initDiscordAuth } from './js/discord_integration.js';
 
-        // Get DOM elements
-        const signOutBtn = document.getElementById('sign-out-btn');
+        // Handle Discord connection
         const connectDiscordBtn = document.getElementById('connect-discord-btn');
+        if (connectDiscordBtn) {
+            connectDiscordBtn.addEventListener('click', () => {
+                initDiscordAuth();
+            });
+        }
 
         // Handle sign out
+        const signOutBtn = document.getElementById('sign-out-btn');
         if (signOutBtn) {
             signOutBtn.addEventListener('click', async () => {
                 try {
+                    const { signOutUser } = await import('./js/firebase-auth.js');
                     await signOutUser();
                     window.location.reload();
                 } catch (error) {
                     console.error('Error signing out:', error);
                 }
-            });
-        }
-
-        // Handle Discord connection
-        if (connectDiscordBtn) {
-            connectDiscordBtn.addEventListener('click', () => {
-                initDiscordAuth();
             });
         }
     </script>

@@ -200,7 +200,7 @@ const DISCORD_REDIRECT_URI = `${window.location.origin}/discord/discord-callback
 const DISCORD_SCOPE = 'identify email guilds';
 
 /**
- * Initialize Discord authentication
+ * Initialize Discord integration
  */
 export function initDiscordAuth() {
     if (!DISCORD_CLIENT_ID) {
@@ -216,45 +216,13 @@ export function initDiscordAuth() {
     window.location.href = `/discord/discord-login.php?state=${state}`;
 }
 
-/**
- * Handle Discord callback
- * 
- * @param {string} code Discord authorization code
- * @param {string} state State parameter for CSRF protection
- */
-export async function handleDiscordCallback(code, state) {
-    try {
-        // Verify state
-        const savedState = sessionStorage.getItem('discord_state');
-        if (state !== savedState) {
-            throw new Error('Invalid state parameter');
-        }
-
-        // Exchange code for token through our server endpoint
-        const response = await fetch('/discord/discord-callback.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ code, state })
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to exchange code for token');
-        }
-
-        const data = await response.json();
-        
-        // Clear state
-        sessionStorage.removeItem('discord_state');
-
-        // Close popup and refresh page
-        window.close();
-        window.opener.location.reload();
-
-        return { success: true, data };
-    } catch (error) {
-        console.error('Error handling Discord callback:', error);
-        return { success: false, error: error.message };
-    }
+// Only log initialization if in development
+const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+if (isDev) {
+    console.log('🎮 [Discord] Initializing Discord integration');
 }
+
+// Export for use in other files
+export default {
+    initDiscordAuth
+};
