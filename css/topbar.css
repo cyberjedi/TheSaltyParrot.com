@@ -41,22 +41,12 @@
 
 /* Navigation buttons */
 .topbar-nav {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-}
-
-.topbar-nav .btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
+    display: none; /* Hide navigation buttons by default */
 }
 
 /* Hamburger menu */
 .hamburger-menu {
-    display: none;
+    display: block; /* Show hamburger menu by default */
 }
 
 .menu-toggle {
@@ -150,16 +140,19 @@
 
 /* Mobile styles */
 @media (max-width: 768px) {
-    .topbar-nav {
-        display: none;
-    }
-
-    .hamburger-menu {
-        display: block;
-    }
-
     .topbar-auth {
         display: none;
+    }
+
+    .dropdown-menu {
+        position: fixed;
+        top: 60px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 0;
+        padding: 1rem;
+        overflow-y: auto;
     }
 }
 
