@@ -378,6 +378,80 @@ $user = [
             background: var(--accent-hover);
             transform: translateY(-1px);
         }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--dark);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: var(--light);
+            font-size: 1.2rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            line-height: 1;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--light);
+        }
+
+        .form-actions {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 95%;
+                margin: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -444,27 +518,61 @@ $user = [
                         <!-- Content will be dynamically updated -->
                     </div>
 
-                    <!-- Create/Join Party Forms -->
+                    <!-- Party Action Buttons -->
                     <div id="party-forms" style="display: none;">
-                        <div class="party-form-group">
-                            <h3>Create a Party</h3>
-                            <form id="create-party-form" class="party-form">
-                                <input type="text" id="party-name" placeholder="Party Name" required>
+                        <div class="party-actions">
+                            <button id="create-party-btn" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Create Party
+                            </button>
+                            <button id="join-party-btn" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt"></i> Join Party
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Party Modals -->
+            <div id="create-party-modal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Create a Party</h3>
+                        <button class="close-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="create-party-form" class="party-form">
+                            <div class="form-group">
+                                <label for="party-name">Party Name</label>
+                                <input type="text" id="party-name" placeholder="Enter party name" required>
+                            </div>
+                            <div class="form-actions">
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-plus"></i> Create Party
                                 </button>
-                            </form>
-                        </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
 
-                        <div class="party-form-group">
-                            <h3>Join a Party</h3>
-                            <form id="join-party-form" class="party-form">
-                                <input type="text" id="party-code" placeholder="Enter 6-digit Party Code" required pattern="[A-Za-z0-9]{6}">
+            <div id="join-party-modal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Join a Party</h3>
+                        <button class="close-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="join-party-form" class="party-form">
+                            <div class="form-group">
+                                <label for="party-code">Party Code</label>
+                                <input type="text" id="party-code" placeholder="Enter 6-digit party code" required pattern="[A-Za-z0-9]{6}">
+                            </div>
+                            <div class="form-actions">
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-sign-in-alt"></i> Join Party
                                 </button>
-                            </form>
-                        </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -606,6 +714,37 @@ $user = [
             },
 
             setupEventListeners() {
+                // Create party button
+                document.getElementById('create-party-btn').addEventListener('click', () => {
+                    modals.show('createParty');
+                });
+
+                // Join party button
+                document.getElementById('join-party-btn').addEventListener('click', () => {
+                    modals.show('joinParty');
+                });
+
+                // Close modal buttons
+                document.querySelectorAll('.close-modal').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const modal = button.closest('.modal');
+                        if (modal.id === 'create-party-modal') {
+                            modals.hide('createParty');
+                        } else {
+                            modals.hide('joinParty');
+                        }
+                    });
+                });
+
+                // Close modals when clicking outside
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            modals.hide(modal.id.replace('-modal', ''));
+                        }
+                    });
+                });
+
                 // Create party form
                 document.getElementById('create-party-form').addEventListener('submit', async (e) => {
                     e.preventDefault();
@@ -622,6 +761,7 @@ $user = [
 
                         const data = await response.json();
                         if (data.success) {
+                            modals.hide('createParty');
                             await this.loadPartyInfo();
                         } else {
                             throw new Error(data.error);
@@ -648,6 +788,7 @@ $user = [
 
                         const data = await response.json();
                         if (data.success) {
+                            modals.hide('joinParty');
                             await this.loadPartyInfo();
                         } else {
                             throw new Error(data.error);
@@ -696,6 +837,24 @@ $user = [
 
         // Make partySection available globally for event handlers
         window.partySection = partySection;
+
+        // Add modal functionality
+        const modals = {
+            createParty: document.getElementById('create-party-modal'),
+            joinParty: document.getElementById('join-party-modal'),
+            
+            show(modalId) {
+                const modal = this[modalId];
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            },
+            
+            hide(modalId) {
+                const modal = this[modalId];
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        };
     </script>
 </body>
 </html> 
