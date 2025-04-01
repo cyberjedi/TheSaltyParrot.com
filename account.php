@@ -228,34 +228,61 @@ $user = [
 
         .party-form-group {
             margin-bottom: 1.5rem;
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 6px;
+            padding: 1.5rem;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .party-form-group h3 {
             margin: 0 0 1rem;
             font-size: 1.1rem;
-            color: var(--light);
+            color: var(--accent);
         }
 
         .party-form {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.75rem;
         }
 
         .party-form input {
             flex: 1;
-            padding: 0.5rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 4px;
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.3);
             color: var(--light);
+            font-size: 0.95rem;
         }
 
         .party-form input:focus {
             outline: none;
             border-color: var(--accent);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .party-form input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .party-form button {
+            padding: 0.75rem 1.5rem;
+            background: var(--accent);
+            color: var(--dark);
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .party-form button:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .party-form button i {
+            margin-right: 0.5rem;
         }
 
         .party-members {
@@ -330,6 +357,30 @@ $user = [
             .party-actions {
                 flex-direction: column;
             }
+        }
+
+        /* Login form styles */
+        .login-form {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 8px;
+        }
+
+        .login-form button {
+            background: var(--accent);
+            color: var(--dark);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .login-form button:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
         }
     </style>
 </head>
