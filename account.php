@@ -152,14 +152,21 @@ $user = [
         }
 
         .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
             padding: 0.75rem 1.5rem;
             background: var(--accent);
-            color: #000;
+            color: var(--dark);
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
+            text-decoration: none;
+            min-width: 140px;
         }
 
         .btn:hover {
@@ -167,9 +174,8 @@ $user = [
             transform: translateY(-1px);
         }
 
-        .btn-small {
-            padding: 0.5rem 1rem;
-            font-size: 0.9rem;
+        .btn i {
+            font-size: 1rem;
         }
 
         .btn-danger {
@@ -183,17 +189,26 @@ $user = [
 
         .btn-discord {
             background: #7289da;
-            color: white;
-            width: auto;
+            color: #fff;
         }
 
         .btn-discord:hover {
             background: #5b73c7;
-            transform: translateY(-1px);
         }
 
-        .btn i {
-            font-size: 1rem;
+        .btn-primary {
+            background: var(--accent);
+            color: var(--dark);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            min-width: auto;
+            font-size: 0.9rem;
         }
 
         @media (max-width: 768px) {
@@ -218,7 +233,12 @@ $user = [
 
             .btn {
                 width: 100%;
-                justify-content: center;
+            }
+
+            .party-actions {
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
             }
         }
 
