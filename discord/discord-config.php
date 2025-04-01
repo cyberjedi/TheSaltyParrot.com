@@ -16,19 +16,45 @@ if (!defined('DISCORD_API_URL')) {
     define('DISCORD_API_URL', 'https://discord.com/api/v10');
 }
 
-// Use the existing configuration by including it
-// This avoids duplicating sensitive credentials
-if (file_exists(__DIR__ . '/discord-config.php')) {
-    require_once __DIR__ . '/discord-config.php';
+// Load configuration from secure variables file
+$config_paths = [
+    $_SERVER['DOCUMENT_ROOT'] . '/../../private/secure_variables.php',
+    $_SERVER['DOCUMENT_ROOT'] . '/../private/secure_variables.php',
+    $_SERVER['DOCUMENT_ROOT'] . '/private/secure_variables.php',
+    dirname(__FILE__) . '/../../private/secure_variables.php'
+];
+
+$config = null;
+foreach ($config_paths as $path) {
+    if (file_exists($path)) {
+        $config = require_once($path);
+        break;
+    }
+}
+
+// Define Discord constants
+if ($config && isset($config['discord']) && is_array($config['discord'])) {
+    if (!defined('DISCORD_CLIENT_ID')) {
+        define('DISCORD_CLIENT_ID', $config['discord']['client_id'] ?? '');
+    }
+    if (!defined('DISCORD_CLIENT_SECRET')) {
+        define('DISCORD_CLIENT_SECRET', $config['discord']['client_secret'] ?? '');
+    }
+    if (!defined('DISCORD_REDIRECT_URI')) {
+        if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'dev.') === 0) {
+            define('DISCORD_REDIRECT_URI', $config['discord']['dev_redirect_uri'] ?? '');
+        } else {
+            define('DISCORD_REDIRECT_URI', $config['discord']['redirect_uri'] ?? '');
+        }
+    }
 } else {
-    // Define backup constants in case we can't find the original config
-    // These won't work but prevent errors
+    // Define backup constants in case we can't find the config
     if (!defined('DISCORD_CLIENT_ID')) define('DISCORD_CLIENT_ID', '');
     if (!defined('DISCORD_CLIENT_SECRET')) define('DISCORD_CLIENT_SECRET', '');
     if (!defined('DISCORD_REDIRECT_URI')) define('DISCORD_REDIRECT_URI', '');
     
     // Log the issue
-    error_log('New UI could not find Discord configuration file');
+    error_log('Discord configuration not found in secure variables file');
 }
 
 /**
@@ -41,12 +67,6 @@ if (file_exists(__DIR__ . '/discord-config.php')) {
  * @return array Response data
  */
 function discord_api_request($endpoint, $method = 'GET', $data = [], $token = null) {
-    // If original function exists, use it
-    if (function_exists('discord_api_request')) {
-        return discord_api_request($endpoint, $method, $data, $token);
-    }
-    
-    // Otherwise implement our own version
     $ch = curl_init();
     
     $headers = ['Accept: application/json', 'Content-Type: application/json'];

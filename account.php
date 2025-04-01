@@ -13,6 +13,9 @@ if (session_status() == PHP_SESSION_NONE) {
 // Include Firebase configuration
 require_once 'config/firebase-config.php';
 
+// Include Discord configuration
+require_once 'discord/discord-config.php';
+
 // Redirect to login if not authenticated
 if (!is_firebase_authenticated()) {
     header('Location: index.php');
@@ -105,48 +108,44 @@ $user = get_firebase_user();
         <p>&copy; 2025 The Salty Parrot</p>
     </footer>
 
-    <!-- Firebase Auth Script -->
+    <!-- Pass Discord client ID to JavaScript -->
+    <script>
+        window.DISCORD_CLIENT_ID = '<?php echo DISCORD_CLIENT_ID; ?>';
+    </script>
     <script type="module">
         import { signOutUser } from './js/firebase-auth.js';
-        import { initDiscordAuth, disconnectDiscord } from './js/discord_integration.js';
+        import { initDiscordAuth } from './js/discord_integration.js';
 
         // Get DOM elements
         const signoutBtn = document.getElementById('signout-btn');
         const connectDiscordBtn = document.getElementById('connect-discord-btn');
         const disconnectDiscordBtn = document.getElementById('disconnect-discord-btn');
 
-        // Sign out handler
-        signoutBtn?.addEventListener('click', async () => {
-            try {
-                const result = await signOutUser();
-                if (result.success) {
-                    window.location.href = 'index.php';
-                } else {
-                    console.error('Error signing out:', result.error);
-                }
-            } catch (error) {
-                console.error('Error signing out:', error);
-            }
-        });
-
-        // Discord connection handler
-        connectDiscordBtn?.addEventListener('click', () => {
-            initDiscordAuth();
-        });
-
-        // Discord disconnection handler
-        disconnectDiscordBtn?.addEventListener('click', async () => {
-            try {
-                const result = await disconnectDiscord();
-                if (result.success) {
+        // Handle sign out
+        if (signoutBtn) {
+            signoutBtn.addEventListener('click', async () => {
+                try {
+                    await signOutUser();
                     window.location.reload();
-                } else {
-                    console.error('Error disconnecting Discord:', result.error);
+                } catch (error) {
+                    console.error('Error signing out:', error);
                 }
-            } catch (error) {
-                console.error('Error disconnecting Discord:', error);
-            }
-        });
+            });
+        }
+
+        // Handle Discord connection
+        if (connectDiscordBtn) {
+            connectDiscordBtn.addEventListener('click', () => {
+                initDiscordAuth();
+            });
+        }
+
+        // Handle Discord disconnection
+        if (disconnectDiscordBtn) {
+            disconnectDiscordBtn.addEventListener('click', () => {
+                window.location.href = 'discord/discord-logout.php';
+            });
+        }
     </script>
 </body>
 </html> 

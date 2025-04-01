@@ -195,7 +195,7 @@
  */
 
 // Discord OAuth configuration
-const DISCORD_CLIENT_ID = 'YOUR_DISCORD_CLIENT_ID';
+const DISCORD_CLIENT_ID = window.DISCORD_CLIENT_ID || '';
 const DISCORD_REDIRECT_URI = `${window.location.origin}/discord/discord-callback.php`;
 const DISCORD_SCOPE = 'identify email guilds';
 
@@ -203,6 +203,11 @@ const DISCORD_SCOPE = 'identify email guilds';
  * Initialize Discord authentication
  */
 export function initDiscordAuth() {
+    if (!DISCORD_CLIENT_ID) {
+        console.error('Discord client ID is not configured');
+        return;
+    }
+
     // Generate random state for CSRF protection
     const state = Math.random().toString(36).substring(7);
     sessionStorage.setItem('discord_state', state);
