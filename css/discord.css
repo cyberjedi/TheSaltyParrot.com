@@ -145,3 +145,70 @@
 .discord-toast.error i {
     color: #f04747;
 }
+
+/* Discord Integration Styles */
+.discord-status {
+    margin-top: 1rem;
+}
+
+.discord-connected {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: rgba(114, 137, 218, 0.1);
+    border: 1px solid rgba(114, 137, 218, 0.3);
+    border-radius: 8px;
+}
+
+.discord-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 2px solid #7289da;
+}
+
+.discord-info {
+    flex: 1;
+}
+
+.discord-info p {
+    margin: 0.25rem 0;
+}
+
+.discord-info strong {
+    color: #7289da;
+}
+
+.btn-discord {
+    background-color: #7289da;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s;
+}
+
+.btn-discord:hover {
+    background-color: #5b73c7;
+}
+
+.btn-discord i {
+    font-size: 1.2rem;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+    .discord-connected {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .discord-info {
+        text-align: center;
+    }
+}

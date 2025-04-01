@@ -1,21 +1,35 @@
 <?php
 /**
- * Topbar Navigation Component (New Design)
+ * Topbar Navigation Component
  * 
- * A minimalist topbar with hamburger menu and Discord integration
+ * A minimalist topbar with authentication and navigation
  */
 
-// Include Discord service
-require_once __DIR__ . '/../discord/discord_service.php';
+// Include Firebase configuration
+require_once __DIR__ . '/../config/firebase-config.php';
 ?>
 <div class="topbar">
     <div class="topbar-container">
-        <!-- Discord connection button or user profile -->
-        <div class="topbar-discord">
-            <?php echo render_discord_user_profile(); ?>
+        <!-- Authentication buttons -->
+        <div class="topbar-auth">
+            <?php if (is_firebase_authenticated()): ?>
+                <a href="account.php" class="btn btn-primary">
+                    <i class="fas fa-user"></i> Account
+                </a>
+                <button id="signout-btn" class="btn btn-danger">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </button>
+            <?php else: ?>
+                <button id="login-btn" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+                <button id="signup-btn" class="btn btn-secondary">
+                    <i class="fas fa-user-plus"></i> Sign Up
+                </button>
+            <?php endif; ?>
         </div>
         
-        <!-- Navigation buttons moved to the right -->
+        <!-- Navigation buttons -->
         <div class="topbar-nav">
             <a href="generators.php" class="btn btn-primary">
                 <i class="fas fa-dice"></i> Generators
@@ -35,71 +49,83 @@ require_once __DIR__ . '/../discord/discord_service.php';
         </div>
     </div>
     
-    <!-- Dropdown menu with Discord options and navigation -->
+    <!-- Dropdown menu -->
     <div id="dropdown-menu" class="dropdown-menu">
         <!-- Navigation Links -->
         <div class="dropdown-section">
             <h3>Navigation</h3>
-            <a href="generators.php" class="discord-menu-item">
+            <a href="generators.php" class="menu-item">
                 <i class="fas fa-dice"></i> Generators
             </a>
-            <a href="character_sheet.php" class="discord-menu-item">
+            <a href="character_sheet.php" class="menu-item">
                 <i class="fas fa-scroll"></i> Character Sheet
             </a>
         </div>
         
-        <!-- Discord Options -->
-        <div class="dropdown-section">
-            <h3>Discord</h3>
-            <?php if (is_discord_authenticated()): ?>
-                <!-- Show Discord-related options when logged in -->
-                <?php 
-                    // Determine correct path for webhook management based on current directory
-                    $baseDir = dirname($_SERVER['PHP_SELF']);
-                    $webhooksUrl = (strpos($baseDir, '/discord') === 0) ? 'webhooks.php' : 'discord/webhooks.php';
-                    $logoutUrl = (strpos($baseDir, '/discord') === 0) ? 'discord-logout.php' : 'discord/discord-logout.php';
-                ?>
-                <a href="<?php echo $webhooksUrl; ?>" class="discord-menu-item">
-                    <i class="fas fa-cog"></i> Configure Webhooks
+        <?php if (is_firebase_authenticated()): ?>
+            <!-- Account Options -->
+            <div class="dropdown-section">
+                <h3>Account</h3>
+                <a href="account.php" class="menu-item">
+                    <i class="fas fa-user"></i> Account Settings
                 </a>
-                <a href="<?php echo $logoutUrl; ?>" class="discord-menu-item">
-                    <i class="fas fa-sign-out-alt"></i> Disconnect Discord
-                </a>
-            <?php else: ?>
-                <!-- Show login option when not logged in -->
-                <?php 
-                    // Determine correct path for auth based on current directory
-                    $authUrl = (strpos($baseDir, '/discord') === 0) ? 'simple_auth.php' : 'discord/simple_auth.php';
-                ?>
-                <a href="<?php echo $authUrl; ?>" class="discord-menu-item">
-                    <i class="fab fa-discord"></i> Connect to Discord
-                </a>
-            <?php endif; ?>
-        </div>
+                <button id="mobile-signout-btn" class="menu-item">
+                    <i class="fas fa-sign-out-alt"></i> Sign Out
+                </button>
+            </div>
+        <?php else: ?>
+            <!-- Auth Options -->
+            <div class="dropdown-section">
+                <h3>Authentication</h3>
+                <button id="mobile-login-btn" class="menu-item">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+                <button id="mobile-signup-btn" class="menu-item">
+                    <i class="fas fa-user-plus"></i> Sign Up
+                </button>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 
-<script>
-// Simple toggle for the dropdown menu
+<script type="module">
+import { signOutUser } from '../js/firebase-auth.js';
+
 document.addEventListener('DOMContentLoaded', function() {
     const menuToggle = document.getElementById('menu-toggle');
     const dropdownMenu = document.getElementById('dropdown-menu');
+    const signoutBtn = document.getElementById('signout-btn');
+    const mobileSignoutBtn = document.getElementById('mobile-signout-btn');
     
-    if (menuToggle && dropdownMenu) {
-        menuToggle.addEventListener('click', function() {
-            dropdownMenu.classList.toggle('active');
-            menuToggle.classList.toggle('active');
-        });
-        
-        // Close menu when clicking outside
-        document.addEventListener('click', function(event) {
-            if (!menuToggle.contains(event.target) && !dropdownMenu.contains(event.target)) {
-                dropdownMenu.classList.remove('active');
-                menuToggle.classList.remove('active');
+    // Toggle menu
+    menuToggle?.addEventListener('click', function() {
+        dropdownMenu.classList.toggle('active');
+        menuToggle.classList.toggle('active');
+    });
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!menuToggle.contains(event.target) && !dropdownMenu.contains(event.target)) {
+            dropdownMenu.classList.remove('active');
+            menuToggle.classList.remove('active');
+        }
+    });
+
+    // Handle sign out
+    async function handleSignOut() {
+        try {
+            const result = await signOutUser();
+            if (result.success) {
+                window.location.href = 'index.php';
+            } else {
+                console.error('Error signing out:', result.error);
             }
-        });
+        } catch (error) {
+            console.error('Error signing out:', error);
+        }
     }
 
-    // No need for AJAX refresh as the webhook status is directly rendered from PHP
+    signoutBtn?.addEventListener('click', handleSignOut);
+    mobileSignoutBtn?.addEventListener('click', handleSignOut);
 });
 </script>

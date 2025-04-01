@@ -74,9 +74,26 @@ $user = get_firebase_user();
                     <div class="discord-integration">
                         <h3>Discord Integration</h3>
                         <p>Connect your Discord account to enable additional features.</p>
-                        <button id="connect-discord-btn" class="btn btn-discord">
-                            <i class="fab fa-discord"></i> Connect Discord
-                        </button>
+                        <div class="discord-status">
+                            <?php if (isset($_SESSION['discord_user'])): ?>
+                                <div class="discord-connected">
+                                    <img src="<?php echo htmlspecialchars($_SESSION['discord_user']['avatar_url']); ?>" 
+                                         alt="Discord Avatar" 
+                                         class="discord-avatar">
+                                    <div class="discord-info">
+                                        <p><strong>Connected as:</strong> <?php echo htmlspecialchars($_SESSION['discord_user']['username']); ?></p>
+                                        <p><strong>Discord ID:</strong> <?php echo htmlspecialchars($_SESSION['discord_user']['id']); ?></p>
+                                    </div>
+                                    <button id="disconnect-discord-btn" class="btn btn-danger">
+                                        <i class="fab fa-discord"></i> Disconnect Discord
+                                    </button>
+                                </div>
+                            <?php else: ?>
+                                <button id="connect-discord-btn" class="btn btn-discord">
+                                    <i class="fab fa-discord"></i> Connect Discord
+                                </button>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -91,11 +108,12 @@ $user = get_firebase_user();
     <!-- Firebase Auth Script -->
     <script type="module">
         import { signOutUser } from './js/firebase-auth.js';
-        import { initDiscordAuth } from './js/discord_integration.js';
+        import { initDiscordAuth, disconnectDiscord } from './js/discord_integration.js';
 
         // Get DOM elements
         const signoutBtn = document.getElementById('signout-btn');
         const connectDiscordBtn = document.getElementById('connect-discord-btn');
+        const disconnectDiscordBtn = document.getElementById('disconnect-discord-btn');
 
         // Sign out handler
         signoutBtn?.addEventListener('click', async () => {
@@ -114,6 +132,20 @@ $user = get_firebase_user();
         // Discord connection handler
         connectDiscordBtn?.addEventListener('click', () => {
             initDiscordAuth();
+        });
+
+        // Discord disconnection handler
+        disconnectDiscordBtn?.addEventListener('click', async () => {
+            try {
+                const result = await disconnectDiscord();
+                if (result.success) {
+                    window.location.reload();
+                } else {
+                    console.error('Error disconnecting Discord:', result.error);
+                }
+            } catch (error) {
+                console.error('Error disconnecting Discord:', error);
+            }
         });
     </script>
 </body>
