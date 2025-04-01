@@ -247,7 +247,7 @@ export async function handleDiscordCallback(code, state) {
             throw new Error('Invalid state parameter');
         }
 
-        // Exchange code for token
+        // Exchange code for token through our server endpoint
         const response = await fetch('/discord/discord-callback.php', {
             method: 'POST',
             headers: {

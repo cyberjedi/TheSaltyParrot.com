@@ -1,25 +1,22 @@
 <?php
-// File: discord/discord-login.php
-// Clean implementation of Discord login functionality for the new UI
-require_once 'discord-config.php';
+/**
+ * Discord Login Handler
+ * 
+ * Initiates the Discord OAuth flow
+ */
 
-// Store the return URL in session
-$_SESSION['discord_ui_return'] = '../index.php';
-
-// Use HTTP_REFERER if available
-if (isset($_SERVER['HTTP_REFERER'])) {
-    // Store the referring page
-    $_SESSION['discord_ui_return'] = $_SERVER['HTTP_REFERER'];
+// Start session if not started
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
 }
 
-// Set a special flag to identify this auth request source
-$_SESSION['from_ui'] = true;
+// Include Discord configuration
+require_once 'discord-config.php';
 
-// Log the authentication attempt
-error_log('Discord auth requested. Return URL: ' . $_SESSION['discord_ui_return']);
+// Get state from request if provided
+$state = $_GET['state'] ?? bin2hex(random_bytes(16));
 
-// Generate a random state parameter to prevent CSRF attacks
-$state = bin2hex(random_bytes(16));
+// Store state in session
 $_SESSION['discord_oauth_state'] = $state;
 
 // Build the authorization URL
@@ -29,12 +26,11 @@ $auth_url .= '&redirect_uri=' . urlencode(DISCORD_REDIRECT_URI);
 $auth_url .= '&response_type=code';
 $auth_url .= '&state=' . $state;
 $auth_url .= '&scope=identify%20guilds';
-$auth_url .= '&prompt=consent'; // Always show consent screen for clarity
+$auth_url .= '&prompt=consent';
 
-// Add tracking parameter
-$auth_url .= '&custom_source=ui';
+// Log the authentication attempt
+error_log('Discord auth initiated. State: ' . $state);
 
-// Direct redirect to Discord
+// Redirect to Discord
 header('Location: ' . $auth_url);
 exit;
-?>
