@@ -377,11 +377,8 @@ $user = [
 
         /* Login form styles */
         .login-form {
-            background: var(--dark);
-            border: 1px solid var(--accent);
-            padding: 2rem;
-            border-radius: 8px;
-            color: var(--light);
+            background-color: #41C8D4 !important;
+            border: none !important;
         }
 
         .login-form input {
@@ -444,11 +441,12 @@ $user = [
         }
 
         .modal-content {
-            background: #41C8D4;
+            background-color: #41C8D4;
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 8px;
             width: 90%;
             max-width: 500px;
+            position: relative;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
@@ -479,6 +477,7 @@ $user = [
 
         .modal-body {
             padding: 1.5rem;
+            background-color: #41C8D4;
         }
 
         .modal-body .form-group {
@@ -522,6 +521,7 @@ $user = [
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
+            width: 100%;
         }
 
         .modal-body .btn-primary:hover {
