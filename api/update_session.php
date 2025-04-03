@@ -12,6 +12,7 @@ if (session_status() == PHP_SESSION_NONE) {
 
 // Include Firebase configuration
 require_once __DIR__ . '/../config/firebase-config.php';
+require_once __DIR__ . '/../config/db_connect.php';
 
 // Set JSON content type
 header('Content-Type: application/json');
@@ -40,6 +41,32 @@ $_SESSION['email'] = $data['email'];
 $_SESSION['displayName'] = $data['displayName'] ?? null;
 $_SESSION['photoURL'] = $data['photoURL'] ?? null;
 $_SESSION['firebase_token'] = $data['token'];
+
+// Sync user data with MySQL database
+try {
+    global $conn;
+    if ($conn) {
+        $stmt = $conn->prepare("
+            INSERT INTO users (uid, email, display_name, photo_url) 
+            VALUES (?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE 
+                email = VALUES(email),
+                display_name = VALUES(display_name),
+                photo_url = VALUES(photo_url),
+                last_login = CURRENT_TIMESTAMP
+        ");
+        
+        $stmt->execute([
+            $data['uid'],
+            $data['email'],
+            $data['displayName'] ?? null,
+            $data['photoURL'] ?? null
+        ]);
+    }
+} catch (PDOException $e) {
+    error_log("Error syncing user data: " . $e->getMessage());
+    // Don't return error to client as this is not critical
+}
 
 // Return success response
 echo json_encode(['success' => true]); 

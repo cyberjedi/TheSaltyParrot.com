@@ -79,6 +79,11 @@ function joinParty($code, $userId) {
     global $conn;
     
     try {
+        if (!$conn) {
+            error_log("Database connection is null");
+            return ['success' => false, 'error' => 'Database connection failed'];
+        }
+
         // Get party by code
         $stmt = $conn->prepare("SELECT * FROM parties WHERE code = ?");
         $stmt->execute([$code]);
@@ -105,7 +110,9 @@ function joinParty($code, $userId) {
         ];
     } catch (PDOException $e) {
         error_log("Error joining party: " . $e->getMessage());
-        return ['success' => false, 'error' => 'Failed to join party'];
+        error_log("SQL State: " . $e->getCode());
+        error_log("Stack trace: " . $e->getTraceAsString());
+        return ['success' => false, 'error' => 'Failed to join party: ' . $e->getMessage()];
     }
 }
 
