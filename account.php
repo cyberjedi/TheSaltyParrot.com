@@ -785,14 +785,31 @@ try {
 
                     const data = await response.json();
                     if (data.success) {
-                        // Reload the page to show updated data
-                        window.location.reload();
+                        // Update the UI without reloading
+                        document.querySelector('.profile-info h1').textContent = displayName;
+                        const profileImage = document.querySelector('.profile-image');
+                        if (photoURL) {
+                            profileImage.src = photoURL;
+                        } else {
+                            profileImage.outerHTML = '<div class="profile-image-placeholder"><i class="fas fa-user"></i></div>';
+                        }
+                        
+                        // Show success message
+                        const alert = document.getElementById('alert');
+                        alert.className = 'alert alert-success';
+                        alert.textContent = 'Profile updated successfully!';
+                        setTimeout(() => {
+                            alert.className = 'alert';
+                            alert.textContent = '';
+                        }, 3000);
                     } else {
-                        alert('Failed to update profile: ' + data.error);
+                        throw new Error(data.error || 'Failed to update profile');
                     }
                 } catch (error) {
                     console.error('Error updating profile:', error);
-                    alert('Failed to update profile. Please try again.');
+                    const alert = document.getElementById('alert');
+                    alert.className = 'alert alert-error';
+                    alert.textContent = error.message || 'Failed to update profile. Please try again.';
                 }
             });
 
