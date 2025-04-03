@@ -34,8 +34,8 @@ require_once __DIR__ . '/../config/firebase-config.php';
             <a href="generators.php" class="btn btn-primary">
                 <i class="fas fa-dice"></i> Generators
             </a>
-            <a href="character_sheet.php" class="btn btn-primary">
-                <i class="fas fa-scroll"></i> Character Sheet
+            <a href="sheets.php" class="btn btn-primary">
+                <i class="fas fa-scroll"></i> Character Sheets
             </a>
         </div>
         
@@ -57,8 +57,8 @@ require_once __DIR__ . '/../config/firebase-config.php';
             <a href="generators.php" class="menu-item">
                 <i class="fas fa-dice"></i> Generators
             </a>
-            <a href="character_sheet.php" class="menu-item">
-                <i class="fas fa-scroll"></i> Character Sheet
+            <a href="sheets.php" class="menu-item">
+                <i class="fas fa-scroll"></i> Character Sheets
             </a>
         </div>
         
