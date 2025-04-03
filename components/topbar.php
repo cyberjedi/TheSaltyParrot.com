@@ -12,7 +12,7 @@ require_once __DIR__ . '/../config/firebase-config.php';
     <div class="topbar-container">
         <!-- Logo in the upper left corner -->
         <a href="index.php" class="topbar-logo">
-            <img src="assets/TSP_logo.png" alt="The Salty Parrot" height="40">
+            <img src="assets/TSP_Logo_3inch.svg" alt="The Salty Parrot" height="40">
         </a>
 
         <!-- Navigation buttons -->

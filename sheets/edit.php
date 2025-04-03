@@ -86,11 +86,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     
     // Get system-specific attributes
     if ($system === 'pirate_borg') {
-        $strength = (int)$_POST['strength'];
-        $agility = (int)$_POST['agility'];
-        $presence = (int)$_POST['presence'];
-        $toughness = (int)$_POST['toughness'];
-        $spirit = (int)$_POST['spirit'];
+        $strength = isset($_POST['strength']) ? (int)$_POST['strength'] : 0;
+        $agility = isset($_POST['agility']) ? (int)$_POST['agility'] : 0;
+        $presence = isset($_POST['presence']) ? (int)$_POST['presence'] : 0;
+        $toughness = isset($_POST['toughness']) ? (int)$_POST['toughness'] : 0;
+        $spirit = isset($_POST['spirit']) ? (int)$_POST['spirit'] : 0;
         $notes = htmlspecialchars($_POST['notes']);
     }
     
@@ -229,12 +229,17 @@ require_once '../components/topbar.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo empty($sheet_id) ? 'Create Character Sheet' : 'Edit ' . htmlspecialchars($sheet['name']); ?></title>
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/topbar.css">
     <link rel="stylesheet" href="../css/character-sheet.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="dark-theme">
-    <div class="main-content">
+<body>
+    <div class="main-content-new">
         <div class="page-container">
             <div class="sheet-container">
                 <div class="sheet-header">
@@ -292,23 +297,23 @@ require_once '../components/topbar.php';
                                 <div class="attributes-grid">
                                     <div class="attribute-item">
                                         <label for="strength">Strength</label>
-                                        <input type="number" id="strength" name="strength" min="0" max="99" value="<?php echo (int)$sheet['strength']; ?>">
+                                        <input type="number" id="strength" name="strength" value="<?php echo (int)$sheet['strength']; ?>">
                                     </div>
                                     <div class="attribute-item">
                                         <label for="agility">Agility</label>
-                                        <input type="number" id="agility" name="agility" min="0" max="99" value="<?php echo (int)$sheet['agility']; ?>">
+                                        <input type="number" id="agility" name="agility" value="<?php echo (int)$sheet['agility']; ?>">
                                     </div>
                                     <div class="attribute-item">
                                         <label for="presence">Presence</label>
-                                        <input type="number" id="presence" name="presence" min="0" max="99" value="<?php echo (int)$sheet['presence']; ?>">
+                                        <input type="number" id="presence" name="presence" value="<?php echo (int)$sheet['presence']; ?>">
                                     </div>
                                     <div class="attribute-item">
                                         <label for="toughness">Toughness</label>
-                                        <input type="number" id="toughness" name="toughness" min="0" max="99" value="<?php echo (int)$sheet['toughness']; ?>">
+                                        <input type="number" id="toughness" name="toughness" value="<?php echo (int)$sheet['toughness']; ?>">
                                     </div>
                                     <div class="attribute-item">
                                         <label for="spirit">Spirit</label>
-                                        <input type="number" id="spirit" name="spirit" min="0" max="99" value="<?php echo (int)$sheet['spirit']; ?>">
+                                        <input type="number" id="spirit" name="spirit" value="<?php echo (int)$sheet['spirit']; ?>">
                                     </div>
                                 </div>
                             </div>
