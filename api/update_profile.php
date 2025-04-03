@@ -82,7 +82,7 @@ try {
         } else {
             // Insert new user
             $stmt = $conn->prepare("
-                INSERT INTO users (uid, displayName, photoURL, email) 
+                INSERT INTO users (uid, display_name, photo_url, email) 
                 VALUES (?, ?, ?, ?)
             ");
         }

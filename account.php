@@ -798,9 +798,9 @@ try {
                         const alert = document.getElementById('alert');
                         alert.className = 'alert alert-success';
                         alert.textContent = 'Profile updated successfully!';
+                        alert.style.display = 'block';
                         setTimeout(() => {
-                            alert.className = 'alert';
-                            alert.textContent = '';
+                            alert.style.display = 'none';
                         }, 3000);
                     } else {
                         throw new Error(data.error || 'Failed to update profile');
@@ -810,6 +810,7 @@ try {
                     const alert = document.getElementById('alert');
                     alert.className = 'alert alert-error';
                     alert.textContent = error.message || 'Failed to update profile. Please try again.';
+                    alert.style.display = 'block';
                 }
             });
 
