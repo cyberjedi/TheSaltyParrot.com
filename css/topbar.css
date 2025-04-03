@@ -1,15 +1,28 @@
 /**
- * Topbar styles for the new design
+ * Topbar styles for the modern design
  */
+
+:root {
+    --dark-blue: #054662;
+    --orange: #F9872F;
+    --light-teal: #41C8D4;
+    --blue: #0BB0D8;
+    --yellow: #FBD029;
+    --white: #ffffff;
+    --light-gray: #f5f5f5;
+    --gray: #e0e0e0;
+    --dark-gray: #333333;
+}
 
 /* Topbar container */
 .topbar {
-    background-color: var(--dark);
-    border-bottom: 1px solid var(--accent);
+    background-color: var(--dark-blue);
+    border-bottom: 1px solid var(--light-teal);
     padding: 0.5rem 1rem;
     position: sticky;
     top: 0;
     z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .topbar-container {
@@ -20,33 +33,103 @@
     align-items: center;
 }
 
+/* Logo styling */
+.topbar-logo {
+    display: flex;
+    align-items: center;
+}
+
+.topbar-logo img {
+    height: 40px;
+    width: auto;
+}
+
+/* Navigation links */
+.topbar-nav {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.topbar-nav .nav-link {
+    color: var(--white);
+    text-decoration: none;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    padding: 0.5rem 0;
+}
+
+.topbar-nav .nav-link:after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: 0;
+    left: 0;
+    background-color: var(--orange);
+    transition: width 0.3s ease;
+}
+
+.topbar-nav .nav-link:hover:after {
+    width: 100%;
+}
+
+.topbar-nav .nav-link i {
+    font-size: 1rem;
+    color: var(--light-teal);
+}
+
 /* Authentication buttons */
 .topbar-auth {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.75rem;
     align-items: center;
 }
 
 .topbar-auth .btn {
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
+    border-radius: 4px;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    font-weight: 500;
+    border: none;
+}
+
+.topbar-auth .btn.btn-primary {
+    background-color: var(--orange);
+    color: var(--white);
+}
+
+.topbar-auth .btn.btn-primary:hover {
+    background-color: #e07b26;
+    transform: translateY(-2px);
+}
+
+.topbar-auth .btn.btn-secondary {
+    background-color: transparent;
+    color: var(--white);
+    border: 1px solid var(--light-teal);
+}
+
+.topbar-auth .btn.btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
 }
 
 .topbar-auth .btn i {
     font-size: 1rem;
 }
 
-/* Navigation buttons */
-.topbar-nav {
-    display: none; /* Hide navigation buttons by default */
-}
-
 /* Hamburger menu */
 .hamburger-menu {
-    display: block; /* Show hamburger menu by default */
+    display: none; /* Hidden on desktop */
 }
 
 .menu-toggle {
@@ -62,7 +145,7 @@
 .hamburger-line {
     width: 24px;
     height: 2px;
-    background-color: var(--light);
+    background-color: var(--white);
     transition: transform 0.3s ease;
 }
 
@@ -84,12 +167,13 @@
     position: absolute;
     top: 100%;
     right: 0;
-    background-color: var(--dark);
-    border: 1px solid var(--accent);
+    background-color: var(--dark-blue);
+    border: 1px solid var(--light-teal);
     border-radius: 0 0 8px 8px;
     padding: 1rem;
-    min-width: 200px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    min-width: 220px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
 }
 
 .dropdown-menu.active {
@@ -97,7 +181,7 @@
 }
 
 .dropdown-section {
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
 }
 
 .dropdown-section:last-child {
@@ -105,22 +189,23 @@
 }
 
 .dropdown-section h3 {
-    color: var(--accent);
+    color: var(--light-teal);
     font-size: 0.9rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--accent);
+    border-bottom: 1px solid rgba(65, 200, 212, 0.3);
+    font-weight: 600;
 }
 
 .menu-item {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    color: var(--light);
+    gap: 0.75rem;
+    padding: 0.75rem;
+    color: var(--white);
     text-decoration: none;
     border-radius: 4px;
-    transition: background-color 0.2s;
+    transition: all 0.2s ease;
     width: 100%;
     text-align: left;
     background: none;
@@ -130,18 +215,29 @@
 }
 
 .menu-item:hover {
-    background-color: rgba(191, 157, 97, 0.1);
+    background-color: rgba(65, 200, 212, 0.1);
 }
 
 .menu-item i {
     width: 1.2rem;
     text-align: center;
+    color: var(--orange);
 }
 
 /* Mobile styles */
+@media (max-width: 992px) {
+    .topbar-nav {
+        display: none; /* Hide navigation on mobile */
+    }
+    
+    .hamburger-menu {
+        display: block; /* Show hamburger on mobile */
+    }
+}
+
 @media (max-width: 768px) {
     .topbar-auth {
-        display: none;
+        display: none; /* Hide auth buttons on small devices */
     }
 
     .dropdown-menu {
@@ -151,7 +247,7 @@
         right: 0;
         bottom: 0;
         border-radius: 0;
-        padding: 1rem;
+        padding: 1.5rem;
         overflow-y: auto;
     }
 }
@@ -166,6 +262,7 @@
     justify-content: center;
     align-items: center;
     text-align: center;
+    background-color: var(--light-gray);
 }
 
 /* Welcome message styling */
@@ -181,27 +278,35 @@
 }
 
 .welcome-title {
-    color: var(--secondary);
+    color: var(--dark-blue);
     font-size: 2.5rem;
     margin-bottom: 20px;
+    font-weight: 700;
 }
 
 .welcome-message {
     font-size: 1.2rem;
     margin-bottom: 30px;
-    color: var(--light);
+    color: var(--dark-gray);
+    line-height: 1.6;
 }
 
 .welcome-actions {
     margin-top: 30px;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
 }
 
 .welcome-actions .btn {
     padding: 12px 30px;
     font-size: 1.1rem;
-    transition: transform 0.2s;
+    transition: all 0.3s ease;
+    border-radius: 6px;
+    font-weight: 600;
 }
 
 .welcome-actions .btn:hover {
     transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }

@@ -2,7 +2,7 @@
 /**
  * Topbar Navigation Component
  * 
- * A minimalist topbar with authentication and navigation
+ * A modern topbar with logo, authentication and navigation
  */
 
 // Include Firebase configuration
@@ -10,13 +10,28 @@ require_once __DIR__ . '/../config/firebase-config.php';
 ?>
 <div class="topbar">
     <div class="topbar-container">
+        <!-- Logo in the upper left corner -->
+        <a href="index.php" class="topbar-logo">
+            <img src="assets/TSP_logo.png" alt="The Salty Parrot" height="40">
+        </a>
+
+        <!-- Navigation buttons -->
+        <div class="topbar-nav">
+            <a href="generators.php" class="nav-link">
+                <i class="fas fa-dice"></i> Generators
+            </a>
+            <a href="sheets.php" class="nav-link">
+                <i class="fas fa-scroll"></i> Character Sheets
+            </a>
+        </div>
+        
         <!-- Authentication buttons -->
         <div class="topbar-auth">
             <?php if (is_firebase_authenticated()): ?>
                 <a href="account.php" class="btn btn-primary">
                     <i class="fas fa-user"></i> Account
                 </a>
-                <button id="signout-btn" class="btn btn-danger">
+                <button id="signout-btn" class="btn btn-secondary">
                     <i class="fas fa-sign-out-alt"></i> Sign Out
                 </button>
             <?php else: ?>
@@ -27,16 +42,6 @@ require_once __DIR__ . '/../config/firebase-config.php';
                     <i class="fas fa-user-plus"></i> Sign Up
                 </button>
             <?php endif; ?>
-        </div>
-        
-        <!-- Navigation buttons -->
-        <div class="topbar-nav">
-            <a href="generators.php" class="btn btn-primary">
-                <i class="fas fa-dice"></i> Generators
-            </a>
-            <a href="sheets.php" class="btn btn-primary">
-                <i class="fas fa-scroll"></i> Character Sheets
-            </a>
         </div>
         
         <!-- Hamburger menu icon -->

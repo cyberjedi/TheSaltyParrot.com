@@ -33,6 +33,10 @@ $page_title = 'Character Sheets';
     <link rel="stylesheet" href="css/character-sheet.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Include the topbar -->
@@ -65,10 +69,11 @@ $page_title = 'Character Sheets';
 
         <div class="sheets-content">
             <div id="sheet-placeholder" class="sheet-placeholder">
-                <h3>Select a sheet to view</h3>
-                <p>Or create a new character sheet</p>
+                <i class="fas fa-scroll fa-4x" style="color: var(--light-teal); margin-bottom: 20px; opacity: 0.5;"></i>
+                <h3>Select a Character Sheet</h3>
+                <p>Choose an existing character sheet from the sidebar or create a new one to get started.</p>
                 <button id="create-sheet-btn-alt" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> New Sheet
+                    <i class="fas fa-plus"></i> Create New Sheet
                 </button>
             </div>
             
@@ -114,6 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const sheetDisplay = document.getElementById('sheet-display');
     const sheetPlaceholder = document.getElementById('sheet-placeholder');
     const createSheetBtn = document.getElementById('create-sheet-btn');
+    const createSheetBtnAlt = document.getElementById('create-sheet-btn-alt');
     const deleteConfirmModal = document.getElementById('delete-confirm-modal');
     const confirmDeleteBtn = document.getElementById('confirm-delete');
     const cancelDeleteBtn = document.getElementById('cancel-delete');
@@ -260,83 +266,163 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Render a sheet's content
     function renderSheetContent(sheet) {
-        // Create sheet content HTML
-        const html = `
+        // Build the sheet HTML based on its system
+        let contentHTML = '';
+        
+        // Common header
+        contentHTML += `
             <div class="sheet-header">
                 <div class="sheet-title">
                     <h2>${sheet.name}</h2>
-                    <div class="sheet-system-badge">${getSystemDisplayName(sheet.system)}</div>
+                    <span class="sheet-system-badge">${getSystemDisplayName(sheet.system)}</span>
                 </div>
                 <div class="sheet-actions">
-                    <button class="btn btn-primary edit-sheet-btn">
+                    <button class="btn btn-secondary edit-sheet-btn" data-sheet-id="${sheet.id}">
                         <i class="fas fa-edit"></i> Edit
                     </button>
-                    <button class="btn btn-secondary print-sheet-btn">
+                    <button class="btn btn-secondary print-sheet-btn" data-sheet-id="${sheet.id}">
                         <i class="fas fa-print"></i> Print
                     </button>
+                    <button class="btn btn-danger delete-sheet-btn" data-sheet-id="${sheet.id}">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
                 </div>
-            </div>
-            
-            <div class="sheet-content">
-                <div class="character-header">
-                    <div class="character-image">
-                        <img src="${sheet.image_path}" 
-                            alt="${sheet.name}" 
-                            onerror="this.src='assets/TSP_default_character.jpg'">
-                    </div>
-                </div>
-                
-                ${renderSystemContent(sheet)}
             </div>
         `;
         
-        sheetDisplay.innerHTML = html;
-        sheetPlaceholder.style.display = 'none';
-        sheetDisplay.style.display = 'block';
+        // System-specific content
+        if (sheet.system === 'pirate_borg') {
+            contentHTML += renderPirateBorgSheet(sheet);
+        } else {
+            contentHTML += `<div class="error-message">Unsupported system: ${sheet.system}</div>`;
+        }
         
-        // Add event listeners to the buttons
-        sheetDisplay.querySelector('.edit-sheet-btn').addEventListener('click', () => {
+        // Update the display
+        sheetDisplay.innerHTML = contentHTML;
+        
+        // Add event listeners to action buttons
+        const editBtn = sheetDisplay.querySelector('.edit-sheet-btn');
+        const printBtn = sheetDisplay.querySelector('.print-sheet-btn');
+        const deleteBtn = sheetDisplay.querySelector('.delete-sheet-btn');
+        
+        editBtn.addEventListener('click', function() {
             window.location.href = `/sheets/edit.php?id=${sheet.id}`;
         });
         
-        sheetDisplay.querySelector('.print-sheet-btn').addEventListener('click', () => {
+        printBtn.addEventListener('click', function() {
             window.open(`/sheets/print.php?id=${sheet.id}`, '_blank');
+        });
+        
+        deleteBtn.addEventListener('click', function() {
+            openDeleteModal(sheet.id);
         });
     }
     
-    // Create a new sheet
-    function createSheet() {
-        window.location.href = '/sheets/edit.php';
+    // Render a Pirate Borg character sheet
+    function renderPirateBorgSheet(sheet) {
+        const data = sheet.data || {};
+        
+        return `
+            <div class="character-header">
+                <div class="character-image">
+                    <img src="${sheet.image_path || 'assets/TSP_default_character.jpg'}" 
+                         alt="${sheet.name}" 
+                         onerror="this.src='assets/TSP_default_character.jpg'">
+                </div>
+                <div class="character-info">
+                    <h3>${sheet.name}</h3>
+                    <p class="character-class">${data.class || 'Unknown Class'}</p>
+                    <p>${data.background || 'No background information'}</p>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h4 class="section-title">Attributes</h4>
+                <div class="attributes-grid">
+                    <div class="attribute">
+                        <div class="attribute-label">Strength</div>
+                        <div class="attribute-value">${data.strength || '?'}</div>
+                    </div>
+                    <div class="attribute">
+                        <div class="attribute-label">Agility</div>
+                        <div class="attribute-value">${data.agility || '?'}</div>
+                    </div>
+                    <div class="attribute">
+                        <div class="attribute-label">Presence</div>
+                        <div class="attribute-value">${data.presence || '?'}</div>
+                    </div>
+                    <div class="attribute">
+                        <div class="attribute-label">Toughness</div>
+                        <div class="attribute-value">${data.toughness || '?'}</div>
+                    </div>
+                    <div class="attribute">
+                        <div class="attribute-label">HP</div>
+                        <div class="attribute-value">${data.hp || '?'}</div>
+                    </div>
+                    <div class="attribute">
+                        <div class="attribute-label">Silver</div>
+                        <div class="attribute-value">${data.silver || '0'}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h4 class="section-title">Equipment</h4>
+                <div class="equipment-list">
+                    ${data.equipment ? data.equipment.split('\n').map(item => `<div class="equipment-item">${item}</div>`).join('') : 'No equipment'}
+                </div>
+            </div>
+            
+            <div class="section">
+                <h4 class="section-title">Notes</h4>
+                <div class="sheet-notes">
+                    ${data.notes || 'No notes'}
+                </div>
+            </div>
+        `;
     }
     
-    // Confirm sheet deletion
-    function confirmDeleteSheet(id) {
-        pendingDeleteId = id;
+    // Get a display name for a system ID
+    function getSystemDisplayName(systemId) {
+        const systemMap = {
+            'pirate_borg': 'Pirate Borg'
+            // Add more systems here as they are supported
+        };
+        
+        return systemMap[systemId] || systemId;
+    }
+    
+    // Open the delete confirmation modal
+    function openDeleteModal(sheetId) {
+        pendingDeleteId = sheetId;
         deleteConfirmModal.style.display = 'flex';
+    }
+    
+    // Close the delete confirmation modal
+    function closeDeleteModal() {
+        deleteConfirmModal.style.display = 'none';
+        pendingDeleteId = null;
     }
     
     // Delete a sheet
     function deleteSheet(id) {
-        fetch('/sheets/api/delete_sheet.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ id: id }),
+        fetch(`/sheets/api/delete_sheet.php?id=${id}`, {
+            method: 'DELETE'
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                loadSheets();
-                
-                // If the deleted sheet was the current one, clear the display
-                if (currentSheetId === id) {
+                // If the deleted sheet was the current one, show the placeholder
+                if (id === currentSheetId) {
                     currentSheetId = null;
                     sheetDisplay.style.display = 'none';
                     sheetPlaceholder.style.display = 'flex';
                 }
+                
+                // Reload the sheets list
+                loadSheets();
             } else {
-                alert(data.error || 'Failed to delete sheet');
+                alert(`Error deleting sheet: ${data.error || 'Unknown error'}`);
             }
         })
         .catch(error => {
@@ -345,96 +431,38 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Event listeners
-    createSheetBtn.addEventListener('click', createSheet);
+    // Event Listeners
+    createSheetBtn.addEventListener('click', function() {
+        window.location.href = '/sheets/edit.php';
+    });
     
-    // Add event listener for the alternative create button in the empty state
-    document.getElementById('create-sheet-btn-alt').addEventListener('click', createSheet);
-    
-    // Add system filter event listener
-    systemFilter.addEventListener('change', function() {
-        currentSystemFilter = this.value;
-        loadSheets();
+    createSheetBtnAlt.addEventListener('click', function() {
+        window.location.href = '/sheets/edit.php';
     });
     
     confirmDeleteBtn.addEventListener('click', function() {
         if (pendingDeleteId) {
             deleteSheet(pendingDeleteId);
-            pendingDeleteId = null;
-            deleteConfirmModal.style.display = 'none';
+            closeDeleteModal();
         }
     });
     
-    cancelDeleteBtn.addEventListener('click', function() {
-        pendingDeleteId = null;
-        deleteConfirmModal.style.display = 'none';
+    cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+    closeModalBtn.addEventListener('click', closeDeleteModal);
+    
+    systemFilter.addEventListener('change', function() {
+        currentSystemFilter = this.value;
+        loadSheets();
     });
     
-    closeModalBtn.addEventListener('click', function() {
-        pendingDeleteId = null;
-        deleteConfirmModal.style.display = 'none';
-    });
-    
-    // Close the modal if clicking outside of it
+    // Close modal when clicking outside of it
     window.addEventListener('click', function(event) {
         if (event.target === deleteConfirmModal) {
-            pendingDeleteId = null;
-            deleteConfirmModal.style.display = 'none';
+            closeDeleteModal();
         }
     });
     
-    // Helper function to get display name for game system
-    function getSystemDisplayName(systemCode) {
-        const systems = {
-            'pirate_borg': 'Pirate Borg'
-            // Add more systems here as they become available
-        };
-        
-        return systems[systemCode] || systemCode;
-    }
-    
-    // Function to render different system content based on system type
-    function renderSystemContent(sheet) {
-        if (sheet.system === 'pirate_borg') {
-            return `
-                <div class="section">
-                    <div class="section-title">Attributes</div>
-                    <div class="attributes-grid">
-                        <div class="attribute">
-                            <div class="attribute-label">Strength</div>
-                            <div class="attribute-value">${sheet.strength}</div>
-                        </div>
-                        <div class="attribute">
-                            <div class="attribute-label">Agility</div>
-                            <div class="attribute-value">${sheet.agility}</div>
-                        </div>
-                        <div class="attribute">
-                            <div class="attribute-label">Presence</div>
-                            <div class="attribute-value">${sheet.presence}</div>
-                        </div>
-                        <div class="attribute">
-                            <div class="attribute-label">Toughness</div>
-                            <div class="attribute-value">${sheet.toughness}</div>
-                        </div>
-                        <div class="attribute">
-                            <div class="attribute-label">Spirit</div>
-                            <div class="attribute-value">${sheet.spirit}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="section">
-                    <div class="section-title">Notes</div>
-                    <div class="sheet-notes">${sheet.notes || 'No notes available.'}</div>
-                </div>
-            `;
-        } 
-        
-        // Default for unknown systems
-        return `<div class="no-system-data">No data available for this system type.</div>`;
-    }
-    
-    // Initial load
+    // Initialize
     loadSheets();
 });
 </script>

@@ -1,8 +1,332 @@
+/* Global Styles for The Salty Parrot */
+
 :root {
-    --primary: #1a2639;
-    --secondary: #bf9d61;
-    --light: #f0f0f0;
-    --dark: #0d1117;
+    /* Main color palette */
+    --dark-blue: #054662;
+    --orange: #F9872F;
+    --light-teal: #41C8D4;
+    --blue: #0BB0D8;
+    --yellow: #FBD029;
+    
+    /* Supporting colors */
+    --white: #FFFFFF;
+    --off-white: #F5F5F5;
+    --light-gray: #E0E0E0;
+    --gray: #AAAAAA;
+    --dark-gray: #555555;
+    --black: #333333;
+    
+    /* Functional colors */
+    --success: #28a745;
+    --warning: #ffc107;
+    --danger: #e74c3c;
+    --info: #0BB0D8;
+}
+
+/* CSS Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Base styles */
+body {
+    font-family: 'Poppins', sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--black);
+    background-color: var(--off-white);
+    min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 0.5em;
+    color: var(--dark-blue);
+}
+
+p {
+    margin-bottom: 1rem;
+}
+
+a {
+    color: var(--blue);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: var(--orange);
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Container */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0.6rem 1.2rem;
+    border-radius: 5px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    text-decoration: none;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary {
+    background-color: var(--orange);
+    color: var(--white);
+}
+
+.btn-primary:hover {
+    background-color: #e07b26;
+}
+
+.btn-secondary {
+    background-color: var(--light-gray);
+    color: var(--dark-gray);
+}
+
+.btn-secondary:hover {
+    background-color: #d5d5d5;
+}
+
+.btn-danger {
+    background-color: var(--danger);
+    color: var(--white);
+}
+
+.btn-danger:hover {
+    background-color: #d62c1a;
+}
+
+.btn-outline {
+    background-color: transparent;
+    border: 1px solid var(--blue);
+    color: var(--blue);
+}
+
+.btn-outline:hover {
+    background-color: var(--blue);
+    color: var(--white);
+}
+
+/* Form elements */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--dark-gray);
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--light-gray);
+    border-radius: 5px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    background-color: var(--white);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(11, 176, 216, 0.2);
+}
+
+/* Utilities */
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.d-flex {
+    display: flex;
+}
+
+.flex-column {
+    flex-direction: column;
+}
+
+.justify-content-between {
+    justify-content: space-between;
+}
+
+.justify-content-center {
+    justify-content: center;
+}
+
+.align-items-center {
+    align-items: center;
+}
+
+.flex-grow-1 {
+    flex-grow: 1;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.gap-3 {
+    gap: 1rem;
+}
+
+.gap-4 {
+    gap: 1.5rem;
+}
+
+.mb-2 {
+    margin-bottom: 0.5rem;
+}
+
+.mb-3 {
+    margin-bottom: 1rem;
+}
+
+.mb-4 {
+    margin-bottom: 1.5rem;
+}
+
+.mt-2 {
+    margin-top: 0.5rem;
+}
+
+.mt-3 {
+    margin-top: 1rem;
+}
+
+.mt-4 {
+    margin-top: 1.5rem;
+}
+
+.p-3 {
+    padding: 1rem;
+}
+
+.p-4 {
+    padding: 1.5rem;
+}
+
+/* Card */
+.card {
+    background-color: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--light-gray);
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-footer {
+    padding: 1.25rem;
+    border-top: 1px solid var(--light-gray);
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Alerts */
+.alert {
+    padding: 1rem;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+}
+
+.alert-success {
+    background-color: rgba(40, 167, 69, 0.1);
+    border: 1px solid rgba(40, 167, 69, 0.2);
+    color: var(--success);
+}
+
+.alert-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.2);
+    color: #856404;
+}
+
+.alert-danger {
+    background-color: rgba(231, 76, 60, 0.1);
+    border: 1px solid rgba(231, 76, 60, 0.2);
+    color: var(--danger);
+}
+
+.alert-info {
+    background-color: rgba(11, 176, 216, 0.1);
+    border: 1px solid rgba(11, 176, 216, 0.2);
+    color: var(--info);
+}
+
+/* Responsive utilities */
+@media (max-width: 992px) {
+    .container {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        font-size: 15px;
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .d-sm-none {
+        display: none !important;
+    }
+    
+    .d-sm-block {
+        display: block !important;
+    }
+    
+    .container {
+        padding: 0 15px;
+    }
 }
 
 .container {
@@ -636,20 +960,6 @@ footer p {
         gap: 15px;
         align-items: flex-start;
     }
-}
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--primary) !important;
-    color: var(--light);
-    line-height: 1.6;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
 }
 
 /* Force no background image */
