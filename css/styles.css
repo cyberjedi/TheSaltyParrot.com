@@ -658,7 +658,7 @@ body, .main-content, .app-container, main {
 }
 
 /* Auth Modal Styles */
-.modal#auth-modal {
+#auth-modal {
     display: none;
     position: fixed;
     z-index: 1000;
@@ -667,99 +667,106 @@ body, .main-content, .app-container, main {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
 }
 
-.modal#auth-modal .modal-content {
+#auth-modal .modal-content {
     background-color: #41C8D4 !important;
-    margin: 15% auto;
-    padding: 20px;
+    padding: 30px;
     border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: 8px;
-    width: 80%;
+    width: 90%;
     max-width: 500px;
     position: relative;
-    color: #000;
 }
 
-.modal#auth-modal .close {
+#auth-modal h2 {
     color: #000;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+#auth-modal .close {
     position: absolute;
     right: 20px;
-    top: 10px;
+    top: 20px;
+    color: #000;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    background: none;
 }
 
-.modal#auth-modal .close:hover {
-    color: #333;
+#auth-modal .form-group {
+    margin-bottom: 20px;
 }
 
-.modal#auth-modal .form-group {
-    margin-bottom: 15px;
-}
-
-.modal#auth-modal .form-group label {
+#auth-modal .form-group label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
     color: #000;
     font-weight: 500;
 }
 
-.modal#auth-modal .form-group input {
+#auth-modal .form-group input {
     width: 100%;
     padding: 12px;
     border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: 4px;
     background-color: rgba(255, 255, 255, 0.9);
     color: #000;
+    font-size: 16px;
 }
 
-.modal#auth-modal .form-group input:focus {
+#auth-modal .form-group input:focus {
     outline: none;
     border-color: #000;
     background-color: #fff;
 }
 
-.modal#auth-modal .btn-primary {
+#auth-modal button[type="submit"] {
     background: #000;
     color: #fff;
     border: none;
-    padding: 0.75rem 1.5rem;
+    padding: 12px;
     border-radius: 4px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
     width: 100%;
+    margin-bottom: 15px;
+    font-size: 16px;
 }
 
-.modal#auth-modal .btn-primary:hover {
+#auth-modal button[type="submit"]:hover {
     background: #333;
-    transform: translateY(-1px);
 }
 
-.modal#auth-modal .btn-google {
+#auth-modal #google-auth-btn {
     background: #4285f4;
     color: #fff;
-    margin-top: 10px;
+    border: none;
+    padding: 12px;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 16px;
 }
 
-.modal#auth-modal .btn-google:hover {
+#auth-modal #google-auth-btn:hover {
     background: #357abd;
 }
 
-.error-message {
-    color: #ff4444;
-    margin-top: 10px;
+#auth-modal .error-message {
+    color: #dc3545;
+    margin-top: 15px;
     text-align: center;
-}
-
-.auth-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 20px;
 }
 
 /* Account Page Styles */
