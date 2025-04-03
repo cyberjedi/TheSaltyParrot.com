@@ -26,15 +26,21 @@ if (!isset($conn)) {
         
         $config = null;
         foreach ($possible_config_paths as $path) {
+            error_log("Checking config path: " . $path);
             if (file_exists($path)) {
+                error_log("Found config file at: " . $path);
                 $config = require_once($path);
                 break;
             }
         }
         
         if ($config === null) {
-            throw new Exception('Database configuration file not found');
+            throw new Exception('Database configuration file not found. Checked paths: ' . implode(', ', $possible_config_paths));
         }
+        
+        // Log the database configuration being used (without sensitive data)
+        error_log("Using database: host=" . ($config['db']['host'] ?? $config['host'] ?? 'not set') . 
+                 ", dbname=" . ($config['db']['name'] ?? $config['dbname'] ?? 'not set'));
         
         // Extract DB credentials - handle both formats for compatibility
         if (isset($config['db'])) {
@@ -69,9 +75,11 @@ if (!isset($conn)) {
     } catch (PDOException $e) {
         error_log('New UI DB Connection error: ' . $e->getMessage());
         $conn = null;
+        throw new Exception('Database connection failed: ' . $e->getMessage());
     } catch (Exception $e) {
         error_log('New UI DB Config error: ' . $e->getMessage());
         $conn = null;
+        throw new Exception('Database configuration error: ' . $e->getMessage());
     }
 }
 ?>
