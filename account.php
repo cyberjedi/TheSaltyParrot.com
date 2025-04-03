@@ -913,19 +913,6 @@ try {
     </script>
 
     <script type="module">
-        import { auth, onAuthStateChanged } from '/js/firebase-auth.js';
-
-        // Listen for auth state changes
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // User is signed in
-                console.log('User is signed in:', user.uid);
-            } else {
-                // User is signed out, redirect to login
-                window.location.href = '/index.php';
-            }
-        });
-
         // Party management functions
         const partySection = {
             async init() {
