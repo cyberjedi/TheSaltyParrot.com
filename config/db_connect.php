@@ -39,23 +39,14 @@ if (!isset($conn)) {
         }
         
         // Log the database configuration being used (without sensitive data)
-        error_log("Using database: host=" . ($config['db']['host'] ?? $config['host'] ?? 'not set') . 
-                 ", dbname=" . ($config['db']['name'] ?? $config['dbname'] ?? 'not set'));
+        error_log("Using database: host=" . ($config['host'] ?? 'not set') . 
+                 ", dbname=" . ($config['dbname'] ?? 'not set'));
         
-        // Extract DB credentials - handle both formats for compatibility
-        if (isset($config['db'])) {
-            // New format with 'db' namespace
-            $db_host = $config['db']['host'] ?? 'localhost';
-            $db_name = $config['db']['name'] ?? 'thesaltyparrot';
-            $db_user = $config['db']['user'] ?? '';
-            $db_pass = $config['db']['pass'] ?? '';
-        } else {
-            // Original format from db_connect.php
-            $db_host = $config['host'] ?? 'localhost';
-            $db_name = $config['dbname'] ?? 'thesaltyparrot';
-            $db_user = $config['username'] ?? '';
-            $db_pass = $config['password'] ?? '';
-        }
+        // Extract DB credentials - using the format from secure_variables.php
+        $db_host = $config['host'] ?? 'localhost';
+        $db_name = $config['dbname'] ?? 'theshfmb_SPDB';
+        $db_user = $config['username'] ?? '';
+        $db_pass = $config['password'] ?? '';
         
         // Create PDO connection
         $conn = new PDO(
