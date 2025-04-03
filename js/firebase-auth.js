@@ -142,5 +142,6 @@ export {
     signUpWithEmail,
     signInWithGoogle,
     signOutUser,
-    auth
+    auth,
+    onAuthStateChanged
 }; 
