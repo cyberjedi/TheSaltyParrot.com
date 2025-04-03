@@ -377,10 +377,39 @@ $user = [
 
         /* Login form styles */
         .login-form {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--dark);
+            border: 1px solid var(--accent);
             padding: 2rem;
             border-radius: 8px;
+            color: var(--light);
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--light);
+            font-size: 0.95rem;
+        }
+
+        .login-form input:focus {
+            outline: none;
+            border-color: var(--accent-hover);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .login-form input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .login-form label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--light);
+            font-weight: 500;
         }
 
         .login-form button {
@@ -392,6 +421,7 @@ $user = [
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
+            width: 100%;
         }
 
         .login-form button:hover {
@@ -686,10 +716,10 @@ $user = [
                     <div class="party-members">
                         ${members.map(member => `
                             <div class="party-member">
-                                <img src="${member.photoURL || 'assets/default-avatar.png'}" 
+                                <img src="${member.photoURL || 'assets/TSP_default_character.jpg'}" 
                                      alt="${member.displayName}" 
                                      class="party-member-avatar"
-                                     onerror="this.src='assets/default-avatar.png'">
+                                     onerror="this.src='assets/TSP_default_character.jpg'">
                                 <div class="party-member-info">
                                     <p class="party-member-name">${member.displayName}</p>
                                     <p class="party-member-role">
