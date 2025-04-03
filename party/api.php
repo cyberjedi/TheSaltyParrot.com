@@ -72,6 +72,42 @@ switch ($action) {
         echo json_encode(['success' => true, 'party' => $party]);
         break;
 
+    case 'leave_party':
+        if (!isset($_POST['party_id'])) {
+            echo json_encode(['success' => false, 'error' => 'Party ID is required']);
+            exit;
+        }
+
+        try {
+            // Start transaction
+            $conn->beginTransaction();
+
+            // Remove user from party_members
+            $stmt = $conn->prepare("DELETE FROM party_members WHERE party_id = ? AND user_id = ?");
+            $stmt->execute([$_POST['party_id'], $_SESSION['uid']]);
+
+            // Check if party is empty
+            $stmt = $conn->prepare("SELECT COUNT(*) FROM party_members WHERE party_id = ?");
+            $stmt->execute([$_POST['party_id']]);
+            $memberCount = $stmt->fetchColumn();
+
+            // If no members left, delete the party
+            if ($memberCount == 0) {
+                $stmt = $conn->prepare("DELETE FROM parties WHERE id = ?");
+                $stmt->execute([$_POST['party_id']]);
+            }
+
+            // Commit transaction
+            $conn->commit();
+            echo json_encode(['success' => true]);
+        } catch (PDOException $e) {
+            // Rollback transaction on error
+            $conn->rollBack();
+            error_log("Error leaving party: " . $e->getMessage());
+            echo json_encode(['success' => false, 'error' => 'Failed to leave party']);
+        }
+        break;
+
     default:
         echo json_encode(['success' => false, 'error' => 'Invalid action']);
         break;

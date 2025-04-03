@@ -649,12 +649,14 @@ $user = [
                 <?php endif; ?>
                 <div class="profile-info">
                     <h1><?php echo htmlspecialchars($user['displayName']); ?></h1>
-                    <p><?php echo htmlspecialchars($user['email']); ?></p>
                 </div>
             </div>
 
             <div class="account-section">
                 <h2><i class="fas fa-user"></i> Account Settings</h2>
+                <div class="account-info">
+                    <p><strong>Email:</strong> <?php echo htmlspecialchars($user['email']); ?></p>
+                </div>
                 <button id="sign-out-btn" class="btn btn-danger">
                     <i class="fas fa-sign-out-alt"></i> Sign Out
                 </button>
@@ -731,7 +733,7 @@ $user = [
                                value="<?php echo htmlspecialchars($user['photoURL'] ?? ''); ?>"
                                placeholder="https://example.com/photo.jpg">
                     </div>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-danger">
                         <i class="fas fa-save"></i>
                         Save Changes
                     </button>
@@ -933,6 +935,11 @@ $user = [
                             </div>
                         `).join('')}
                     </div>
+                    <div class="party-actions">
+                        <button class="btn btn-danger" onclick="partySection.leaveParty('${party.id}')">
+                            <i class="fas fa-sign-out-alt"></i> Leave Party
+                        </button>
+                    </div>
                 `;
                 
                 partyInfo.style.display = 'block';
@@ -1075,6 +1082,32 @@ $user = [
                 }
             },
 
+            async leaveParty(partyId) {
+                if (!confirm('Are you sure you want to leave this party?')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/party/api.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `action=leave_party&party_id=${partyId}`
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        await this.loadPartyInfo();
+                    } else {
+                        throw new Error(data.error);
+                    }
+                } catch (error) {
+                    console.error('Error leaving party:', error);
+                    this.showError('Failed to leave party');
+                }
+            },
+
             showError(message) {
                 // You can implement a better error display system
                 alert(message);
@@ -1148,6 +1181,10 @@ $user = [
                     document.querySelector('.profile-info h1').textContent = formData.displayName;
                     if (formData.photoURL && profileImage) {
                         profileImage.src = formData.photoURL;
+                    }
+                    // Refresh party information
+                    if (window.partySection) {
+                        window.partySection.loadPartyInfo();
                     }
                 } else {
                     showAlert(data.error || 'Failed to update profile');
