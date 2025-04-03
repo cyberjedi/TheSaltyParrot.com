@@ -444,7 +444,7 @@ $user = [
         }
 
         .modal-content {
-            background: var(--dark);
+            background: #41C8D4;
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             width: 90%;
@@ -457,19 +457,20 @@ $user = [
             justify-content: space-between;
             align-items: center;
             padding: 1rem 1.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .modal-header h3 {
             margin: 0;
-            color: var(--light);
+            color: var(--dark);
             font-size: 1.2rem;
+            font-weight: 600;
         }
 
         .close-modal {
             background: none;
             border: none;
-            color: var(--light);
+            color: var(--dark);
             font-size: 1.5rem;
             cursor: pointer;
             padding: 0.5rem;
@@ -487,7 +488,8 @@ $user = [
         .form-group label {
             display: block;
             margin-bottom: 0.5rem;
-            color: var(--light);
+            color: var(--dark);
+            font-weight: 500;
         }
 
         .form-actions {
