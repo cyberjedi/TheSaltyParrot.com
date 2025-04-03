@@ -30,6 +30,7 @@ $page_title = 'Character Sheets';
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/sheets.css">
     <link rel="stylesheet" href="css/topbar.css">
+    <link rel="stylesheet" href="css/character-sheet.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>

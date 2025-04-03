@@ -229,270 +229,106 @@ require_once '../components/topbar.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo empty($sheet_id) ? 'Create Character Sheet' : 'Edit ' . htmlspecialchars($sheet['name']); ?></title>
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/character-sheet.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        /* Styles for the sheet editor */
-        .sheet-container {
-            max-width: 800px;
-            margin: 30px auto;
-            background-color: #202020;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            color: #e1e1e1;
-        }
-        
-        .sheet-header {
-            background-color: #41C8D4;
-            color: #000;
-            padding: 15px 20px;
-            border-top-left-radius: 8px;
-            border-top-right-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .sheet-header h2 {
-            margin: 0;
-            font-size: 1.4rem;
-        }
-        
-        .sheet-body {
-            padding: 20px;
-        }
-        
-        .edit-sections {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        
-        @media (max-width: 768px) {
-            .edit-sections {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        .edit-section {
-            margin-bottom: 20px;
-        }
-        
-        .form-row {
-            margin-bottom: 15px;
-        }
-        
-        .form-group {
-            margin-bottom: 10px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 8px 12px;
-            background-color: #333;
-            border: 1px solid #444;
-            border-radius: 4px;
-            color: #e1e1e1;
-        }
-        
-        .form-group textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-        
-        .attributes-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-        
-        .attribute-item {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .attribute-item label {
-            margin-bottom: 5px;
-        }
-        
-        .attribute-item input {
-            width: 60px;
-            padding: 5px;
-            text-align: center;
-            margin-right: 5px;
-        }
-        
-        .profile-image-preview {
-            width: 150px;
-            height: 150px;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 10px;
-        }
-        
-        .profile-image-preview img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .action-buttons {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
-        
-        .btn {
-            padding: 8px 16px;
-            border-radius: 4px;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        
-        .btn-primary {
-            background-color: #41C8D4;
-            color: #000;
-        }
-        
-        .btn-danger {
-            background-color: #dc3545;
-            color: white;
-        }
-        
-        .btn-secondary {
-            background-color: #6c757d;
-            color: white;
-        }
-        
-        .alert {
-            padding: 10px 15px;
-            border-radius: 4px;
-            margin-bottom: 15px;
-        }
-        
-        .alert-danger {
-            background-color: #dc3545;
-            color: white;
-        }
-        
-        .alert-success {
-            background-color: #28a745;
-            color: white;
-        }
-        
-        /* System-specific styles */
-        .system-specific-fields {
-            display: none;
-        }
-        
-        .system-specific-fields.active {
-            display: block;
-        }
-    </style>
 </head>
-<body>
-    <div class="container">
-        <div class="sheet-container">
-            <div class="sheet-header">
-                <h2><?php echo empty($sheet_id) ? 'Create New Character Sheet' : 'Edit Character Sheet'; ?></h2>
-            </div>
-            
-            <div class="sheet-body">
-                <?php if ($error_message): ?>
-                <div class="alert alert-danger"><?php echo $error_message; ?></div>
-                <?php endif; ?>
+<body class="dark-theme">
+    <div class="main-content">
+        <div class="page-container">
+            <div class="sheet-container">
+                <div class="sheet-header">
+                    <h2><?php echo empty($sheet_id) ? 'Create New Character Sheet' : 'Edit Character Sheet'; ?></h2>
+                </div>
                 
-                <?php if ($success_message): ?>
-                <div class="alert alert-success"><?php echo $success_message; ?></div>
-                <?php endif; ?>
-                
-                <form id="sheet-form" method="POST" action="/sheets/edit.php" enctype="multipart/form-data">
-                    <input type="hidden" name="action" value="save_sheet">
-                    <input type="hidden" name="sheet_id" value="<?php echo $sheet_id; ?>">
+                <div class="sheet-body">
+                    <?php if ($error_message): ?>
+                    <div class="alert alert-danger"><?php echo $error_message; ?></div>
+                    <?php endif; ?>
                     
-                    <div class="edit-section">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="system">Game System</label>
-                                <select id="system" name="system" class="form-control">
-                                    <option value="pirate_borg" <?php echo (isset($sheet['system']) && $sheet['system'] === 'pirate_borg') ? 'selected' : ''; ?>>Pirate Borg</option>
-                                    <!-- More game systems can be added here in the future -->
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="name">Character Name</label>
-                                <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($sheet['name']); ?>" required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="image">Character Image</label>
-                                <div class="profile-image-preview">
-                                    <img id="image-preview" src="<?php echo htmlspecialchars($sheet['image_path']); ?>" 
-                                         alt="Character Portrait" 
-                                         onerror="this.src='../assets/TSP_default_character.jpg'">
-                                </div>
-                                <input type="file" id="image" name="image" accept="image/*">
-                            </div>
-                        </div>
-                    </div>
+                    <?php if ($success_message): ?>
+                    <div class="alert alert-success"><?php echo $success_message; ?></div>
+                    <?php endif; ?>
                     
-                    <!-- Pirate Borg specific fields -->
-                    <div id="pirate-borg-fields" class="system-specific-fields active">
-                        <div class="edit-section">
-                            <h3>Attributes</h3>
-                            <div class="attributes-grid">
-                                <div class="attribute-item">
-                                    <label for="strength">Strength</label>
-                                    <input type="number" id="strength" name="strength" min="0" max="99" value="<?php echo (int)$sheet['strength']; ?>">
-                                </div>
-                                <div class="attribute-item">
-                                    <label for="agility">Agility</label>
-                                    <input type="number" id="agility" name="agility" min="0" max="99" value="<?php echo (int)$sheet['agility']; ?>">
-                                </div>
-                                <div class="attribute-item">
-                                    <label for="presence">Presence</label>
-                                    <input type="number" id="presence" name="presence" min="0" max="99" value="<?php echo (int)$sheet['presence']; ?>">
-                                </div>
-                                <div class="attribute-item">
-                                    <label for="toughness">Toughness</label>
-                                    <input type="number" id="toughness" name="toughness" min="0" max="99" value="<?php echo (int)$sheet['toughness']; ?>">
-                                </div>
-                                <div class="attribute-item">
-                                    <label for="spirit">Spirit</label>
-                                    <input type="number" id="spirit" name="spirit" min="0" max="99" value="<?php echo (int)$sheet['spirit']; ?>">
-                                </div>
-                            </div>
-                        </div>
+                    <form id="sheet-form" method="POST" action="/sheets/edit.php" enctype="multipart/form-data">
+                        <input type="hidden" name="action" value="save_sheet">
+                        <input type="hidden" name="sheet_id" value="<?php echo $sheet_id; ?>">
                         
                         <div class="edit-section">
-                            <div class="form-group">
-                                <label for="notes">Notes</label>
-                                <textarea id="notes" name="notes"><?php echo htmlspecialchars($sheet['notes']); ?></textarea>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="system">Game System</label>
+                                    <select id="system" name="system" class="form-control">
+                                        <option value="pirate_borg" <?php echo (isset($sheet['system']) && $sheet['system'] === 'pirate_borg') ? 'selected' : ''; ?>>Pirate Borg</option>
+                                        <!-- More game systems can be added here in the future -->
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="name">Character Name</label>
+                                    <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($sheet['name']); ?>" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="image">Character Image</label>
+                                    <div class="profile-image-preview">
+                                        <img id="image-preview" src="<?php echo htmlspecialchars($sheet['image_path']); ?>" 
+                                             alt="Character Portrait" 
+                                             onerror="this.src='../assets/TSP_default_character.jpg'">
+                                    </div>
+                                    <input type="file" id="image" name="image" accept="image/*">
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- Other system-specific fields can be added here in the future -->
-                    
-                    <div class="action-buttons">
-                        <button type="submit" class="btn btn-primary">Save Character</button>
-                        <a href="/sheets.php" class="btn btn-secondary">Cancel</a>
-                    </div>
-                </form>
+                        
+                        <!-- Pirate Borg specific fields -->
+                        <div id="pirate-borg-fields" class="system-specific-fields active">
+                            <div class="edit-section">
+                                <h3>Attributes</h3>
+                                <div class="attributes-grid">
+                                    <div class="attribute-item">
+                                        <label for="strength">Strength</label>
+                                        <input type="number" id="strength" name="strength" min="0" max="99" value="<?php echo (int)$sheet['strength']; ?>">
+                                    </div>
+                                    <div class="attribute-item">
+                                        <label for="agility">Agility</label>
+                                        <input type="number" id="agility" name="agility" min="0" max="99" value="<?php echo (int)$sheet['agility']; ?>">
+                                    </div>
+                                    <div class="attribute-item">
+                                        <label for="presence">Presence</label>
+                                        <input type="number" id="presence" name="presence" min="0" max="99" value="<?php echo (int)$sheet['presence']; ?>">
+                                    </div>
+                                    <div class="attribute-item">
+                                        <label for="toughness">Toughness</label>
+                                        <input type="number" id="toughness" name="toughness" min="0" max="99" value="<?php echo (int)$sheet['toughness']; ?>">
+                                    </div>
+                                    <div class="attribute-item">
+                                        <label for="spirit">Spirit</label>
+                                        <input type="number" id="spirit" name="spirit" min="0" max="99" value="<?php echo (int)$sheet['spirit']; ?>">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="edit-section">
+                                <div class="form-group">
+                                    <label for="notes">Notes</label>
+                                    <textarea id="notes" name="notes"><?php echo htmlspecialchars($sheet['notes']); ?></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Other system-specific fields can be added here in the future -->
+                        
+                        <div class="action-buttons">
+                            <button type="submit" class="btn btn-primary">Save Character</button>
+                            <a href="/sheets.php" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
