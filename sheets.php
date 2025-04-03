@@ -25,90 +25,95 @@ $page_title = 'Character Sheets';
 require_once 'components/topbar.php';
 ?>
 
-<div class="main-wrapper">
-    <?php 
-    // Include sidebar
-    require_once 'components/sidebar.php'; 
-    ?>
-    
-    <main class="content" id="character-sheets-content">
-        <div class="sheets-container">
-            <!-- Sheet List Sidebar -->
-            <div class="sheets-sidebar">
-                <div class="sheets-header">
-                    <h2>My Sheets</h2>
-                    <button id="create-sheet-btn" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> New Sheet
-                    </button>
-                </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Character Sheets - The Salty Parrot</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/sheets.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="main-wrapper">
+        <?php 
+        // Include sidebar
+        require_once 'components/sidebar.php'; 
+        ?>
+        
+        <main class="content">
+            <div class="sheets-container">
+                <div class="sheets-sidebar">
+                    <div class="sheets-header">
+                        <h2>My Sheets</h2>
+                        <button id="create-sheet-btn" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> New Sheet
+                        </button>
+                    </div>
                 
-                <div class="sheets-filter">
-                    <select id="system-filter" class="form-control">
-                        <option value="">All Systems</option>
-                        <option value="pirate_borg">Pirate Borg</option>
-                        <!-- More game systems can be added here in the future -->
-                    </select>
-                </div>
+                    <div class="sheets-filter">
+                        <select id="system-filter" class="form-control">
+                            <option value="">All Systems</option>
+                            <option value="pirate_borg">Pirate Borg</option>
+                            <!-- More game systems can be added here in the future -->
+                        </select>
+                    </div>
                 
-                <div class="sheets-list" id="sheets-list">
-                    <!-- Sheets will be loaded here via JavaScript -->
-                    <div class="sheets-loading">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <span>Loading sheets...</span>
+                    <div class="sheets-list" id="sheets-list">
+                        <div class="sheets-loading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Loading sheets...</span>
+                        </div>
                     </div>
                 </div>
-            </div>
             
-            <!-- Sheet Content -->
-            <div class="sheet-content">
-                <div id="sheet-placeholder" class="sheet-placeholder">
-                    <i class="fas fa-scroll"></i>
-                    <h3>Select a sheet to view</h3>
-                    <p>Or create a new sheet to get started</p>
-                </div>
+                <div class="sheets-content">
+                    <div id="sheet-placeholder" class="sheet-placeholder">
+                        <h3>Select a sheet to view</h3>
+                        <p>Or create a new character sheet</p>
+                        <button id="create-sheet-btn-alt" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> New Sheet
+                        </button>
+                    </div>
                 
-                <div id="sheet-display" class="sheet-display" style="display: none;">
-                    <!-- Active sheet will be loaded here -->
+                    <div id="sheet-display" class="sheet-display" style="display: none;"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Sheet List Item Template -->
+    <template id="sheet-list-item-template">
+        <div class="sheet-list-item" data-sheet-id="">
+            <div class="sheet-list-info">
+                <img class="sheet-thumbnail" src="" alt="Character Portrait">
+                <div class="sheet-details">
+                    <span class="sheet-name"></span>
+                    <span class="sheet-system"></span>
+                    <span class="sheet-last-edited"></span>
                 </div>
             </div>
         </div>
-    </main>
-</div>
-
-<!-- Sheet Templates - Hidden -->
-<template id="sheet-list-item-template">
-    <div class="sheet-list-item" data-sheet-id="">
-        <div class="sheet-list-info">
-            <img class="sheet-thumbnail" src="" alt="Character Portrait">
-            <div class="sheet-details">
-                <span class="sheet-name"></span>
-                <span class="sheet-system"></span>
-                <span class="sheet-last-edited"></span>
+    </template>
+    
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-confirm-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Delete Character Sheet</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this character sheet? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-delete" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-delete" class="btn btn-danger">Delete</button>
             </div>
         </div>
-        <div class="sheet-actions">
-            <button class="btn-icon sheet-action-btn" data-action="edit" title="Edit Sheet">
-                <i class="fas fa-edit"></i>
-            </button>
-            <button class="btn-icon sheet-action-btn" data-action="delete" title="Delete Sheet">
-                <i class="fas fa-trash"></i>
-            </button>
-        </div>
     </div>
-</template>
-
-<!-- Confirm Delete Modal -->
-<div id="delete-confirm-modal" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <h2>Confirm Deletion</h2>
-        <p>Are you sure you want to delete this character sheet? This action cannot be undone.</p>
-        <div class="modal-actions">
-            <button id="cancel-delete" class="btn btn-secondary">Cancel</button>
-            <button id="confirm-delete" class="btn btn-danger">Delete</button>
-        </div>
-    </div>
-</div>
 
 <!-- CSS for Character Sheets -->
 <style>
@@ -638,6 +643,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Event listeners
     createSheetBtn.addEventListener('click', createSheet);
+    
+    // Add event listener for the alternative create button in the empty state
+    document.getElementById('create-sheet-btn-alt').addEventListener('click', createSheet);
     
     // Add system filter event listener
     systemFilter.addEventListener('change', function() {
