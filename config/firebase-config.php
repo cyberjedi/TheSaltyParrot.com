@@ -19,7 +19,7 @@ define('FIREBASE_APP_ID', '1:598113689428:web:fb57b75af8efc6e051f2c1');
  * @return bool True if authenticated
  */
 function is_firebase_authenticated() {
-    return isset($_SESSION['firebase_user']) && 
+    return isset($_SESSION['uid']) && 
            isset($_SESSION['firebase_token']);
 }
 
@@ -33,7 +33,12 @@ function get_firebase_user() {
         return null;
     }
     
-    return $_SESSION['firebase_user'] ?? null;
+    return [
+        'uid' => $_SESSION['uid'],
+        'email' => $_SESSION['email'],
+        'displayName' => $_SESSION['displayName'],
+        'photoURL' => $_SESSION['photoURL']
+    ];
 }
 
 /**
@@ -42,8 +47,7 @@ function get_firebase_user() {
  * @return string|null User ID or null if not authenticated
  */
 function get_firebase_user_id() {
-    $user = get_firebase_user();
-    return $user ? $user['uid'] : null;
+    return is_firebase_authenticated() ? $_SESSION['uid'] : null;
 }
 
 /**
@@ -52,8 +56,7 @@ function get_firebase_user_id() {
  * @return string|null User email or null if not authenticated
  */
 function get_firebase_user_email() {
-    $user = get_firebase_user();
-    return $user ? $user['email'] : null;
+    return is_firebase_authenticated() ? $_SESSION['email'] : null;
 }
 
 /**
@@ -62,8 +65,7 @@ function get_firebase_user_email() {
  * @return string|null User display name or null if not authenticated
  */
 function get_firebase_user_display_name() {
-    $user = get_firebase_user();
-    return $user ? $user['displayName'] : null;
+    return is_firebase_authenticated() ? $_SESSION['displayName'] : null;
 }
 
 /**
@@ -72,6 +74,5 @@ function get_firebase_user_display_name() {
  * @return string|null User photo URL or null if not authenticated
  */
 function get_firebase_user_photo_url() {
-    $user = get_firebase_user();
-    return $user ? $user['photoURL'] : null;
+    return is_firebase_authenticated() ? $_SESSION['photoURL'] : null;
 } 

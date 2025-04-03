@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const result = await signOutUser();
             if (result.success) {
-                window.location.href = 'index.php';
+                window.location.reload();
             } else {
                 console.error('Error signing out:', result.error);
             }
