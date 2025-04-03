@@ -10,18 +10,21 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Set error reporting for debugging
-error_reporting(E_ALL);
+// Enable error display for debugging
 ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 // Set JSON content type
 header('Content-Type: application/json');
 
 // Check if user is logged in
 if (!isset($_SESSION['uid'])) {
-    error_log("Update profile failed: User not authenticated");
     http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
+    echo json_encode([
+        'error' => 'Not authenticated',
+        'session' => array_keys($_SESSION)
+    ]);
     exit;
 }
 
@@ -29,14 +32,23 @@ if (!isset($_SESSION['uid'])) {
 $json = file_get_contents('php://input');
 $data = json_decode($json, true);
 
-// Log received data
-error_log("Received profile update request for user " . $_SESSION['uid'] . ": " . print_r($data, true));
+// Debug received data
+$debug = [
+    'received_data' => $data,
+    'session_data' => [
+        'uid' => $_SESSION['uid'] ?? null,
+        'email' => $_SESSION['email'] ?? null,
+        'displayName' => $_SESSION['displayName'] ?? null
+    ]
+];
 
 // Validate input
 if (!isset($data['displayName']) || trim($data['displayName']) === '') {
-    error_log("Update profile failed: Display name is required");
     http_response_code(400);
-    echo json_encode(['error' => 'Display name is required']);
+    echo json_encode([
+        'error' => 'Display name is required',
+        'debug' => $debug
+    ]);
     exit;
 }
 
@@ -45,9 +57,12 @@ $photoURL = null;
 if (isset($data['photoURL']) && trim($data['photoURL']) !== '') {
     $photoURL = filter_var(trim($data['photoURL']), FILTER_VALIDATE_URL);
     if ($photoURL === false) {
-        error_log("Update profile failed: Invalid photo URL - " . $data['photoURL']);
         http_response_code(400);
-        echo json_encode(['error' => 'Invalid photo URL']);
+        echo json_encode([
+            'error' => 'Invalid photo URL',
+            'provided_url' => $data['photoURL'],
+            'debug' => $debug
+        ]);
         exit;
     }
 }
@@ -59,34 +74,58 @@ try {
     if (!$conn) {
         throw new Exception('Database connection failed');
     }
-    
-    // Update user in database
-    $stmt = $conn->prepare("
-        INSERT INTO users (uid, display_name, photo_url, email)
-        VALUES (?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-            display_name = VALUES(display_name),
-            photo_url = VALUES(photo_url),
-            last_login = CURRENT_TIMESTAMP
-    ");
-    
+
+    // Prepare the query
+    $query = "
+        UPDATE users 
+        SET display_name = ?, 
+            photo_url = ?
+        WHERE uid = ?
+    ";
+
+    // Prepare and execute
+    $stmt = $conn->prepare($query);
+    if (!$stmt) {
+        throw new Exception('Failed to prepare statement: ' . print_r($conn->errorInfo(), true));
+    }
+
     $params = [
-        $_SESSION['uid'],
         trim($data['displayName']),
         $photoURL,
-        $_SESSION['email'] ?? null
+        $_SESSION['uid']
     ];
-    
-    error_log("Executing update with params: " . print_r($params, true));
-    
+
     $result = $stmt->execute($params);
     
     if ($result) {
+        // Check if any rows were affected
+        if ($stmt->rowCount() === 0) {
+            // No rows updated, try to insert
+            $insertQuery = "
+                INSERT INTO users (uid, display_name, photo_url, email)
+                VALUES (?, ?, ?, ?)
+            ";
+            
+            $stmt = $conn->prepare($insertQuery);
+            if (!$stmt) {
+                throw new Exception('Failed to prepare insert statement: ' . print_r($conn->errorInfo(), true));
+            }
+            
+            $result = $stmt->execute([
+                $_SESSION['uid'],
+                trim($data['displayName']),
+                $photoURL,
+                $_SESSION['email'] ?? null
+            ]);
+            
+            if (!$result) {
+                throw new Exception('Failed to insert user: ' . print_r($stmt->errorInfo(), true));
+            }
+        }
+        
         // Update session
         $_SESSION['displayName'] = trim($data['displayName']);
         $_SESSION['photoURL'] = $photoURL;
-        
-        error_log("Profile updated successfully for user " . $_SESSION['uid']);
         
         // Return success
         echo json_encode([
@@ -94,17 +133,23 @@ try {
             'user' => [
                 'displayName' => $_SESSION['displayName'],
                 'photoURL' => $_SESSION['photoURL']
-            ]
+            ],
+            'debug' => $debug
         ]);
     } else {
-        throw new Exception('Failed to update user profile');
+        throw new Exception('Failed to execute statement: ' . print_r($stmt->errorInfo(), true));
     }
     
 } catch (Exception $e) {
-    error_log("Error updating profile for user {$_SESSION['uid']}: " . $e->getMessage());
-    error_log("Stack trace: " . $e->getTraceAsString());
-    
     http_response_code(500);
-    echo json_encode(['error' => 'Failed to update profile: ' . $e->getMessage()]);
+    echo json_encode([
+        'error' => 'Failed to update profile',
+        'message' => $e->getMessage(),
+        'debug' => array_merge($debug, [
+            'error_trace' => $e->getTraceAsString(),
+            'error_line' => $e->getLine(),
+            'error_file' => $e->getFile()
+        ])
+    ]);
     exit;
 } 
