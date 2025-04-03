@@ -787,11 +787,15 @@ try {
                     if (data.success) {
                         // Update the UI without reloading
                         document.querySelector('.profile-info h1').textContent = displayName;
+                        
+                        // Update profile image
                         const profileImage = document.querySelector('.profile-image');
-                        if (photoURL) {
-                            profileImage.src = photoURL;
-                        } else {
-                            profileImage.outerHTML = '<div class="profile-image-placeholder"><i class="fas fa-user"></i></div>';
+                        if (profileImage) {
+                            if (photoURL) {
+                                profileImage.src = photoURL;
+                            } else {
+                                profileImage.outerHTML = '<div class="profile-image-placeholder"><i class="fas fa-user"></i></div>';
+                            }
                         }
                         
                         // Show success message
@@ -909,277 +913,18 @@ try {
     </script>
 
     <script type="module">
-        // Party management functions
-        const partySection = {
-            async init() {
-                await this.loadPartyInfo();
-                this.setupEventListeners();
-            },
+        import { auth, onAuthStateChanged } from '/js/firebase-auth.js';
 
-            async loadPartyInfo() {
-                try {
-                    const response = await fetch('/party/api.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: 'action=get_party'
-                    });
-
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        if (data.party) {
-                            await this.displayPartyInfo(data.party);
-                        } else {
-                            this.showPartyForms();
-                        }
-                    } else {
-                        throw new Error(data.error);
-                    }
-                } catch (error) {
-                    console.error('Error loading party info:', error);
-                    this.showError('Failed to load party information');
-                } finally {
-                    document.getElementById('party-loading').style.display = 'none';
-                }
-            },
-
-            async displayPartyInfo(party) {
-                const members = await this.getPartyMembers(party.id);
-                const partyInfo = document.getElementById('party-info');
-                
-                partyInfo.innerHTML = `
-                    <h3>${party.name}</h3>
-                    <div class="party-code">
-                        ${party.code}
-                        <button class="btn btn-small" onclick="navigator.clipboard.writeText('${party.code}')">
-                            <i class="fas fa-copy"></i>
-                        </button>
-                    </div>
-                    <div class="party-members">
-                        ${members.map(member => `
-                            <div class="party-member">
-                                <img src="${member.photoURL || 'assets/TSP_default_character.jpg'}" 
-                                     alt="${member.displayName}" 
-                                     class="party-member-avatar"
-                                     onerror="this.src='assets/TSP_default_character.jpg'">
-                                <div class="party-member-info">
-                                    <p class="party-member-name">${member.displayName}</p>
-                                    <p class="party-member-role">
-                                        ${party.creator_id === member.uid ? 'Party Leader' : 'Member'}
-                                    </p>
-                                </div>
-                                ${party.creator_id === '<?php echo $_SESSION['uid']; ?>' && member.uid !== '<?php echo $_SESSION['uid']; ?>' ? `
-                                    <button class="btn btn-danger btn-small" onclick="partySection.removeMember('${party.id}', '${member.uid}')">
-                                        <i class="fas fa-user-minus"></i> Kick
-                                    </button>
-                                ` : ''}
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="party-actions">
-                        <button class="btn btn-danger" onclick="partySection.leaveParty('${party.id}')">
-                            <i class="fas fa-sign-out-alt"></i> Leave Party
-                        </button>
-                    </div>
-                `;
-                
-                partyInfo.style.display = 'block';
-                document.getElementById('party-forms').style.display = 'none';
-            },
-
-            async getPartyMembers(partyId) {
-                try {
-                    const response = await fetch('/party/api.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: `action=get_members&party_id=${partyId}`
-                    });
-
-                    const data = await response.json();
-                    return data.success ? data.members : [];
-                } catch (error) {
-                    console.error('Error getting party members:', error);
-                    return [];
-                }
-            },
-
-            showPartyForms() {
-                document.getElementById('party-info').style.display = 'none';
-                document.getElementById('party-forms').style.display = 'block';
-            },
-
-            setupEventListeners() {
-                // Create party button
-                document.getElementById('create-party-btn').addEventListener('click', () => {
-                    modals.show('createParty');
-                });
-
-                // Join party button
-                document.getElementById('join-party-btn').addEventListener('click', () => {
-                    modals.show('joinParty');
-                });
-
-                // Close modal buttons
-                document.querySelectorAll('.close-modal').forEach(button => {
-                    button.addEventListener('click', () => {
-                        const modal = button.closest('.modal');
-                        if (modal.id === 'create-party-modal') {
-                            modals.hide('createParty');
-                        } else {
-                            modals.hide('joinParty');
-                        }
-                    });
-                });
-
-                // Close modals when clicking outside
-                document.querySelectorAll('.modal').forEach(modal => {
-                    modal.addEventListener('click', (e) => {
-                        if (e.target === modal) {
-                            modals.hide(modal.id.replace('-modal', ''));
-                        }
-                    });
-                });
-
-                // Create party form
-                document.getElementById('create-party-form').addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const name = document.getElementById('party-name').value;
-                    
-                    try {
-                        const response = await fetch('/party/api.php', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded',
-                            },
-                            body: `action=create&name=${encodeURIComponent(name)}`
-                        });
-
-                        const data = await response.json();
-                        if (data.success) {
-                            modals.hide('createParty');
-                            await this.loadPartyInfo();
-                        } else {
-                            throw new Error(data.error);
-                        }
-                    } catch (error) {
-                        console.error('Error creating party:', error);
-                        this.showError('Failed to create party');
-                    }
-                });
-
-                // Join party form
-                document.getElementById('join-party-form').addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const code = document.getElementById('party-code').value;
-                    
-                    try {
-                        const response = await fetch('/party/api.php', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded',
-                            },
-                            body: `action=join&code=${encodeURIComponent(code)}`
-                        });
-
-                        const data = await response.json();
-                        if (data.success) {
-                            modals.hide('joinParty');
-                            await this.loadPartyInfo();
-                        } else {
-                            throw new Error(data.error);
-                        }
-                    } catch (error) {
-                        console.error('Error joining party:', error);
-                        this.showError('Failed to join party');
-                    }
-                });
-            },
-
-            async removeMember(partyId, memberId) {
-                if (!confirm('Are you sure you want to remove this member?')) {
-                    return;
-                }
-
-                try {
-                    const response = await fetch('/party/api.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: `action=remove_member&party_id=${partyId}&member_id=${memberId}`
-                    });
-
-                    const data = await response.json();
-                    if (data.success) {
-                        await this.loadPartyInfo();
-                    } else {
-                        throw new Error(data.error);
-                    }
-                } catch (error) {
-                    console.error('Error removing member:', error);
-                    this.showError('Failed to remove member');
-                }
-            },
-
-            async leaveParty(partyId) {
-                if (!confirm('Are you sure you want to leave this party?')) {
-                    return;
-                }
-
-                try {
-                    const response = await fetch('/party/api.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: `action=leave_party&party_id=${partyId}`
-                    });
-
-                    const data = await response.json();
-                    if (data.success) {
-                        await this.loadPartyInfo();
-                    } else {
-                        throw new Error(data.error);
-                    }
-                } catch (error) {
-                    console.error('Error leaving party:', error);
-                    this.showError('Failed to leave party');
-                }
-            },
-
-            showError(message) {
-                // You can implement a better error display system
-                alert(message);
+        // Listen for auth state changes
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User is signed in
+                console.log('User is signed in:', user.uid);
+            } else {
+                // User is signed out, redirect to login
+                window.location.href = '/index.php';
             }
-        };
-
-        // Initialize party section
-        partySection.init();
-
-        // Make partySection available globally for event handlers
-        window.partySection = partySection;
-
-        // Add modal functionality
-        const modals = {
-            createParty: document.getElementById('create-party-modal'),
-            joinParty: document.getElementById('join-party-modal'),
-            
-            show(modalId) {
-                const modal = this[modalId];
-                modal.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
-            },
-            
-            hide(modalId) {
-                const modal = this[modalId];
-                modal.style.display = 'none';
-                document.body.style.overflow = '';
-            }
-        };
+        });
     </script>
 
     <script>
