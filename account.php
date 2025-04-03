@@ -535,6 +535,102 @@ $user = [
                 margin: 1rem;
             }
         }
+
+        .settings-form {
+            max-width: 500px;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--light);
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            color: var(--light);
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-hover);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .photo-preview {
+            margin-top: 1rem;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--accent);
+        }
+
+        .photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Profile Settings Styles */
+        .profile-form {
+            margin-top: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--light);
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: var(--light);
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .alert-success {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+
+        .alert-error {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -614,6 +710,76 @@ $user = [
                     </div>
                 </div>
             </div>
+
+            <div class="account-section">
+                <h2><i class="fas fa-user-edit"></i> Profile Settings</h2>
+                <div id="alert" class="alert"></div>
+                <form id="profile-form" class="profile-form">
+                    <div class="form-group">
+                        <label for="displayName">Display Name</label>
+                        <input type="text" 
+                               id="displayName" 
+                               name="displayName" 
+                               value="<?php echo htmlspecialchars($user['displayName']); ?>" 
+                               required>
+                    </div>
+                    <div class="form-group">
+                        <label for="photoURL">Photo URL</label>
+                        <input type="url" 
+                               id="photoURL" 
+                               name="photoURL" 
+                               value="<?php echo htmlspecialchars($user['photoURL'] ?? ''); ?>"
+                               placeholder="https://example.com/photo.jpg">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Save Changes
+                    </button>
+                </form>
+            </div>
+
+            <script>
+            document.getElementById('profile-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const displayName = document.getElementById('displayName').value;
+                const photoURL = document.getElementById('photoURL').value;
+
+                try {
+                    const response = await fetch('/api/update_profile.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            displayName,
+                            photoURL
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        // Update session and reload
+                        window.location.reload();
+                    } else {
+                        alert('Failed to update profile: ' + data.error);
+                    }
+                } catch (error) {
+                    console.error('Error updating profile:', error);
+                    alert('Failed to update profile. Please try again.');
+                }
+            });
+
+            // Preview photo URL when entered
+            document.getElementById('photoURL').addEventListener('input', (e) => {
+                const preview = document.getElementById('photo-preview');
+                const url = e.target.value;
+                if (url) {
+                    preview.src = url;
+                } else {
+                    preview.src = 'assets/TSP_default_character.jpg';
+                }
+            });
+            </script>
 
             <!-- Party Modals -->
             <div id="create-party-modal" class="modal" style="display: none;">
@@ -938,6 +1104,65 @@ $user = [
                 document.body.style.overflow = '';
             }
         };
+    </script>
+
+    <script>
+        // Profile Settings
+        const profileForm = document.getElementById('profile-form');
+        const alertDiv = document.getElementById('alert');
+        const profileImage = document.querySelector('.profile-image');
+
+        // Show alert message
+        function showAlert(message, type = 'error') {
+            alertDiv.textContent = message;
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.style.display = 'block';
+            setTimeout(() => {
+                alertDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Handle form submission
+        profileForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                displayName: document.getElementById('displayName').value.trim(),
+                photoURL: document.getElementById('photoURL').value.trim()
+            };
+
+            try {
+                const response = await fetch('/api/update_profile.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('Profile updated successfully!', 'success');
+                    // Update the profile header
+                    document.querySelector('.profile-info h1').textContent = formData.displayName;
+                    if (formData.photoURL && profileImage) {
+                        profileImage.src = formData.photoURL;
+                    }
+                } else {
+                    showAlert(data.error || 'Failed to update profile');
+                }
+            } catch (error) {
+                showAlert('An error occurred while updating your profile');
+            }
+        });
+
+        // Handle profile image errors
+        if (profileImage) {
+            profileImage.addEventListener('error', function() {
+                this.src = 'assets/default-avatar.png';
+            });
+        }
     </script>
 </body>
 </html> 
