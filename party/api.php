@@ -31,7 +31,11 @@ switch ($action) {
             echo json_encode(['success' => false, 'error' => 'Party name is required']);
             exit;
         }
-        echo json_encode(createParty($name, $userId));
+        
+        error_log("Creating party with name: " . $name . " for user: " . $userId);
+        $result = createParty($name, $userId);
+        error_log("Create party result: " . json_encode($result));
+        echo json_encode($result);
         break;
 
     case 'join':

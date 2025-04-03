@@ -1,5 +1,5 @@
 <?php
-require_once '../config/db_connect.php';
+require_once __DIR__ . '/../config/db_connect.php';
 
 /**
  * Generate a random 6-digit party code
@@ -30,15 +30,30 @@ function createParty($name, $creatorId) {
     global $conn;
     
     try {
+        if (!$conn) {
+            error_log("Database connection is null");
+            return ['success' => false, 'error' => 'Database connection failed'];
+        }
+
         $code = generatePartyCode();
         
         // Create party
         $stmt = $conn->prepare("INSERT INTO parties (name, code, creator_id) VALUES (?, ?, ?)");
+        if (!$stmt) {
+            error_log("Failed to prepare party insert statement");
+            return ['success' => false, 'error' => 'Failed to prepare statement'];
+        }
+        
         $stmt->execute([$name, $code, $creatorId]);
         $partyId = $conn->lastInsertId();
         
         // Add creator as member
         $stmt = $conn->prepare("INSERT INTO party_members (party_id, user_id) VALUES (?, ?)");
+        if (!$stmt) {
+            error_log("Failed to prepare party_members insert statement");
+            return ['success' => false, 'error' => 'Failed to prepare statement'];
+        }
+        
         $stmt->execute([$partyId, $creatorId]);
         
         return [
@@ -51,7 +66,9 @@ function createParty($name, $creatorId) {
         ];
     } catch (PDOException $e) {
         error_log("Error creating party: " . $e->getMessage());
-        return ['success' => false, 'error' => 'Failed to create party'];
+        error_log("SQL State: " . $e->getCode());
+        error_log("Stack trace: " . $e->getTraceAsString());
+        return ['success' => false, 'error' => 'Failed to create party: ' . $e->getMessage()];
     }
 }
 
