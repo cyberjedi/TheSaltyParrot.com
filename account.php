@@ -445,7 +445,7 @@ $user = [
 
         .modal-content {
             background: #41C8D4;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 8px;
             width: 90%;
             max-width: 500px;
@@ -457,12 +457,12 @@ $user = [
             justify-content: space-between;
             align-items: center;
             padding: 1rem 1.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         .modal-header h3 {
             margin: 0;
-            color: var(--dark);
+            color: #000;
             font-size: 1.2rem;
             font-weight: 600;
         }
@@ -470,7 +470,7 @@ $user = [
         .close-modal {
             background: none;
             border: none;
-            color: var(--dark);
+            color: #000;
             font-size: 1.5rem;
             cursor: pointer;
             padding: 0.5rem;
@@ -481,21 +481,52 @@ $user = [
             padding: 1.5rem;
         }
 
-        .form-group {
+        .modal-body .form-group {
             margin-bottom: 1rem;
         }
 
-        .form-group label {
+        .modal-body .form-group label {
             display: block;
             margin-bottom: 0.5rem;
-            color: var(--dark);
+            color: #000;
             font-weight: 500;
         }
 
-        .form-actions {
-            margin-top: 1.5rem;
-            display: flex;
-            justify-content: flex-end;
+        .modal-body input {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+            font-size: 0.95rem;
+        }
+
+        .modal-body input:focus {
+            outline: none;
+            border-color: #000;
+            background: #fff;
+        }
+
+        .modal-body input::placeholder {
+            color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-body .btn-primary {
+            background: #000;
+            color: #fff;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .modal-body .btn-primary:hover {
+            background: #333;
+            transform: translateY(-1px);
         }
 
         @media (max-width: 768px) {
