@@ -78,16 +78,11 @@ try {
 
         if ($exists) {
             // Update existing user
-            $stmt = $conn->prepare("
-                UPDATE users 
-                SET display_name = ?, 
-                    photo_url = ?
-                WHERE uid = ?
-            ");
+            $stmt = $conn->prepare("UPDATE users SET display_name = ?, photo_url = ? WHERE uid = ?");
         } else {
             // Insert new user
             $stmt = $conn->prepare("
-                INSERT INTO users (uid, display_name, photo_url, email) 
+                INSERT INTO users (uid, displayName, photoURL, email) 
                 VALUES (?, ?, ?, ?)
             ");
         }
