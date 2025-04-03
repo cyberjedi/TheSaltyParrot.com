@@ -10,6 +10,9 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
+// Debug session info
+error_log("Session data: " . print_r($_SESSION, true));
+
 // Check if user is logged in first
 if (!isset($_SESSION['uid'])) {
     header('Location: index.php');
@@ -29,18 +32,26 @@ $user = [
     'photoURL' => $_SESSION['photoURL'] ?? null
 ];
 
+error_log("Initial user data from session: " . print_r($user, true));
+
 // Try to get additional data from database
 try {
     require_once 'config/db_connect.php';
     
-    if (isset($conn) && $conn !== null) {
+    if (!isset($conn) || $conn === null) {
+        error_log("Database connection failed - conn is null or not set");
+    } else {
+        error_log("Database connection successful");
+        
+        error_log("Fetching user with UID: " . $_SESSION['uid']);
         $stmt = $conn->prepare("SELECT display_name, email, photo_url FROM users WHERE uid = ?");
         $stmt->execute([$_SESSION['uid']]);
         $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        error_log("DB User data: " . print_r($dbUser, true));
+        error_log("DB User data fetched: " . print_r($dbUser, true));
         
         if ($dbUser) {
+            error_log("Found user in database. Updating values from DB.");
             // Update user data with database values if they exist
             $user['displayName'] = $dbUser['display_name'] ?? $user['displayName'];
             $user['email'] = $dbUser['email'] ?? $user['email'];
@@ -50,12 +61,15 @@ try {
             $_SESSION['displayName'] = $user['displayName'];
             $_SESSION['photoURL'] = $user['photoURL'];
             
-            error_log("Updated user data: " . print_r($user, true));
+            error_log("Updated user data from DB: " . print_r($user, true));
+        } else {
+            error_log("No user found in database with that UID.");
         }
     }
 } catch (Exception $e) {
     // Log the error but continue with session data
     error_log("Error fetching user data: " . $e->getMessage());
+    error_log("Error trace: " . $e->getTraceAsString());
 }
 ?>
 <!DOCTYPE html>

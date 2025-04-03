@@ -46,22 +46,44 @@ $_SESSION['firebase_token'] = $data['token'];
 try {
     global $conn;
     if ($conn) {
+        // First log what we're about to sync
+        error_log("Syncing user data - UID: " . $data['uid'] . ", Display Name: " . ($data['displayName'] ?? 'null') . ", Photo URL: " . ($data['photoURL'] ?? 'null'));
+        
         $stmt = $conn->prepare("
             INSERT INTO users (uid, email, display_name, photo_url) 
             VALUES (?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE 
                 email = VALUES(email),
-                display_name = VALUES(display_name),
-                photo_url = VALUES(photo_url),
+                display_name = COALESCE(VALUES(display_name), display_name),
+                photo_url = COALESCE(VALUES(photo_url), photo_url),
                 last_login = CURRENT_TIMESTAMP
         ");
         
-        $stmt->execute([
+        $success = $stmt->execute([
             $data['uid'],
             $data['email'],
             $data['displayName'] ?? null,
             $data['photoURL'] ?? null
         ]);
+        
+        error_log("User sync result: " . ($success ? "Success" : "Failed"));
+        
+        // Get the latest values from the database after update
+        $fetchStmt = $conn->prepare("SELECT display_name, photo_url FROM users WHERE uid = ?");
+        $fetchStmt->execute([$data['uid']]);
+        $dbUser = $fetchStmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($dbUser) {
+            error_log("Database values after sync - display_name: " . ($dbUser['display_name'] ?? 'null') . ", photo_url: " . ($dbUser['photo_url'] ?? 'null'));
+            
+            // Update session with the actual database values
+            $_SESSION['displayName'] = $dbUser['display_name'] ?? $_SESSION['displayName'];
+            $_SESSION['photoURL'] = $dbUser['photo_url'] ?? $_SESSION['photoURL'];
+            
+            error_log("Session updated with DB values - displayName: " . $_SESSION['displayName'] . ", photoURL: " . ($_SESSION['photoURL'] ?? 'null'));
+        }
+    } else {
+        error_log("Database connection not available for user sync");
     }
 } catch (PDOException $e) {
     error_log("Error syncing user data: " . $e->getMessage());
