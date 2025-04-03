@@ -55,26 +55,30 @@ try {
         WHERE uid = ?
     ");
     
-    $stmt->execute([
+    $result = $stmt->execute([
         trim($data['displayName']),
         $photoURL,
         $_SESSION['uid']
     ]);
     
-    // Update session
-    $_SESSION['displayName'] = trim($data['displayName']);
-    $_SESSION['photoURL'] = $photoURL;
+    if ($result) {
+        // Update session
+        $_SESSION['displayName'] = trim($data['displayName']);
+        $_SESSION['photoURL'] = $photoURL;
+        
+        // Return success
+        echo json_encode([
+            'success' => true,
+            'user' => [
+                'displayName' => $_SESSION['displayName'],
+                'photoURL' => $_SESSION['photoURL']
+            ]
+        ]);
+    } else {
+        throw new Exception('Failed to update user profile');
+    }
     
-    // Return success
-    echo json_encode([
-        'success' => true,
-        'user' => [
-            'displayName' => $_SESSION['displayName'],
-            'photoURL' => $_SESSION['photoURL']
-        ]
-    ]);
-    
-} catch (PDOException $e) {
+} catch (Exception $e) {
     error_log("Error updating profile: " . $e->getMessage());
     http_response_code(500);
     echo json_encode(['error' => 'Failed to update profile']);
