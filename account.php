@@ -16,18 +16,39 @@ require_once 'config/firebase-config.php';
 // Include Discord configuration
 require_once 'discord/discord-config.php';
 
+// Get user data from database
+require_once 'config/db_connect.php';
+
+try {
+    $stmt = $conn->prepare("SELECT display_name, email, photo_url FROM users WHERE uid = ?");
+    $stmt->execute([$_SESSION['uid']]);
+    $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Merge database data with session data, preferring database values
+    $user = [
+        'displayName' => $dbUser['display_name'] ?? $_SESSION['displayName'] ?? 'User',
+        'email' => $dbUser['email'] ?? $_SESSION['email'] ?? '',
+        'photoURL' => $dbUser['photo_url'] ?? $_SESSION['photoURL'] ?? null
+    ];
+
+    // Update session with latest values
+    $_SESSION['displayName'] = $user['displayName'];
+    $_SESSION['photoURL'] = $user['photoURL'];
+} catch (PDOException $e) {
+    error_log("Error fetching user data: " . $e->getMessage());
+    // Fallback to session data if database fetch fails
+    $user = [
+        'displayName' => $_SESSION['displayName'] ?? 'User',
+        'email' => $_SESSION['email'] ?? '',
+        'photoURL' => $_SESSION['photoURL'] ?? null
+    ];
+}
+
 // Check if user is logged in
 if (!isset($_SESSION['uid'])) {
     header('Location: index.php');
     exit;
 }
-
-// Get user data from session
-$user = [
-    'displayName' => $_SESSION['displayName'] ?? 'User',
-    'email' => $_SESSION['email'] ?? '',
-    'photoURL' => $_SESSION['photoURL'] ?? null
-];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -760,7 +781,7 @@ $user = [
 
                     const data = await response.json();
                     if (data.success) {
-                        // Update session and reload
+                        // Reload the page to show updated data
                         window.location.reload();
                     } else {
                         alert('Failed to update profile: ' + data.error);
@@ -1177,15 +1198,8 @@ $user = [
 
                 if (response.ok) {
                     showAlert('Profile updated successfully!', 'success');
-                    // Update the profile header
-                    document.querySelector('.profile-info h1').textContent = formData.displayName;
-                    if (formData.photoURL && profileImage) {
-                        profileImage.src = formData.photoURL;
-                    }
-                    // Refresh party information
-                    if (window.partySection) {
-                        window.partySection.loadPartyInfo();
-                    }
+                    // Reload the page to show updated data
+                    window.location.reload();
                 } else {
                     showAlert(data.error || 'Failed to update profile');
                 }
