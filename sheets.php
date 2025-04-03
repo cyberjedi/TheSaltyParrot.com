@@ -17,12 +17,8 @@ if (!isset($_SESSION['uid'])) {
     exit;
 }
 
-// Set active page for sidebar
-$current_page = 'sheets';
+// Set page title
 $page_title = 'Character Sheets';
-
-// Include header
-require_once 'components/topbar.php';
 ?>
 
 <!DOCTYPE html>
@@ -33,57 +29,52 @@ require_once 'components/topbar.php';
     <title>Character Sheets - The Salty Parrot</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/sheets.css">
+    <link rel="stylesheet" href="css/topbar.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div class="main-wrapper">
-        <?php 
-        // Include sidebar
-        require_once 'components/sidebar.php'; 
-        ?>
-        
-        <main class="content">
-            <div class="sheets-container">
-                <div class="sheets-sidebar">
-                    <div class="sheets-header">
-                        <h2>My Sheets</h2>
-                        <button id="create-sheet-btn" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> New Sheet
-                        </button>
-                    </div>
-                
-                    <div class="sheets-filter">
-                        <select id="system-filter" class="form-control">
-                            <option value="">All Systems</option>
-                            <option value="pirate_borg">Pirate Borg</option>
-                            <!-- More game systems can be added here in the future -->
-                        </select>
-                    </div>
-                
-                    <div class="sheets-list" id="sheets-list">
-                        <div class="sheets-loading">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <span>Loading sheets...</span>
-                        </div>
-                    </div>
-                </div>
+    <!-- Include the topbar -->
+    <?php include 'components/topbar.php'; ?>
+    
+    <div class="sheets-container">
+        <div class="sheets-sidebar">
+            <div class="sheets-header">
+                <h2>My Sheets</h2>
+                <button id="create-sheet-btn" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Sheet
+                </button>
+            </div>
             
-                <div class="sheets-content">
-                    <div id="sheet-placeholder" class="sheet-placeholder">
-                        <h3>Select a sheet to view</h3>
-                        <p>Or create a new character sheet</p>
-                        <button id="create-sheet-btn-alt" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> New Sheet
-                        </button>
-                    </div>
-                
-                    <div id="sheet-display" class="sheet-display" style="display: none;"></div>
+            <div class="sheets-filter">
+                <select id="system-filter" class="form-control">
+                    <option value="">All Systems</option>
+                    <option value="pirate_borg">Pirate Borg</option>
+                    <!-- More game systems can be added here in the future -->
+                </select>
+            </div>
+            
+            <div class="sheets-list" id="sheets-list">
+                <div class="sheets-loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Loading sheets...</span>
                 </div>
             </div>
-        </main>
+        </div>
+
+        <div class="sheets-content">
+            <div id="sheet-placeholder" class="sheet-placeholder">
+                <h3>Select a sheet to view</h3>
+                <p>Or create a new character sheet</p>
+                <button id="create-sheet-btn-alt" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Sheet
+                </button>
+            </div>
+            
+            <div id="sheet-display" class="sheet-display" style="display: none;"></div>
+        </div>
     </div>
-    
+
     <!-- Sheet List Item Template -->
     <template id="sheet-list-item-template">
         <div class="sheet-list-item" data-sheet-id="">
@@ -97,7 +88,7 @@ require_once 'components/topbar.php';
             </div>
         </div>
     </template>
-    
+
     <!-- Delete Confirmation Modal -->
     <div id="delete-confirm-modal" class="modal">
         <div class="modal-content">
@@ -115,12 +106,6 @@ require_once 'components/topbar.php';
         </div>
     </div>
 
-<!-- CSS for Character Sheets -->
-<style>
-    /* All styles moved to css/sheets.css */
-</style>
-
-<!-- JavaScript for Character Sheets -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // DOM elements
@@ -226,20 +211,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 selectSheet(sheet.id);
             });
             
-            // Add event listeners for action buttons
-            const editBtn = sheetElement.querySelector('[data-action="edit"]');
-            const deleteBtn = sheetElement.querySelector('[data-action="delete"]');
-            
-            editBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                editSheet(sheet.id);
-            });
-            
-            deleteBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                confirmDeleteSheet(sheet.id);
-            });
-            
             sheetsList.appendChild(sheetItem);
         });
     }
@@ -335,16 +306,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Create a new sheet
     function createSheet() {
         window.location.href = '/sheets/edit.php';
-    }
-    
-    // Edit a sheet
-    function editSheet(id) {
-        window.location.href = `/sheets/edit.php?id=${id}`;
-    }
-    
-    // Print a sheet
-    function printSheet(id) {
-        window.open(`/sheets/print.php?id=${id}`, '_blank');
     }
     
     // Confirm sheet deletion
@@ -476,6 +437,5 @@ document.addEventListener('DOMContentLoaded', function() {
     loadSheets();
 });
 </script>
-
 </body>
 </html> 
