@@ -66,67 +66,47 @@ try {
         throw new Exception('Database connection failed');
     }
 
-    // First check if user exists
-    try {
-        $checkStmt = $conn->prepare("SELECT uid FROM users WHERE uid = ?");
-        if (!$checkStmt) {
-            throw new Exception('Failed to prepare check statement: ' . implode(' ', $conn->errorInfo()));
-        }
-        
-        $checkStmt->execute([$_SESSION['uid']]);
-        $exists = $checkStmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($exists) {
-            // Update existing user
-            $stmt = $conn->prepare("UPDATE users SET display_name = ?, photo_url = ? WHERE uid = ?");
-        } else {
-            // Insert new user
-            $stmt = $conn->prepare("
-                INSERT INTO users (uid, display_name, photo_url, email) 
-                VALUES (?, ?, ?, ?)
-            ");
-        }
-
-        if (!$stmt) {
-            throw new Exception('Failed to prepare statement: ' . implode(' ', $conn->errorInfo()));
-        }
-
-        if ($exists) {
-            $success = $stmt->execute([
-                trim($data['displayName']),
-                $photoURL,
-                $_SESSION['uid']
-            ]);
-        } else {
-            $success = $stmt->execute([
-                $_SESSION['uid'],
-                trim($data['displayName']),
-                $photoURL,
-                $_SESSION['email'] ?? null
-            ]);
-        }
-
-        if (!$success) {
-            $error = $stmt->errorInfo();
-            throw new Exception('Database error: ' . ($error[2] ?? 'Unknown error'));
-        }
-
-        // Update session
-        $_SESSION['displayName'] = trim($data['displayName']);
-        $_SESSION['photoURL'] = $photoURL;
-
-        // Return success
-        echo json_encode([
-            'success' => true,
-            'user' => [
-                'displayName' => $_SESSION['displayName'],
-                'photoURL' => $_SESSION['photoURL']
-            ]
-        ]);
-
-    } catch (PDOException $e) {
-        throw new Exception('Database operation failed: ' . $e->getMessage());
+    // Update user profile
+    $stmt = $conn->prepare("UPDATE users SET display_name = ?, photo_url = ? WHERE uid = ?");
+    if (!$stmt) {
+        throw new Exception('Failed to prepare UPDATE statement: ' . implode(' ', $conn->errorInfo()));
     }
+    
+    $success = $stmt->execute([
+        trim($data['displayName']),
+        $photoURL,
+        $_SESSION['uid']
+    ]);
+    
+    if (!$success) {
+        $error = $stmt->errorInfo();
+        error_log("Update failed. Error: " . print_r($error, true));
+        error_log("Attempted values - display_name: " . trim($data['displayName']) . ", photo_url: " . $photoURL . ", uid: " . $_SESSION['uid']);
+        throw new Exception('Update failed: ' . ($error[2] ?? 'Unknown error'));
+    }
+    
+    // Verify the update
+    $verifyStmt = $conn->prepare("SELECT display_name, photo_url FROM users WHERE uid = ?");
+    $verifyStmt->execute([$_SESSION['uid']]);
+    $updated = $verifyStmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$updated || $updated['display_name'] !== trim($data['displayName'])) {
+        error_log("Update verification failed. Expected: " . trim($data['displayName']) . ", Got: " . ($updated['display_name'] ?? 'null'));
+        throw new Exception('Update verification failed - database not updated');
+    }
+
+    // Update session
+    $_SESSION['displayName'] = trim($data['displayName']);
+    $_SESSION['photoURL'] = $photoURL;
+
+    // Return success
+    echo json_encode([
+        'success' => true,
+        'user' => [
+            'displayName' => $_SESSION['displayName'],
+            'photoURL' => $_SESSION['photoURL']
+        ]
+    ]);
 
 } catch (Exception $e) {
     error_log('Profile update error: ' . $e->getMessage());
