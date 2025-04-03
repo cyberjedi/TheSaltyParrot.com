@@ -172,8 +172,8 @@ if (file_exists($base_path . 'discord/discord-config.php')) {
         <a href="<?php echo $base_path; ?>index.php" class="sidebar-btn <?php echo ($current_page == 'index' || $current_page == 'dashboard') ? 'active' : ''; ?>">
             <i class="fas fa-dice"></i> Generators
         </a>
-        <a href="<?php echo $base_path; ?>character_sheet.php" class="sidebar-btn <?php echo ($current_page == 'character_sheet') ? 'active' : ''; ?>">
-            <i class="fas fa-scroll"></i> Character Sheet
+        <a href="<?php echo $base_path; ?>sheets.php" class="sidebar-btn <?php echo ($current_page == 'sheets') ? 'active' : ''; ?>">
+            <i class="fas fa-scroll"></i> Character Sheets
         </a>
     </div>
     
