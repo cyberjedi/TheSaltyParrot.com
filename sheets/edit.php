@@ -297,23 +297,23 @@ require_once '../components/topbar.php';
                                 <div class="attributes-grid">
                                     <div class="attribute-item">
                                         <label for="strength">Strength</label>
-                                        <input type="number" id="strength" name="strength" value="<?php echo (int)$sheet['strength']; ?>">
+                                        <input type="text" id="strength" name="strength" value="<?php echo (int)$sheet['strength']; ?>" class="attribute-field">
                                     </div>
                                     <div class="attribute-item">
                                         <label for="agility">Agility</label>
-                                        <input type="number" id="agility" name="agility" value="<?php echo (int)$sheet['agility']; ?>">
+                                        <input type="text" id="agility" name="agility" value="<?php echo (int)$sheet['agility']; ?>" class="attribute-field">
                                     </div>
                                     <div class="attribute-item">
                                         <label for="presence">Presence</label>
-                                        <input type="number" id="presence" name="presence" value="<?php echo (int)$sheet['presence']; ?>">
+                                        <input type="text" id="presence" name="presence" value="<?php echo (int)$sheet['presence']; ?>" class="attribute-field">
                                     </div>
                                     <div class="attribute-item">
                                         <label for="toughness">Toughness</label>
-                                        <input type="number" id="toughness" name="toughness" value="<?php echo (int)$sheet['toughness']; ?>">
+                                        <input type="text" id="toughness" name="toughness" value="<?php echo (int)$sheet['toughness']; ?>" class="attribute-field">
                                     </div>
                                     <div class="attribute-item">
                                         <label for="spirit">Spirit</label>
-                                        <input type="number" id="spirit" name="spirit" value="<?php echo (int)$sheet['spirit']; ?>">
+                                        <input type="text" id="spirit" name="spirit" value="<?php echo (int)$sheet['spirit']; ?>" class="attribute-field">
                                     </div>
                                 </div>
                             </div>
@@ -365,6 +365,49 @@ require_once '../components/topbar.php';
                 document.getElementById('pirate-borg-fields').classList.add('active');
             }
             // Add more system handlers here in the future
+        });
+
+        // Input validation for attribute fields
+        document.querySelectorAll('.attribute-field').forEach(input => {
+            // Allow only numbers (including negative)
+            input.addEventListener('input', function(e) {
+                let value = this.value;
+                // Remove any non-digit characters except minus sign at the beginning
+                if (value.startsWith('-')) {
+                    value = '-' + value.substring(1).replace(/[^\d]/g, '');
+                } else {
+                    value = value.replace(/[^\d]/g, '');
+                }
+                this.value = value;
+            });
+
+            // Ensure proper number formatting when focus is lost
+            input.addEventListener('blur', function() {
+                if (this.value === '') {
+                    this.value = '0';
+                } else if (this.value === '-') {
+                    this.value = '0';
+                }
+            });
+        });
+
+        // Form validation
+        document.getElementById('sheet-form').addEventListener('submit', function(e) {
+            // Ensure all attribute fields contain valid numbers
+            const attributeFields = document.querySelectorAll('.attribute-field');
+            let isValid = true;
+            
+            attributeFields.forEach(field => {
+                if (field.value === '' || isNaN(parseInt(field.value))) {
+                    isValid = false;
+                    field.style.borderColor = 'red';
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please enter valid numbers for all attributes');
+            }
         });
     </script>
 </body>
