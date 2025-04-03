@@ -69,7 +69,9 @@ $page_title = 'Character Sheets';
 
         <div class="sheets-content">
             <div id="sheet-placeholder" class="sheet-placeholder">
-                <i class="fas fa-scroll fa-4x" style="color: var(--light-teal); margin-bottom: 20px; opacity: 0.5;"></i>
+                <div class="placeholder-icon">
+                    <i class="fas fa-scroll fa-4x"></i>
+                </div>
                 <h3>Select a Character Sheet</h3>
                 <p>Choose an existing character sheet from the sidebar or create a new one to get started.</p>
                 <button id="create-sheet-btn-alt" class="btn btn-primary">
@@ -271,7 +273,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Common header
         contentHTML += `
-            <div class="sheet-header">
+            <div class="sheet-content-header">
                 <div class="sheet-title">
                     <h2>${sheet.name}</h2>
                     <span class="sheet-system-badge">${getSystemDisplayName(sheet.system)}</span>
@@ -332,7 +334,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="character-info">
                     <h3>${sheet.name}</h3>
                     <p class="character-class">${data.class || 'Unknown Class'}</p>
-                    <p>${data.background || 'No background information'}</p>
+                    <p class="character-background">${data.background || 'No background information'}</p>
                 </div>
             </div>
             
@@ -341,27 +343,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="attributes-grid">
                     <div class="attribute">
                         <div class="attribute-label">Strength</div>
-                        <div class="attribute-value">${data.strength || '?'}</div>
+                        <div class="attribute-value">${data.strength !== undefined ? data.strength : '?'}</div>
                     </div>
                     <div class="attribute">
                         <div class="attribute-label">Agility</div>
-                        <div class="attribute-value">${data.agility || '?'}</div>
+                        <div class="attribute-value">${data.agility !== undefined ? data.agility : '?'}</div>
                     </div>
                     <div class="attribute">
                         <div class="attribute-label">Presence</div>
-                        <div class="attribute-value">${data.presence || '?'}</div>
+                        <div class="attribute-value">${data.presence !== undefined ? data.presence : '?'}</div>
                     </div>
                     <div class="attribute">
                         <div class="attribute-label">Toughness</div>
-                        <div class="attribute-value">${data.toughness || '?'}</div>
+                        <div class="attribute-value">${data.toughness !== undefined ? data.toughness : '?'}</div>
                     </div>
                     <div class="attribute">
-                        <div class="attribute-label">HP</div>
-                        <div class="attribute-value">${data.hp || '?'}</div>
-                    </div>
-                    <div class="attribute">
-                        <div class="attribute-label">Silver</div>
-                        <div class="attribute-value">${data.silver || '0'}</div>
+                        <div class="attribute-label">Spirit</div>
+                        <div class="attribute-value">${data.spirit !== undefined ? data.spirit : '?'}</div>
                     </div>
                 </div>
             </div>
@@ -376,7 +374,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="section">
                 <h4 class="section-title">Notes</h4>
                 <div class="sheet-notes">
-                    ${data.notes || 'No notes'}
+                    ${data.notes || 'No notes available.'}
                 </div>
             </div>
         `;
