@@ -38,6 +38,8 @@ try {
         $stmt->execute([$_SESSION['uid']]);
         $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        error_log("DB User data: " . print_r($dbUser, true));
+        
         if ($dbUser) {
             // Update user data with database values if they exist
             $user['displayName'] = $dbUser['display_name'] ?? $user['displayName'];
@@ -47,6 +49,8 @@ try {
             // Update session with latest values
             $_SESSION['displayName'] = $user['displayName'];
             $_SESSION['photoURL'] = $user['photoURL'];
+            
+            error_log("Updated user data: " . print_r($user, true));
         }
     }
 } catch (Exception $e) {
@@ -605,6 +609,8 @@ try {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            background-color: white;
+            border: 1px solid #ccc;
         }
 
         /* Profile Settings Styles */
@@ -666,7 +672,11 @@ try {
         <div class="account-container">
             <div class="account-header">
                 <?php if ($user['photoURL']): ?>
-                    <img src="<?php echo htmlspecialchars($user['photoURL']); ?>" alt="Profile" class="profile-image" onerror="this.outerHTML='<div class=\'profile-image-placeholder\'><i class=\'fas fa-user\'></i></div>'">
+                    <img src="<?php echo htmlspecialchars($user['photoURL']); ?>" 
+                         alt="Profile" 
+                         class="profile-image" 
+                         onerror="this.outerHTML='<div class=\'profile-image-placeholder\'><i class=\'fas fa-user\'></i></div>'"
+                         style="background-color: white;">
                 <?php else: ?>
                     <div class="profile-image-placeholder">
                         <i class="fas fa-user"></i>
@@ -674,6 +684,7 @@ try {
                 <?php endif; ?>
                 <div class="profile-info">
                     <h1><?php echo htmlspecialchars($user['displayName']); ?></h1>
+                    <p><?php echo htmlspecialchars($user['email']); ?></p>
                 </div>
             </div>
 
@@ -758,7 +769,10 @@ try {
                                value="<?php echo htmlspecialchars($user['photoURL'] ?? ''); ?>"
                                placeholder="https://example.com/photo.jpg">
                         <div class="photo-preview">
-                            <img id="photo-preview" src="<?php echo htmlspecialchars($user['photoURL'] ?? 'assets/TSP_default_character.jpg'); ?>" alt="Profile photo preview">
+                            <img id="photo-preview" 
+                                 src="<?php echo htmlspecialchars($user['photoURL'] ?? 'assets/TSP_default_character.jpg'); ?>" 
+                                 alt="Profile photo preview"
+                                 onerror="this.src='assets/TSP_default_character.jpg'; this.onerror=null;">
                         </div>
                     </div>
                     <button type="submit" class="btn btn-danger">
