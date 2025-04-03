@@ -10,44 +10,48 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
+// Check if user is logged in first
+if (!isset($_SESSION['uid'])) {
+    header('Location: index.php');
+    exit;
+}
+
 // Include Firebase configuration
 require_once 'config/firebase-config.php';
 
 // Include Discord configuration
 require_once 'discord/discord-config.php';
 
-// Get user data from database
-require_once 'config/db_connect.php';
+// Initialize user data with session values
+$user = [
+    'displayName' => $_SESSION['displayName'] ?? 'User',
+    'email' => $_SESSION['email'] ?? '',
+    'photoURL' => $_SESSION['photoURL'] ?? null
+];
 
+// Try to get additional data from database
 try {
-    $stmt = $conn->prepare("SELECT display_name, email, photo_url FROM users WHERE uid = ?");
-    $stmt->execute([$_SESSION['uid']]);
-    $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
+    require_once 'config/db_connect.php';
+    
+    if (isset($conn) && $conn !== null) {
+        $stmt = $conn->prepare("SELECT display_name, email, photo_url FROM users WHERE uid = ?");
+        $stmt->execute([$_SESSION['uid']]);
+        $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Merge database data with session data, preferring database values
-    $user = [
-        'displayName' => $dbUser['display_name'] ?? $_SESSION['displayName'] ?? 'User',
-        'email' => $dbUser['email'] ?? $_SESSION['email'] ?? '',
-        'photoURL' => $dbUser['photo_url'] ?? $_SESSION['photoURL'] ?? null
-    ];
+        if ($dbUser) {
+            // Update user data with database values if they exist
+            $user['displayName'] = $dbUser['display_name'] ?? $user['displayName'];
+            $user['email'] = $dbUser['email'] ?? $user['email'];
+            $user['photoURL'] = $dbUser['photo_url'] ?? $user['photoURL'];
 
-    // Update session with latest values
-    $_SESSION['displayName'] = $user['displayName'];
-    $_SESSION['photoURL'] = $user['photoURL'];
-} catch (PDOException $e) {
+            // Update session with latest values
+            $_SESSION['displayName'] = $user['displayName'];
+            $_SESSION['photoURL'] = $user['photoURL'];
+        }
+    }
+} catch (Exception $e) {
+    // Log the error but continue with session data
     error_log("Error fetching user data: " . $e->getMessage());
-    // Fallback to session data if database fetch fails
-    $user = [
-        'displayName' => $_SESSION['displayName'] ?? 'User',
-        'email' => $_SESSION['email'] ?? '',
-        'photoURL' => $_SESSION['photoURL'] ?? null
-    ];
-}
-
-// Check if user is logged in
-if (!isset($_SESSION['uid'])) {
-    header('Location: index.php');
-    exit;
 }
 ?>
 <!DOCTYPE html>
