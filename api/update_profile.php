@@ -63,41 +63,94 @@ try {
     require_once __DIR__ . '/../config/db_connect.php';
     
     if (!isset($conn) || $conn === null) {
+        error_log("Database connection failed - \$conn is null or not set");
         throw new Exception('Database connection failed');
     }
 
-    // Update user profile
-    $stmt = $conn->prepare("UPDATE users SET display_name = ?, photo_url = ? WHERE uid = ?");
-    if (!$stmt) {
-        throw new Exception('Failed to prepare UPDATE statement: ' . implode(' ', $conn->errorInfo()));
-    }
+    // Debug the connection details
+    $driverName = $conn->getAttribute(PDO::ATTR_DRIVER_NAME);
+    error_log("PDO Driver: " . $driverName);
+    error_log("PDO Connection Status: " . ($conn ? "Connected" : "Failed"));
+    error_log("Current UID from session: " . $_SESSION['uid']);
+    error_log("Display Name to update: " . trim($data['displayName']));
+    error_log("Photo URL to update: " . ($photoURL ?? 'NULL'));
+
+    // First verify the user exists
+    $checkStmt = $conn->prepare("SELECT uid FROM users WHERE uid = ?");
+    $checkStmt->execute([$_SESSION['uid']]);
+    $userExists = $checkStmt->fetch(PDO::FETCH_ASSOC);
     
-    $success = $stmt->execute([
-        trim($data['displayName']),
-        $photoURL,
-        $_SESSION['uid']
-    ]);
+    error_log("User exists check: " . ($userExists ? "Yes" : "No"));
     
-    if (!$success) {
-        $error = $stmt->errorInfo();
-        error_log("Update failed. Error: " . print_r($error, true));
-        error_log("Attempted values - display_name: " . trim($data['displayName']) . ", photo_url: " . $photoURL . ", uid: " . $_SESSION['uid']);
-        throw new Exception('Update failed: ' . ($error[2] ?? 'Unknown error'));
-    }
-    
-    // Verify the update
-    $verifyStmt = $conn->prepare("SELECT display_name, photo_url FROM users WHERE uid = ?");
-    $verifyStmt->execute([$_SESSION['uid']]);
-    $updated = $verifyStmt->fetch(PDO::FETCH_ASSOC);
-    
-    if (!$updated || $updated['display_name'] !== trim($data['displayName'])) {
-        error_log("Update verification failed. Expected: " . trim($data['displayName']) . ", Got: " . ($updated['display_name'] ?? 'null'));
-        throw new Exception('Update verification failed - database not updated');
+    if (!$userExists) {
+        error_log("User does not exist in database, creating new record");
+        // Insert user if they don't exist
+        $insertStmt = $conn->prepare("INSERT INTO users (uid, display_name, photo_url, email) VALUES (?, ?, ?, ?)");
+        $success = $insertStmt->execute([
+            $_SESSION['uid'],
+            trim($data['displayName']),
+            $photoURL,
+            $_SESSION['email'] ?? null
+        ]);
+        
+        error_log("Insert result: " . ($success ? "Success" : "Failed"));
+        if (!$success) {
+            error_log("Insert error info: " . print_r($insertStmt->errorInfo(), true));
+            throw new Exception("Failed to create user record: " . implode(", ", $insertStmt->errorInfo()));
+        }
+    } else {
+        // Update user profile
+        $stmt = $conn->prepare("UPDATE users SET display_name = ?, photo_url = ? WHERE uid = ?");
+        if (!$stmt) {
+            error_log("Failed to prepare UPDATE statement: " . print_r($conn->errorInfo(), true));
+            throw new Exception('Failed to prepare UPDATE statement: ' . implode(' ', $conn->errorInfo()));
+        }
+        
+        error_log("Executing UPDATE with parameters: " . trim($data['displayName']) . ", " . ($photoURL ?? 'NULL') . ", " . $_SESSION['uid']);
+        
+        $success = $stmt->execute([
+            trim($data['displayName']),
+            $photoURL,
+            $_SESSION['uid']
+        ]);
+        
+        error_log("Update result: " . ($success ? "Success" : "Failed"));
+        if (!$success) {
+            $error = $stmt->errorInfo();
+            error_log("Update failed. Error info: " . print_r($error, true));
+            throw new Exception('Update failed: ' . ($error[2] ?? 'Unknown error'));
+        }
+        
+        // Get the number of affected rows
+        $rowCount = $stmt->rowCount();
+        error_log("Rows affected by UPDATE: " . $rowCount);
+        
+        if ($rowCount === 0) {
+            error_log("Warning: UPDATE statement didn't modify any rows, even though user exists");
+        }
+        
+        // Verify the update
+        $verifyStmt = $conn->prepare("SELECT display_name, photo_url FROM users WHERE uid = ?");
+        $verifyStmt->execute([$_SESSION['uid']]);
+        $updated = $verifyStmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$updated) {
+            error_log("Verification failed: couldn't retrieve user after update");
+        } else {
+            error_log("Retrieved after update - display_name: " . ($updated['display_name'] ?? 'NULL') . 
+                      ", photo_url: " . ($updated['photo_url'] ?? 'NULL'));
+            
+            if ($updated['display_name'] !== trim($data['displayName'])) {
+                error_log("Warning: display_name mismatch after update. Expected: " . trim($data['displayName']) . 
+                          ", Got: " . ($updated['display_name'] ?? 'NULL'));
+            }
+        }
     }
 
     // Update session
     $_SESSION['displayName'] = trim($data['displayName']);
     $_SESSION['photoURL'] = $photoURL;
+    error_log("Session updated - displayName: " . $_SESSION['displayName'] . ", photoURL: " . ($_SESSION['photoURL'] ?? 'NULL'));
 
     // Return success
     echo json_encode([
@@ -107,6 +160,7 @@ try {
             'photoURL' => $_SESSION['photoURL']
         ]
     ]);
+    error_log("Success response sent to client");
 
 } catch (Exception $e) {
     error_log('Profile update error: ' . $e->getMessage());

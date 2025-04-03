@@ -129,10 +129,32 @@ async function clearUserSession() {
 onAuthStateChanged(auth, (user) => {
     if (user) {
         // User is signed in
-        updateUserSession(user);
+        // Only update the session if we don't already have a valid session
+        const hasSession = document.cookie.includes('PHPSESSID');
+        
+        // Check if we're on the account page (already logged in)
+        const isAccountPage = window.location.pathname.includes('account.php');
+        
+        // Only update session if needed
+        if (!isAccountPage) {
+            console.log('Updating user session...');
+            updateUserSession(user).catch(error => {
+                console.error('Error updating session:', error);
+            });
+        }
     } else {
         // User is signed out
-        clearUserSession();
+        const needsRedirect = !window.location.pathname.includes('index.php');
+        
+        // Only clear session if not on the index page
+        if (needsRedirect) {
+            clearUserSession().then(() => {
+                window.location.href = '/index.php';
+            }).catch(error => {
+                console.error('Error clearing session:', error);
+                window.location.href = '/index.php';
+            });
+        }
     }
 });
 
