@@ -89,25 +89,25 @@ require_once __DIR__ . '/../config/firebase-config.php';
 </div>
 
 <!-- Auth Modal -->
-<div id="auth-modal" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <h2 id="auth-modal-title">Login</h2>
+<div id="auth-modal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5);">
+    <div class="modal-content" style="background-color: #41C8D4 !important; margin: 15% auto; padding: 30px; border: 1px solid rgba(0, 0, 0, 0.2); border-radius: 8px; width: 90%; max-width: 500px; position: relative;">
+        <span class="close" style="position: absolute; right: 20px; top: 20px; color: #000; font-size: 24px; font-weight: bold; cursor: pointer;">&times;</span>
+        <h2 id="auth-modal-title" style="color: #000; margin-bottom: 20px; font-size: 1.5rem;">Login</h2>
         <form id="auth-form">
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" required>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label for="email" style="display: block; margin-bottom: 8px; color: #000; font-weight: 500;">Email</label>
+                <input type="email" id="email" name="email" required style="width: 100%; padding: 12px; border: 1px solid rgba(0, 0, 0, 0.2); border-radius: 4px; background-color: rgba(255, 255, 255, 0.9); color: #000; font-size: 16px;">
             </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label for="password" style="display: block; margin-bottom: 8px; color: #000; font-weight: 500;">Password</label>
+                <input type="password" id="password" name="password" required style="width: 100%; padding: 12px; border: 1px solid rgba(0, 0, 0, 0.2); border-radius: 4px; background-color: rgba(255, 255, 255, 0.9); color: #000; font-size: 16px;">
             </div>
-            <button type="submit" class="btn btn-primary">Submit</button>
-            <button type="button" id="google-auth-btn" class="btn btn-google">
+            <button type="submit" class="btn btn-primary" style="background: #000 !important; color: #fff !important; border: none; padding: 12px; border-radius: 4px; font-weight: 600; cursor: pointer; width: 100%; margin-bottom: 15px; font-size: 16px;">Submit</button>
+            <button type="button" id="google-auth-btn" class="btn btn-google" style="background: #4285f4 !important; color: #fff !important; border: none; padding: 12px; border-radius: 4px; font-weight: 600; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 16px;">
                 <i class="fab fa-google"></i> Continue with Google
             </button>
         </form>
-        <div id="auth-error" class="error-message"></div>
+        <div id="auth-error" class="error-message" style="color: #dc3545; margin-top: 15px; text-align: center;"></div>
     </div>
 </div>
 
