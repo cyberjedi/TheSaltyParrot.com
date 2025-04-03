@@ -757,6 +757,9 @@ try {
                                name="photoURL" 
                                value="<?php echo htmlspecialchars($user['photoURL'] ?? ''); ?>"
                                placeholder="https://example.com/photo.jpg">
+                        <div class="photo-preview">
+                            <img id="photo-preview" src="<?php echo htmlspecialchars($user['photoURL'] ?? 'assets/TSP_default_character.jpg'); ?>" alt="Profile photo preview">
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-danger">
                         <i class="fas fa-save"></i>
@@ -821,6 +824,8 @@ try {
             // Preview photo URL when entered
             document.getElementById('photoURL').addEventListener('input', (e) => {
                 const preview = document.getElementById('photo-preview');
+                if (!preview) return; // Skip if the element doesn't exist
+                
                 const url = e.target.value;
                 if (url) {
                     preview.src = url;
