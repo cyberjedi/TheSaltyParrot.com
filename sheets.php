@@ -460,6 +460,32 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize
     loadSheets();
+    
+    // Check URL for sheet ID parameter to auto-select a sheet
+    function checkUrlForSheetId() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sheetId = urlParams.get('id');
+        
+        if (sheetId) {
+            // Wait for sheets to load, then select the specified sheet
+            const checkInterval = setInterval(() => {
+                const sheetElement = document.querySelector(`.sheet-list-item[data-sheet-id="${sheetId}"]`);
+                if (sheetElement) {
+                    clearInterval(checkInterval);
+                    selectSheet(parseInt(sheetId));
+                    
+                    // Scroll the sidebar to show the selected sheet
+                    sheetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 100);
+            
+            // Clear interval after 3 seconds if sheet not found
+            setTimeout(() => clearInterval(checkInterval), 3000);
+        }
+    }
+    
+    // Run auto-select check after sheets are loaded
+    setTimeout(checkUrlForSheetId, 300);
 });
 </script>
 </body>

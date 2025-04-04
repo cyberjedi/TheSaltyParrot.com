@@ -95,7 +95,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
     
     // Handle image upload
-    $image_path = isset($sheet['image_path']) ? $sheet['image_path'] : '../assets/TSP_default_character.jpg';
+    if (!empty($sheet_id)) {
+        // For existing sheets, get the current image path from the database
+        $stmt = $conn->prepare("SELECT image_path FROM character_sheets WHERE id = ? AND user_id = ?");
+        $stmt->execute([$sheet_id, $user_id]);
+        $current_image_data = $stmt->fetch(PDO::FETCH_ASSOC);
+        $image_path = $current_image_data ? $current_image_data['image_path'] : '../assets/TSP_default_character.jpg';
+    } else {
+        // For new sheets, use the default image
+        $image_path = '../assets/TSP_default_character.jpg';
+    }
     
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
         // Check file type
