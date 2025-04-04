@@ -29,18 +29,21 @@
     max-width: 1200px;
     margin: 0 auto;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     padding: 0 1rem;
     width: 100%;
     box-sizing: border-box;
+    position: relative;
+    height: 60px;
 }
 
 /* Logo styling */
 .topbar-logo {
     display: flex;
     align-items: center;
-    margin-right: auto; /* Push the logo to the far left */
+    position: absolute;
+    left: 1rem;
 }
 
 .topbar-logo img {
@@ -53,6 +56,9 @@
     display: flex;
     gap: 1.5rem;
     align-items: center;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .topbar-nav .nav-link {
@@ -91,6 +97,8 @@
     display: flex;
     gap: 0.75rem;
     align-items: center;
+    position: absolute;
+    right: 4rem; /* Leave space for hamburger */
 }
 
 .topbar-auth .btn {
@@ -133,8 +141,9 @@
 
 /* Hamburger menu */
 .hamburger-menu {
-    display: none; /* Hidden on desktop */
-    margin-left: auto; /* Push the hamburger menu to the far right */
+    display: block; /* Always displayed */
+    position: absolute;
+    right: 1rem;
 }
 
 .menu-toggle {
@@ -234,19 +243,11 @@
     .topbar-nav {
         display: none; /* Hide navigation on mobile */
     }
-    
-    .hamburger-menu {
-        display: block !important; /* Always show hamburger on mobile */
-    }
 }
 
 @media (max-width: 768px) {
     .topbar-auth {
         display: none; /* Hide auth buttons on small devices */
-    }
-
-    .hamburger-menu {
-        display: block !important; /* Ensure it's always displayed even at smaller breakpoints */
     }
 
     .dropdown-menu {
@@ -271,8 +272,7 @@
     justify-content: center;
     align-items: center;
     text-align: center;
-    background-color: var(--dark-blue);
-    color: var(--white);
+    background-color: var(--light-gray);
 }
 
 /* Welcome message styling */

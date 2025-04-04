@@ -26,8 +26,6 @@ require_once 'config/firebase-config.php';
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <style>
         body {
-            background-color: var(--dark);
-            color: var(--light);
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
