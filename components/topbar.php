@@ -17,12 +17,7 @@ require_once __DIR__ . '/../config/firebase-config.php';
 
         <!-- Navigation buttons -->
         <div class="topbar-nav">
-            <a href="generators.php" class="nav-link">
-                <i class="fas fa-dice"></i> Generators
-            </a>
-            <a href="sheets.php" class="nav-link">
-                <i class="fas fa-scroll"></i> Character Sheets
-            </a>
+            <!-- Navigation links moved to hamburger menu only -->
         </div>
         
         <!-- Authentication buttons -->

@@ -168,6 +168,30 @@
     color: rgba(255, 255, 255, 0.8);
 }
 
+.active-star {
+    display: none;
+    color: var(--btn-submit);
+    font-size: 1.2rem;
+    margin-left: auto;
+    width: 24px;
+    height: 24px;
+    align-items: center;
+    justify-content: center;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
 .no-sheets {
     padding: 30px 20px;
     text-align: center;

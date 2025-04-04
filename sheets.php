@@ -93,6 +93,9 @@ $page_title = 'Character Sheets';
                     <span class="sheet-system"></span>
                     <span class="sheet-last-edited"></span>
                 </div>
+                <div class="active-star">
+                    <i class="fas fa-star"></i>
+                </div>
             </div>
         </div>
     </template>
@@ -185,6 +188,9 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Track if we found an active sheet
+        let foundActive = false;
+        
         // Add each sheet to the list
         sheets.forEach(sheet => {
             const sheetItem = document.importNode(sheetItemTemplate.content, true);
@@ -210,6 +216,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.src = 'assets/TSP_default_character.jpg';
             };
             
+            // Show/hide active star based on is_active field
+            const activeStar = sheetElement.querySelector('.active-star');
+            if (sheet.is_active) {
+                activeStar.style.display = 'flex';
+                foundActive = true;
+                
+                // Auto-select active sheet if no specific sheet was requested
+                if (!currentSheetId) {
+                    currentSheetId = sheet.id;
+                }
+            } else {
+                activeStar.style.display = 'none';
+            }
+            
             // Mark as active if this is the current sheet
             if (sheet.id === currentSheetId) {
                 sheetElement.classList.add('active');
@@ -227,6 +247,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             sheetsList.appendChild(sheetItem);
         });
+        
+        // If we found an active sheet and no specific sheet is selected, display the active one
+        if (foundActive && !currentSheetId) {
+            loadSheetContent(currentSheetId);
+            sheetPlaceholder.style.display = 'none';
+            sheetDisplay.style.display = 'block';
+        }
     }
     
     // Select a sheet
@@ -284,6 +311,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     <span class="sheet-system-badge">${getSystemDisplayName(sheet.system)}</span>
                 </div>
                 <div class="sheet-actions">
+                    <button class="btn btn-primary make-active-btn" data-sheet-id="${sheet.id}">
+                        <i class="fas fa-star"></i> Make Active
+                    </button>
                     <button class="btn btn-secondary edit-sheet-btn" data-sheet-id="${sheet.id}">
                         <i class="fas fa-edit"></i> Edit
                     </button>
@@ -308,9 +338,14 @@ document.addEventListener('DOMContentLoaded', function() {
         sheetDisplay.innerHTML = contentHTML;
         
         // Add event listeners to action buttons
+        const makeActiveBtn = sheetDisplay.querySelector('.make-active-btn');
         const editBtn = sheetDisplay.querySelector('.edit-sheet-btn');
         const printBtn = sheetDisplay.querySelector('.print-sheet-btn');
         const deleteBtn = sheetDisplay.querySelector('.delete-sheet-btn');
+        
+        makeActiveBtn.addEventListener('click', function() {
+            setActiveSheet(sheet.id);
+        });
         
         editBtn.addEventListener('click', function() {
             window.location.href = `/sheets/edit.php?id=${sheet.id}`;
@@ -491,6 +526,28 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Run auto-select check after sheets are loaded
     setTimeout(checkUrlForSheetId, 300);
+
+    // Set a sheet as active
+    function setActiveSheet(id) {
+        fetch(`/sheets/api/set_active_sheet.php?id=${id}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload sheets to update active status
+                    loadSheets();
+                    
+                    // Show success message
+                    const sheetTitle = sheetDisplay.querySelector('.sheet-title h2').textContent;
+                    alert(`${sheetTitle} has been set as your active character.`);
+                } else {
+                    alert(`Error setting active sheet: ${data.error || 'Unknown error'}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error setting active sheet:', error);
+                alert('Failed to set active sheet. Please try again.');
+            });
+    }
 });
 </script>
 </body>
