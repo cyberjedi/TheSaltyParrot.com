@@ -155,11 +155,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     
                     // Insert system-specific data
                     if ($system === 'pirate_borg') {
-                        $query = "INSERT INTO pirate_borg_sheets (sheet_id, strength, agility, presence, toughness, spirit, notes) 
-                                 VALUES (?, ?, ?, ?, ?, ?, ?)";
+                        $query = "INSERT INTO pirate_borg_sheets (sheet_id, character_type, strength, agility, presence, toughness, spirit, notes) 
+                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
                         
                         $stmt = $conn->prepare($query);
-                        $stmt->execute([$sheet_id, $strength, $agility, $presence, $toughness, $spirit, $notes]);
+                        $stmt->execute([$sheet_id, $_POST['character_type'], $strength, $agility, $presence, $toughness, $spirit, $notes]);
                     }
                     
                     $success_message = "Character sheet created successfully!";
@@ -179,18 +179,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         
                         if ($check->fetchColumn()) {
                             // Update
-                            $query = "UPDATE pirate_borg_sheets SET strength = ?, agility = ?, presence = ?, 
+                            $query = "UPDATE pirate_borg_sheets SET character_type = ?, strength = ?, agility = ?, presence = ?, 
                                     toughness = ?, spirit = ?, notes = ? WHERE sheet_id = ?";
                             
                             $stmt = $conn->prepare($query);
-                            $stmt->execute([$strength, $agility, $presence, $toughness, $spirit, $notes, $sheet_id]);
+                            $stmt->execute([$_POST['character_type'], $strength, $agility, $presence, $toughness, $spirit, $notes, $sheet_id]);
                         } else {
                             // Insert
-                            $query = "INSERT INTO pirate_borg_sheets (sheet_id, strength, agility, presence, toughness, spirit, notes) 
-                                     VALUES (?, ?, ?, ?, ?, ?, ?)";
+                            $query = "INSERT INTO pirate_borg_sheets (sheet_id, character_type, strength, agility, presence, toughness, spirit, notes) 
+                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
                             
                             $stmt = $conn->prepare($query);
-                            $stmt->execute([$sheet_id, $strength, $agility, $presence, $toughness, $spirit, $notes]);
+                            $stmt->execute([$sheet_id, $_POST['character_type'], $strength, $agility, $presence, $toughness, $spirit, $notes]);
                         }
                     }
                     
@@ -274,6 +274,13 @@ require_once '../components/topbar.php';
                                 <div class="form-group">
                                     <label for="name">Character Name</label>
                                     <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($sheet['name']); ?>" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="character_type">Character Type</label>
+                                    <input type="text" id="character_type" name="character_type" value="<?php echo htmlspecialchars($sheet['character_type'] ?? ''); ?>" placeholder="Pirate, Navigator, Sea Witch, etc.">
                                 </div>
                             </div>
                             

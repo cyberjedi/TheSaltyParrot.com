@@ -116,8 +116,10 @@ $page_title = htmlspecialchars($sheet['name']) . ' - Character Sheet';
                          alt="Character Portrait" 
                          onerror="this.src='../assets/TSP_default_character.jpg'">
                 </div>
-                <div class="character-name">
-                    <?php echo htmlspecialchars($sheet['name']); ?>
+                <div class="character-info">
+                    <h1><?php echo htmlspecialchars($sheet['name']); ?></h1>
+                    <p class="character-class"><?php echo htmlspecialchars($sheet['character_type'] ?? 'Unknown Class'); ?></p>
+                    <p class="character-background"><?php echo htmlspecialchars($sheet['background'] ?? ''); ?></p>
                 </div>
             </div>
             

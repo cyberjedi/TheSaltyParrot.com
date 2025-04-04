@@ -322,8 +322,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Render a Pirate Borg character sheet
     function renderPirateBorgSheet(sheet) {
-        const data = sheet.data || {};
-        
         return `
             <div class="character-header">
                 <div class="character-image">
@@ -333,8 +331,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="character-info">
                     <h3>${sheet.name}</h3>
-                    <p class="character-class">${data.class || 'Unknown Class'}</p>
-                    <p class="character-background">${data.background || 'No background information'}</p>
+                    <p class="character-class">${sheet.character_type || 'Unknown Class'}</p>
+                    <p class="character-background">${sheet.background || 'No background information'}</p>
                 </div>
             </div>
             
@@ -343,23 +341,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="attributes-grid">
                     <div class="attribute">
                         <div class="attribute-label">Strength</div>
-                        <div class="attribute-value">${data.strength !== undefined ? data.strength : '?'}</div>
+                        <div class="attribute-value">${sheet.strength !== undefined ? sheet.strength : '?'}</div>
                     </div>
                     <div class="attribute">
                         <div class="attribute-label">Agility</div>
-                        <div class="attribute-value">${data.agility !== undefined ? data.agility : '?'}</div>
+                        <div class="attribute-value">${sheet.agility !== undefined ? sheet.agility : '?'}</div>
                     </div>
                     <div class="attribute">
                         <div class="attribute-label">Presence</div>
-                        <div class="attribute-value">${data.presence !== undefined ? data.presence : '?'}</div>
+                        <div class="attribute-value">${sheet.presence !== undefined ? sheet.presence : '?'}</div>
                     </div>
                     <div class="attribute">
                         <div class="attribute-label">Toughness</div>
-                        <div class="attribute-value">${data.toughness !== undefined ? data.toughness : '?'}</div>
+                        <div class="attribute-value">${sheet.toughness !== undefined ? sheet.toughness : '?'}</div>
                     </div>
                     <div class="attribute">
                         <div class="attribute-label">Spirit</div>
-                        <div class="attribute-value">${data.spirit !== undefined ? data.spirit : '?'}</div>
+                        <div class="attribute-value">${sheet.spirit !== undefined ? sheet.spirit : '?'}</div>
                     </div>
                 </div>
             </div>
@@ -367,14 +365,14 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="section">
                 <h4 class="section-title">Equipment</h4>
                 <div class="equipment-list">
-                    ${data.equipment ? data.equipment.split('\n').map(item => `<div class="equipment-item">${item}</div>`).join('') : 'No equipment'}
+                    ${sheet.equipment ? sheet.equipment.split('\n').map(item => `<div class="equipment-item">${item}</div>`).join('') : 'No equipment'}
                 </div>
             </div>
             
             <div class="section">
                 <h4 class="section-title">Notes</h4>
                 <div class="sheet-notes">
-                    ${data.notes || 'No notes available.'}
+                    ${sheet.notes || 'No notes available.'}
                 </div>
             </div>
         `;
