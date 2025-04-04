@@ -533,7 +533,13 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Reload sheets to update active status
+                    // Update the button immediately
+                    const makeActiveBtn = sheetDisplay.querySelector('.make-active-btn');
+                    makeActiveBtn.classList.remove('btn-secondary');
+                    makeActiveBtn.classList.add('btn-submit');
+                    makeActiveBtn.innerHTML = '<i class="fas fa-star"></i> Active Character';
+                    
+                    // Reload sheets to update active status in the sidebar
                     loadSheets();
                     
                     // Show success message
