@@ -11,7 +11,7 @@
 /* Sidebar */
 .sheets-sidebar {
     width: 320px;
-    background-color: var(--dark-blue);
+    background-color: var(--topbar-bg);
     box-shadow: 2px 0 20px rgba(0, 0, 0, 0.15);
     overflow-y: auto;
     max-height: calc(100vh - 60px);
@@ -31,7 +31,7 @@
 .sheets-header h2 {
     margin: 0;
     font-size: 1.4rem;
-    color: var(--white);
+    color: var(--text);
     font-weight: 600;
 }
 
@@ -45,7 +45,7 @@
     width: 100%;
     padding: 12px;
     background-color: rgba(255, 255, 255, 0.1);
-    color: var(--white);
+    color: var(--text);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 6px;
     font-size: 0.95rem;
@@ -55,13 +55,13 @@
 }
 
 .sheets-filter select:focus {
-    border-color: var(--light-teal);
+    border-color: var(--accent-secondary);
     box-shadow: 0 0 0 3px rgba(65, 200, 212, 0.2);
 }
 
 .sheets-filter select option {
-    background-color: var(--dark-blue);
-    color: var(--white);
+    background-color: var(--topbar-bg);
+    color: var(--text);
 }
 
 .sheets-list {
@@ -93,15 +93,15 @@
 }
 
 .sheet-list-item:hover::before {
-    background-color: var(--light-teal);
+    background-color: var(--accent-secondary);
 }
 
 .sheet-list-item.active {
-    background-color: var(--orange);
+    background-color: var(--accent-primary);
 }
 
 .sheet-list-item.active::before {
-    background-color: var(--yellow);
+    background-color: var(--btn-submit);
 }
 
 .sheet-list-info {
@@ -123,11 +123,11 @@
 
 .sheet-list-item:hover .sheet-thumbnail {
     transform: scale(1.05);
-    border-color: var(--light-teal);
+    border-color: var(--accent-secondary);
 }
 
 .sheet-list-item.active .sheet-thumbnail {
-    border-color: var(--white);
+    border-color: var(--text);
 }
 
 .sheet-details {
@@ -142,14 +142,14 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: var(--white);
+    color: var(--text);
     font-size: 1.1rem;
     margin-bottom: 6px;
 }
 
 .sheet-system {
     font-size: 0.85rem;
-    color: var(--light-teal);
+    color: var(--accent-secondary);
     margin-bottom: 5px;
     font-weight: 500;
 }
@@ -181,8 +181,8 @@
     flex: 1;
     padding: 30px;
     overflow-y: auto;
-    color: var(--dark-gray);
-    background-color: #fff;
+    color: var(--text);
+    background-color: var(--background);
     box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.03);
 }
 
@@ -199,7 +199,7 @@
 
 .sheet-placeholder h3 {
     margin-bottom: 15px;
-    color: var(--dark-blue);
+    color: var(--accent-primary);
     font-size: 1.8rem;
     font-weight: 600;
 }
@@ -207,7 +207,7 @@
 .sheet-placeholder p {
     margin-bottom: 30px;
     max-width: 500px;
-    color: #666;
+    color: var(--text);
     font-size: 1.1rem;
     line-height: 1.6;
 }
@@ -225,7 +225,7 @@
 
 .sheets-loading i {
     font-size: 2rem;
-    color: var(--light-teal);
+    color: var(--accent-secondary);
 }
 
 .loading-spinner {
@@ -234,7 +234,7 @@
     align-items: center;
     justify-content: center;
     height: 200px;
-    color: var(--light-teal);
+    color: var(--accent-secondary);
     gap: 15px;
     font-size: 1.1rem;
 }
@@ -250,7 +250,7 @@
     align-items: center;
     margin-bottom: 25px;
     padding-bottom: 18px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .sheet-title {
@@ -261,7 +261,7 @@
 
 .sheet-title h2 {
     margin: 0;
-    color: var(--dark-blue);
+    color: var(--accent-primary);
     font-size: 1.8rem;
     font-weight: 700;
 }
@@ -269,8 +269,8 @@
 .sheet-system-badge {
     display: inline-block;
     font-size: 0.85rem;
-    background-color: var(--light-teal);
-    color: var(--white);
+    background-color: var(--accent-secondary);
+    color: var(--background);
     padding: 5px 10px;
     border-radius: 4px;
     font-weight: 500;
@@ -282,12 +282,40 @@
     gap: 10px;
 }
 
+/* Sheet content header - This was missing from the original CSS */
+.sheet-content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sheet-content-header .sheet-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sheet-content-header .sheet-title h2 {
+    margin: 0;
+    color: var(--accent-primary);
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.sheet-content-header .sheet-actions {
+    display: flex;
+    gap: 10px;
+}
+
 .character-header {
     display: flex;
     align-items: center;
     gap: 25px;
     margin-bottom: 35px;
-    background-color: #f9f9f9;
+    background-color: var(--popup-bg);
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
@@ -299,7 +327,7 @@
     border-radius: 10px;
     overflow: hidden;
     background-color: #eee;
-    border: 3px solid var(--light-teal);
+    border: 3px solid var(--accent-secondary);
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -314,22 +342,47 @@
     transform: scale(1.05);
 }
 
+.character-info {
+    flex: 1;
+}
+
+.character-info h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.5rem;
+    color: var(--accent-primary);
+    font-weight: 600;
+}
+
+.character-class {
+    font-size: 1.1rem;
+    color: var(--accent-secondary);
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.character-background {
+    font-size: 0.95rem;
+    color: var(--text);
+    line-height: 1.6;
+}
+
 .section {
     margin-bottom: 35px;
-    background-color: #fff;
+    background-color: var(--popup-bg);
     border-radius: 10px;
     padding: 22px;
     box-shadow: 0 3px 12px rgba(0, 0, 0, 0.07);
-    border: 1px solid #eee;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .section-title {
     font-size: 1.2rem;
-    color: var(--dark-blue);
+    color: var(--accent-primary);
     margin-top: 0;
     margin-bottom: 18px;
     padding-bottom: 12px;
-    border-bottom: 2px solid var(--light-teal);
+    border-bottom: 2px solid var(--accent-secondary);
     font-weight: 600;
 }
 
@@ -340,22 +393,22 @@
 }
 
 .attribute {
-    background-color: #f5f5f5;
+    background-color: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
     padding: 15px;
     text-align: center;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border: 1px solid #eee;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .attribute:hover {
     transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.07);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
 }
 
 .attribute-label {
     font-size: 0.9rem;
-    color: #666;
+    color: var(--text);
     margin-bottom: 8px;
     font-weight: 500;
 }
@@ -363,17 +416,31 @@
 .attribute-value {
     font-size: 1.8rem;
     font-weight: 700;
-    color: var(--dark-blue);
+    color: var(--accent-primary);
 }
 
 .sheet-notes {
     white-space: pre-wrap;
     line-height: 1.6;
-    background-color: #f9f9f9;
+    background-color: rgba(255, 255, 255, 0.03);
     padding: 15px;
     border-radius: 6px;
-    color: #555;
+    color: var(--text);
     font-size: 0.95rem;
+}
+
+.equipment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.equipment-item {
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-radius: 5px;
+    color: var(--text);
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* Buttons */
@@ -396,8 +463,8 @@
 }
 
 .btn-primary {
-    background-color: var(--orange);
-    color: white;
+    background-color: var(--accent-primary);
+    color: var(--text);
 }
 
 .btn-primary:hover {
@@ -417,7 +484,7 @@
 
 .btn-danger {
     background-color: #e74c3c;
-    color: white;
+    color: var(--text);
 }
 
 .btn-danger:hover {
@@ -440,7 +507,7 @@
 }
 
 .modal-content {
-    background-color: white;
+    background-color: var(--popup-bg);
     border-radius: 10px;
     width: 90%;
     max-width: 500px;
@@ -449,8 +516,8 @@
 }
 
 .modal-header {
-    background-color: var(--dark-blue);
-    color: white;
+    background-color: var(--topbar-bg);
+    color: var(--text);
     padding: 15px 20px;
     display: flex;
     justify-content: space-between;
@@ -464,7 +531,7 @@
 }
 
 .close {
-    color: white;
+    color: var(--text);
     font-size: 1.5rem;
     cursor: pointer;
     transition: transform 0.2s ease;
@@ -476,12 +543,12 @@
 
 .modal-body {
     padding: 20px;
-    color: #444;
+    color: var(--text);
 }
 
 .modal-footer {
     padding: 15px 20px;
-    background-color: #f5f5f5;
+    background-color: rgba(255, 255, 255, 0.05);
     display: flex;
     justify-content: flex-end;
     gap: 10px;
@@ -502,6 +569,16 @@
     .character-header {
         flex-direction: column;
         text-align: center;
+    }
+
+    .sheet-content-header {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .sheet-content-header .sheet-actions {
+        width: 100%;
+        justify-content: center;
     }
 
     .attributes-grid {
@@ -530,10 +607,10 @@
     border-radius: 50%;
     margin-bottom: 25px;
     box-shadow: 0 10px 20px rgba(65, 200, 212, 0.15);
-    border: 2px dashed var(--light-teal);
+    border: 2px dashed var(--accent-secondary);
 }
 
 .placeholder-icon i {
-    color: var(--light-teal);
+    color: var(--accent-secondary);
     font-size: 4rem;
 } 

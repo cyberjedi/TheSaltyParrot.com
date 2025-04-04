@@ -149,12 +149,13 @@
 }
 
 .profile-image-preview {
+    position: relative;
     width: 150px;
     height: 150px;
     border-radius: 10px;
     overflow: hidden;
     margin-bottom: 15px;
-    border: 3px solid var(--light-teal);
+    border: 3px solid var(--accent-secondary);
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -167,6 +168,27 @@
 
 .profile-image-preview:hover img {
     transform: scale(1.05);
+}
+
+.profile-image-preview .edit-icon {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 32px;
+    height: 32px;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: var(--text);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 5;
+}
+
+.profile-image-preview .edit-icon:hover {
+    background-color: var(--accent-primary);
 }
 
 .action-buttons {
