@@ -114,6 +114,61 @@ $page_title = 'Character Sheets';
         </div>
     </div>
 
+    <!-- Photo Management Modal -->
+    <div id="photo-management-modal" class="photo-management-modal">
+        <div class="photo-management-container">
+            <div class="photo-management-header">
+                <h3>Character Image Manager</h3>
+                <button class="photo-management-close">&times;</button>
+            </div>
+            
+            <div class="photo-gallery" id="photo-gallery">
+                <!-- Photos will be loaded here -->
+                <div class="loading-photos">
+                    <i class="fas fa-spinner fa-spin"></i> Loading photos...
+                </div>
+            </div>
+            
+            <div class="upload-section">
+                <h4>Upload New Image</h4>
+                <div class="upload-dropzone" id="upload-dropzone">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Drag and drop an image here, or click to select a file</p>
+                </div>
+                <form id="upload-form" class="upload-form" enctype="multipart/form-data">
+                    <input type="file" id="file-input" name="image" accept="image/*" style="display: none;">
+                    <input type="hidden" id="sheet-id-input" name="sheet_id">
+                </form>
+            </div>
+            
+            <div class="photo-management-actions">
+                <button id="cancel-photo-selection" class="btn btn-secondary">Cancel</button>
+                <button id="apply-photo-selection" class="btn btn-primary">Apply Selected Photo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Photo Confirmation Modal -->
+    <div id="delete-photo-modal" class="delete-photo-modal">
+        <div class="delete-photo-container">
+            <div class="delete-photo-header">
+                <h3>Delete Photo</h3>
+            </div>
+            <div class="delete-photo-body">
+                <p>Are you sure you want to delete this photo?</p>
+                <div id="delete-photo-sheets" class="delete-photo-sheets" style="display: none;">
+                    <p><strong>Warning:</strong> This photo is currently used by the following character sheets:</p>
+                    <ul id="delete-photo-sheets-list"></ul>
+                    <p>If you delete this photo, it will be replaced with the default image on these sheets.</p>
+                </div>
+            </div>
+            <div class="delete-photo-actions">
+                <button id="cancel-photo-delete" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-photo-delete" class="btn btn-danger">Delete Photo</button>
+            </div>
+        </div>
+    </div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // DOM elements
@@ -135,6 +190,11 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentSheetId = null;
     let pendingDeleteId = null;
     let currentSystemFilter = '';
+    
+    // Photo management state
+    let currentPhotoManagementSheetId = null;
+    let selectedPhotoPath = null;
+    let photoToDelete = null;
     
     // Load all sheets for the current user
     function loadSheets() {
@@ -328,6 +388,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     <img src="${sheet.image_path || 'assets/TSP_default_character.jpg'}" 
                          alt="${sheet.name}" 
                          onerror="this.src='assets/TSP_default_character.jpg'">
+                    <div class="edit-icon" onclick="openPhotoManagement('${sheet.id}')">
+                        <i class="fas fa-pencil-alt"></i>
+                    </div>
                 </div>
                 <div class="character-info">
                     <h3>${sheet.name}</h3>
@@ -486,6 +549,327 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Run auto-select check after sheets are loaded
     setTimeout(checkUrlForSheetId, 300);
+});
+
+// Photo management functionality
+let currentPhotoManagementSheetId = null;
+let selectedPhotoPath = null;
+let photoToDelete = null;
+
+// Open photo management modal
+function openPhotoManagement(sheetId) {
+    currentPhotoManagementSheetId = sheetId;
+    document.getElementById('sheet-id-input').value = sheetId;
+    document.getElementById('photo-management-modal').style.display = 'block';
+    loadUserPhotos();
+}
+
+// Close photo management modal
+function closePhotoManagement() {
+    document.getElementById('photo-management-modal').style.display = 'none';
+    document.getElementById('photo-gallery').innerHTML = '';
+    currentPhotoManagementSheetId = null;
+    selectedPhotoPath = null;
+}
+
+// Load user photos
+function loadUserPhotos() {
+    const photoGallery = document.getElementById('photo-gallery');
+    photoGallery.innerHTML = '<div class="loading-photos"><i class="fas fa-spinner fa-spin"></i> Loading photos...</div>';
+    
+    fetch('/sheets/api/get_user_photos.php')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderPhotoGallery(data.photos);
+            } else {
+                photoGallery.innerHTML = `<div class="error-message">${data.error || 'Failed to load photos'}</div>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading photos:', error);
+            photoGallery.innerHTML = '<div class="error-message">Failed to load photos. Please try again.</div>';
+        });
+}
+
+// Render photo gallery
+function renderPhotoGallery(photos) {
+    const photoGallery = document.getElementById('photo-gallery');
+    
+    if (!photos || photos.length === 0) {
+        photoGallery.innerHTML = '<div class="no-photos">You don\'t have any uploaded photos yet.</div>';
+        return;
+    }
+    
+    // Get current sheet's image path
+    let currentImagePath = '';
+    if (currentPhotoManagementSheetId) {
+        const sheetElement = document.querySelector(`.sheet-list-item[data-sheet-id="${currentPhotoManagementSheetId}"]`);
+        if (sheetElement) {
+            const thumbnail = sheetElement.querySelector('.sheet-thumbnail');
+            if (thumbnail) {
+                currentImagePath = thumbnail.src;
+            }
+        }
+    }
+    
+    // Create gallery HTML
+    photoGallery.innerHTML = '';
+    photos.forEach(photo => {
+        const isSelected = photo.path === currentImagePath || photo.path === selectedPhotoPath;
+        const photoItem = document.createElement('div');
+        photoItem.className = `photo-item ${isSelected ? 'selected' : ''}`;
+        photoItem.innerHTML = `
+            <img src="${photo.path}" alt="Character Photo">
+            <div class="photo-actions">
+                <button class="photo-action-btn" onclick="selectPhoto('${photo.path}', this.parentNode.parentNode)">
+                    <i class="fas fa-check"></i>
+                </button>
+                <button class="photo-action-btn photo-action-delete" onclick="confirmDeletePhoto('${photo.path}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        photoGallery.appendChild(photoItem);
+    });
+}
+
+// Select a photo
+function selectPhoto(path, photoElement) {
+    selectedPhotoPath = path;
+    
+    // Update selected class
+    document.querySelectorAll('.photo-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+    
+    photoElement.classList.add('selected');
+}
+
+// Apply selected photo to the character sheet
+function applySelectedPhoto() {
+    if (!selectedPhotoPath || !currentPhotoManagementSheetId) {
+        return;
+    }
+    
+    fetch('/sheets/api/update_sheet_photo.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            sheet_id: currentPhotoManagementSheetId,
+            image_path: selectedPhotoPath
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Refresh the current sheet to show the updated image
+            selectSheet(currentPhotoManagementSheetId);
+            closePhotoManagement();
+        } else {
+            alert(data.error || 'Failed to update photo');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating photo:', error);
+        alert('Failed to update photo. Please try again.');
+    });
+}
+
+// Confirm photo deletion
+function confirmDeletePhoto(path) {
+    photoToDelete = path;
+    
+    // Check if the photo is used by any sheets
+    fetch(`/sheets/api/check_photo_usage.php?path=${encodeURIComponent(path)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const usedBySheets = data.sheets || [];
+                const deletePhotoSheets = document.getElementById('delete-photo-sheets');
+                const deletePhotoSheetsList = document.getElementById('delete-photo-sheets-list');
+                
+                if (usedBySheets.length > 0) {
+                    deletePhotoSheetsList.innerHTML = '';
+                    usedBySheets.forEach(sheet => {
+                        const li = document.createElement('li');
+                        li.textContent = sheet.name;
+                        deletePhotoSheetsList.appendChild(li);
+                    });
+                    deletePhotoSheets.style.display = 'block';
+                } else {
+                    deletePhotoSheets.style.display = 'none';
+                }
+                
+                document.getElementById('delete-photo-modal').style.display = 'flex';
+            } else {
+                alert(data.error || 'Failed to check photo usage');
+            }
+        })
+        .catch(error => {
+            console.error('Error checking photo usage:', error);
+            alert('Failed to check photo usage. Please try again.');
+        });
+}
+
+// Delete photo
+function deletePhoto() {
+    if (!photoToDelete) {
+        return;
+    }
+    
+    fetch('/sheets/api/delete_photo.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            path: photoToDelete
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close delete modal
+            closeDeletePhotoModal();
+            
+            // Reload photos
+            loadUserPhotos();
+            
+            // If the current sheet was using this photo, refresh it
+            if (currentPhotoManagementSheetId) {
+                selectSheet(currentPhotoManagementSheetId);
+            }
+        } else {
+            alert(data.error || 'Failed to delete photo');
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting photo:', error);
+        alert('Failed to delete photo. Please try again.');
+    });
+}
+
+// Close delete photo modal
+function closeDeletePhotoModal() {
+    document.getElementById('delete-photo-modal').style.display = 'none';
+    photoToDelete = null;
+}
+
+// Set up upload functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const photoManagementModal = document.getElementById('photo-management-modal');
+    const photoManagementClose = document.querySelector('.photo-management-close');
+    const uploadDropzone = document.getElementById('upload-dropzone');
+    const fileInput = document.getElementById('file-input');
+    const uploadForm = document.getElementById('upload-form');
+    const applyPhotoBtn = document.getElementById('apply-photo-selection');
+    const cancelPhotoBtn = document.getElementById('cancel-photo-selection');
+    const confirmDeleteBtn = document.getElementById('confirm-photo-delete');
+    const cancelDeleteBtn = document.getElementById('cancel-photo-delete');
+    
+    // Close photo management modal
+    photoManagementClose.addEventListener('click', closePhotoManagement);
+    cancelPhotoBtn.addEventListener('click', closePhotoManagement);
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target === photoManagementModal) {
+            closePhotoManagement();
+        }
+    });
+    
+    // Apply selected photo
+    applyPhotoBtn.addEventListener('click', applySelectedPhoto);
+    
+    // Delete photo confirmation
+    confirmDeleteBtn.addEventListener('click', deletePhoto);
+    cancelDeleteBtn.addEventListener('click', closeDeletePhotoModal);
+    
+    // Upload dropzone click
+    uploadDropzone.addEventListener('click', function() {
+        fileInput.click();
+    });
+    
+    // File selection
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            uploadPhoto(this.files[0]);
+        }
+    });
+    
+    // Drag and drop
+    uploadDropzone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.style.borderColor = 'var(--accent-primary)';
+        this.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+    });
+    
+    uploadDropzone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.style.borderColor = 'var(--accent-secondary)';
+        this.style.backgroundColor = '';
+    });
+    
+    uploadDropzone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.style.borderColor = 'var(--accent-secondary)';
+        this.style.backgroundColor = '';
+        
+        if (e.dataTransfer.files.length > 0) {
+            uploadPhoto(e.dataTransfer.files[0]);
+        }
+    });
+    
+    // Upload photo
+    function uploadPhoto(file) {
+        // Check file type
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Invalid file type. Please upload a JPEG, PNG, or GIF image.');
+            return;
+        }
+        
+        // Create form data
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('sheet_id', currentPhotoManagementSheetId);
+        
+        // Show loading state
+        uploadDropzone.innerHTML = '<i class="fas fa-spinner fa-spin"></i><p>Uploading...</p>';
+        
+        // Upload file
+        fetch('/sheets/api/upload_photo.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reset dropzone
+                uploadDropzone.innerHTML = '<i class="fas fa-cloud-upload-alt"></i><p>Drag and drop an image here, or click to select a file</p>';
+                
+                // Select the new photo
+                selectedPhotoPath = data.path;
+                
+                // Reload photos
+                loadUserPhotos();
+            } else {
+                alert(data.error || 'Failed to upload photo');
+                uploadDropzone.innerHTML = '<i class="fas fa-cloud-upload-alt"></i><p>Drag and drop an image here, or click to select a file</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Error uploading photo:', error);
+            alert('Failed to upload photo. Please try again.');
+            uploadDropzone.innerHTML = '<i class="fas fa-cloud-upload-alt"></i><p>Drag and drop an image here, or click to select a file</p>';
+        });
+    }
 });
 </script>
 </body>
