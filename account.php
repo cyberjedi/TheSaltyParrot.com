@@ -92,13 +92,18 @@ try {
     <main class="main-content">
         <div class="account-container">
             <div class="account-header">
-                <?php if ($user['photoURL']): ?>
-                    <img src="<?php echo htmlspecialchars($user['photoURL']); ?>" alt="Profile Photo" class="profile-image">
-                <?php else: ?>
-                    <div class="profile-image-placeholder">
-                        <i class="fas fa-user"></i>
+                <div class="profile-image-wrapper">
+                    <?php if ($user['photoURL']): ?>
+                        <img src="<?php echo htmlspecialchars($user['photoURL']); ?>" alt="Profile Photo" class="profile-image">
+                    <?php else: ?>
+                        <div class="profile-image-placeholder">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    <?php endif; ?>
+                    <div class="edit-profile-photo" onclick="openPhotoManagement()">
+                        <i class="fas fa-pencil-alt"></i>
                     </div>
-                <?php endif; ?>
+                </div>
                 <div class="profile-info">
                     <h1><?php echo htmlspecialchars($user['displayName']); ?></h1>
                     <p><?php echo htmlspecialchars($user['email']); ?></p>
@@ -113,14 +118,6 @@ try {
                     <div class="form-group">
                         <label for="displayName">Display Name</label>
                         <input type="text" id="displayName" value="<?php echo htmlspecialchars($user['displayName']); ?>" placeholder="Your display name">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="photo">Profile Photo URL</label>
-                        <input type="text" id="photoURL" value="<?php echo htmlspecialchars($user['photoURL'] ?? ''); ?>" placeholder="https://example.com/your-photo.jpg">
-                        <div class="photo-preview">
-                            <img id="photo-preview-img" src="<?php echo htmlspecialchars($user['photoURL'] ?? 'https://via.placeholder.com/100x100?text=No+Photo'); ?>" alt="Profile photo preview">
-                        </div>
                     </div>
                     
                     <button id="save-profile" class="btn btn-submit">Save Profile</button>
@@ -364,17 +361,12 @@ try {
                             <div class="party-member">
                                 <div class="party-member-avatar-wrapper">
                                     <img src="${member.activeCharacterImage || member.photo_url || 'assets/TSP_default_character.jpg'}" 
-                                         alt="${member.displayName}" 
+                                         alt="${member.display_name || 'User'}" 
                                          class="party-member-avatar"
                                          onerror="this.src='assets/TSP_default_character.jpg'">
-                                    ${member.uid === '<?php echo $_SESSION['uid']; ?>' ? `
-                                        <div class="edit-profile-photo">
-                                            <i class="fas fa-pencil-alt" onclick="openPhotoManagement()"></i>
-                                        </div>
-                                    ` : ''}
                                 </div>
                                 <div class="party-member-info">
-                                    <p class="party-member-name">${member.displayName}</p>
+                                    <p class="party-member-name">${member.display_name || 'Unknown User'}</p>
                                     <p class="party-member-character">${member.activeCharacterName || 'No Active Character'}</p>
                                     <p class="party-member-role ${(party.game_master_id === member.uid) ? 'gm-role' : ''}">
                                         ${party.game_master_id === member.uid ? '<strong>Game Master</strong>' : 
