@@ -31,12 +31,16 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 0 1rem;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* Logo styling */
 .topbar-logo {
     display: flex;
     align-items: center;
+    margin-right: auto; /* Push the logo to the far left */
 }
 
 .topbar-logo img {
@@ -130,6 +134,7 @@
 /* Hamburger menu */
 .hamburger-menu {
     display: none; /* Hidden on desktop */
+    margin-left: auto; /* Push the hamburger menu to the far right */
 }
 
 .menu-toggle {
@@ -231,13 +236,17 @@
     }
     
     .hamburger-menu {
-        display: block; /* Show hamburger on mobile */
+        display: block !important; /* Always show hamburger on mobile */
     }
 }
 
 @media (max-width: 768px) {
     .topbar-auth {
         display: none; /* Hide auth buttons on small devices */
+    }
+
+    .hamburger-menu {
+        display: block !important; /* Ensure it's always displayed even at smaller breakpoints */
     }
 
     .dropdown-menu {
@@ -262,7 +271,8 @@
     justify-content: center;
     align-items: center;
     text-align: center;
-    background-color: var(--light-gray);
+    background-color: var(--dark-blue);
+    color: var(--white);
 }
 
 /* Welcome message styling */

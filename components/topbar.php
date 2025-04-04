@@ -44,7 +44,7 @@ require_once __DIR__ . '/../config/firebase-config.php';
             <?php endif; ?>
         </div>
         
-        <!-- Hamburger menu icon -->
+        <!-- Hamburger menu icon - always present -->
         <div class="hamburger-menu">
             <button id="menu-toggle" class="menu-toggle" aria-label="Toggle menu">
                 <span class="hamburger-line"></span>

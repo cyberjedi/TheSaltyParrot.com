@@ -36,7 +36,7 @@ body {
     font-size: 16px;
     line-height: 1.5;
     color: var(--black);
-    background-color: var(--off-white);
+    background-color: var(--dark-blue) !important;
     min-height: 100vh;
 }
 
