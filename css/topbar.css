@@ -23,27 +23,22 @@
     top: 0;
     z-index: 1000;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
 }
 
 .topbar-container {
-    max-width: 1200px;
-    margin: 0 auto;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    padding: 0 1rem;
     width: 100%;
-    box-sizing: border-box;
     position: relative;
-    height: 60px;
 }
 
 /* Logo styling */
 .topbar-logo {
     display: flex;
     align-items: center;
-    position: absolute;
-    left: 1rem;
+    margin-right: auto; /* Push everything else to the right */
 }
 
 .topbar-logo img {
@@ -56,9 +51,7 @@
     display: flex;
     gap: 1.5rem;
     align-items: center;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+    margin: 0 auto; /* Center the nav */
 }
 
 .topbar-nav .nav-link {
@@ -97,8 +90,8 @@
     display: flex;
     gap: 0.75rem;
     align-items: center;
-    position: absolute;
-    right: 4rem; /* Leave space for hamburger */
+    margin-left: auto; /* Push to the right */
+    margin-right: 10px; /* Give space for hamburger */
 }
 
 .topbar-auth .btn {
@@ -141,9 +134,7 @@
 
 /* Hamburger menu */
 .hamburger-menu {
-    display: block; /* Always displayed */
-    position: absolute;
-    right: 1rem;
+    display: block !important; /* Always visible */
 }
 
 .menu-toggle {
@@ -272,7 +263,8 @@
     justify-content: center;
     align-items: center;
     text-align: center;
-    background-color: var(--light-gray);
+    background-color: #054662; /* Match the screenshot */
+    color: white;
 }
 
 /* Welcome message styling */
@@ -288,7 +280,7 @@
 }
 
 .welcome-title {
-    color: var(--dark-blue);
+    color: white;
     font-size: 2.5rem;
     margin-bottom: 20px;
     font-weight: 700;
@@ -297,7 +289,7 @@
 .welcome-message {
     font-size: 1.2rem;
     margin-bottom: 30px;
-    color: var(--dark-gray);
+    color: white;
     line-height: 1.6;
 }
 

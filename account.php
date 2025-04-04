@@ -84,11 +84,16 @@ try {
     <link rel="stylesheet" href="css/discord.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <style>
+        body {
+            background-color: #054662 !important;
+            color: white !important;
+        }
+        
         .account-container {
             max-width: 800px;
             margin: 2rem auto;
             padding: 2rem;
-            background: var(--dark-blue);
+            background: #054662;
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
