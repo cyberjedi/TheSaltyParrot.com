@@ -1,0 +1,71 @@
+/*
+ * The Salty Parrot - Color Guide
+ * 
+ * This file serves as a reference for all colors used throughout the site.
+ * Use these colors consistently to maintain visual harmony.
+ */
+
+/*
+ * MAIN COLOR PALETTE
+ */
+
+/* Dark Blue: #054662 */
+/* Used for: Sidebars and topbar backgrounds */
+
+/* Orange: #F9872F */
+/* Used for: Primary accented text */
+
+/* Light Teal: #41C8D4 */
+/* Used for: Alternate accented text */
+
+/* Blue: #0BB0D8 */
+/* Used for: Normal buttons */
+
+/* Yellow: #FBD029 */
+/* Used for: Save/commit buttons (database operations) */
+
+/* Discord Blue: #7289DA */
+/* Used for: Discord integration buttons */
+
+/*
+ * SUPPORTING COLORS
+ */
+
+/* White: #FFFFFF */
+/* Used for: Text color */
+
+/* Black: #000000 */
+/* Used for: Main background */
+
+/* Dark Gray: #333333 */
+/* Used for: Pop-out boxes (account page, character sheets) */
+
+/* Other grays for various UI elements */
+/* Light Gray: #E0E0E0 */
+/* Gray: #AAAAAA */
+
+/*
+ * SEMANTIC COLOR ASSIGNMENTS
+ * 
+ * These semantic variables make it easier to maintain consistent 
+ * application of colors throughout the site:
+ */
+
+--background: var(--black);        /* Main background color */
+--text: var(--white);              /* Main text color */
+--topbar-bg: var(--dark-blue);     /* Topbar background */
+--popup-bg: var(--dark-gray);      /* Pop-up boxes, dialogs */
+--accent-primary: var(--orange);   /* Primary accents */
+--accent-secondary: var(--light-teal); /* Secondary accents */
+--btn-default: var(--blue);        /* Default buttons */
+--btn-submit: var(--yellow);       /* Save/submit buttons */
+--btn-discord: var(--discord-blue); /* Discord buttons */
+
+/*
+ * USAGE GUIDELINES
+ * 
+ * 1. Use semantic variables when possible (--background, --text, etc.)
+ * 2. For special cases, use the direct color variables
+ * 3. Maintain contrast ratios for accessibility
+ * 4. When creating new UI elements, refer to this guide
+ */ 

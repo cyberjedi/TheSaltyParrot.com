@@ -16,8 +16,8 @@
 
 /* Topbar container */
 .topbar {
-    background-color: var(--dark-blue);
-    border-bottom: 1px solid var(--light-teal);
+    background-color: var(--topbar-bg);
+    border-bottom: 1px solid var(--accent-secondary);
     padding: 0.5rem 1rem;
     position: sticky;
     top: 0;
@@ -55,7 +55,7 @@
 }
 
 .topbar-nav .nav-link {
-    color: var(--white);
+    color: var(--text);
     text-decoration: none;
     font-weight: 500;
     display: flex;
@@ -72,7 +72,7 @@
     height: 2px;
     bottom: 0;
     left: 0;
-    background-color: var(--orange);
+    background-color: var(--accent-primary);
     transition: width 0.3s ease;
 }
 
@@ -82,7 +82,7 @@
 
 .topbar-nav .nav-link i {
     font-size: 1rem;
-    color: var(--light-teal);
+    color: var(--accent-secondary);
 }
 
 /* Authentication buttons */
@@ -108,19 +108,19 @@
 }
 
 .topbar-auth .btn.btn-primary {
-    background-color: var(--orange);
-    color: var(--white);
+    background-color: var(--accent-primary);
+    color: var(--text);
 }
 
 .topbar-auth .btn.btn-primary:hover {
-    background-color: #e07b26;
+    background-color: color-mix(in srgb, var(--accent-primary) 90%, black);
     transform: translateY(-2px);
 }
 
 .topbar-auth .btn.btn-secondary {
     background-color: transparent;
-    color: var(--white);
-    border: 1px solid var(--light-teal);
+    color: var(--text);
+    border: 1px solid var(--accent-secondary);
 }
 
 .topbar-auth .btn.btn-secondary:hover {
@@ -134,7 +134,12 @@
 
 /* Hamburger menu */
 .hamburger-menu {
-    display: block !important; /* Always visible */
+    display: none; /* Hidden on desktop */
+}
+
+.hamburger-menu.always-visible {
+    display: block !important;
+    z-index: 1001;
 }
 
 .menu-toggle {
@@ -150,7 +155,7 @@
 .hamburger-line {
     width: 24px;
     height: 2px;
-    background-color: var(--white);
+    background-color: var(--text);
     transition: transform 0.3s ease;
 }
 
@@ -172,8 +177,8 @@
     position: absolute;
     top: 100%;
     right: 0;
-    background-color: var(--dark-blue);
-    border: 1px solid var(--light-teal);
+    background-color: var(--topbar-bg);
+    border: 1px solid var(--accent-secondary);
     border-radius: 0 0 8px 8px;
     padding: 1rem;
     min-width: 220px;
@@ -194,7 +199,7 @@
 }
 
 .dropdown-section h3 {
-    color: var(--light-teal);
+    color: var(--accent-secondary);
     font-size: 0.9rem;
     margin-bottom: 0.75rem;
     padding-bottom: 0.5rem;
@@ -207,7 +212,7 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem;
-    color: var(--white);
+    color: var(--text);
     text-decoration: none;
     border-radius: 4px;
     transition: all 0.2s ease;
@@ -226,13 +231,112 @@
 .menu-item i {
     width: 1.2rem;
     text-align: center;
-    color: var(--orange);
+    color: var(--accent-primary);
+}
+
+/* Auth Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: var(--popup-bg) !important;
+    margin: 15% auto;
+    padding: 30px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+}
+
+.modal-close {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    color: var(--text);
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.modal-title {
+    color: var(--accent-primary);
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+.modal-form-group {
+    margin-bottom: 20px;
+}
+
+.modal-label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.modal-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--accent-secondary);
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+    font-size: 16px;
+}
+
+.modal-submit-btn {
+    background: var(--btn-submit) !important;
+    color: var(--black) !important;
+    border: none;
+    padding: 12px;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.modal-oauth-btn {
+    background: var(--btn-discord) !important;
+    color: var(--text) !important;
+    border: none;
+    padding: 12px;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 16px;
+}
+
+.error-message {
+    color: var(--danger);
+    margin-top: 15px;
+    text-align: center;
 }
 
 /* Mobile styles */
 @media (max-width: 992px) {
     .topbar-nav {
         display: none; /* Hide navigation on mobile */
+    }
+    
+    .hamburger-menu {
+        display: block !important; /* Always show hamburger on mobile */
     }
 }
 
@@ -263,8 +367,8 @@
     justify-content: center;
     align-items: center;
     text-align: center;
-    background-color: #054662; /* Match the screenshot */
-    color: white;
+    background-color: var(--background);
+    color: var(--text);
 }
 
 /* Welcome message styling */
@@ -280,7 +384,7 @@
 }
 
 .welcome-title {
-    color: white;
+    color: var(--accent-primary);
     font-size: 2.5rem;
     margin-bottom: 20px;
     font-weight: 700;
@@ -289,7 +393,7 @@
 .welcome-message {
     font-size: 1.2rem;
     margin-bottom: 30px;
-    color: white;
+    color: var(--text);
     line-height: 1.6;
 }
 

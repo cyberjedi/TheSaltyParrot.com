@@ -24,31 +24,6 @@ require_once 'config/firebase-config.php';
     <link rel="stylesheet" href="css/topbar.css">
     <link rel="stylesheet" href="css/discord.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <style>
-        body {
-            background-color: #054662; /* Dark blue from screenshot */
-            color: white;
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        main.main-content-new {
-            background-color: #054662; /* Match body color */
-            color: white;
-        }
-        
-        .welcome-title {
-            color: white !important; /* Ensure visible on dark background */
-        }
-        
-        .welcome-message {
-            color: white !important; /* Ensure visible on dark background */
-        }
-    </style>
 </head>
 <body>
     <!-- Include the topbar -->

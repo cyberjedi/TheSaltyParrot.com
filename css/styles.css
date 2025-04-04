@@ -2,25 +2,37 @@
 
 :root {
     /* Main color palette */
-    --dark-blue: #054662;
-    --orange: #F9872F;
-    --light-teal: #41C8D4;
-    --blue: #0BB0D8;
-    --yellow: #FBD029;
+    --dark-blue: #054662;    /* Sidebars and topbar backgrounds */
+    --orange: #F9872F;       /* Primary accented text */
+    --light-teal: #41C8D4;   /* Alternate accented text */
+    --blue: #0BB0D8;         /* Normal buttons */
+    --yellow: #FBD029;       /* Save/commit buttons */
+    --discord-blue: #7289DA; /* Discord buttons */
     
     /* Supporting colors */
-    --white: #FFFFFF;
+    --white: #FFFFFF;        /* Text color */
     --off-white: #F5F5F5;
     --light-gray: #E0E0E0;
     --gray: #AAAAAA;
-    --dark-gray: #555555;
-    --black: #333333;
+    --dark-gray: #333333;    /* Pop-out boxes */
+    --black: #000000;        /* Main background */
     
     /* Functional colors */
     --success: #28a745;
     --warning: #ffc107;
     --danger: #e74c3c;
     --info: #0BB0D8;
+    
+    /* Semantic assignments */
+    --background: var(--black);
+    --text: var(--white);
+    --topbar-bg: var(--dark-blue);
+    --popup-bg: var(--dark-gray);
+    --accent-primary: var(--orange);
+    --accent-secondary: var(--light-teal);
+    --btn-default: var(--blue);
+    --btn-submit: var(--yellow);
+    --btn-discord: var(--discord-blue);
 }
 
 /* CSS Reset */
@@ -35,35 +47,63 @@ body {
     font-family: 'Poppins', sans-serif;
     font-size: 16px;
     line-height: 1.5;
-    color: var(--white);
-    background-color: #054662 !important; /* Match screenshot - important to override any other styles */
+    color: var(--text);
+    background-color: var(--background) !important;
     min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
     line-height: 1.2;
     margin-bottom: 0.5em;
-    color: var(--dark-blue);
+    color: var(--accent-primary);
 }
 
 p {
     margin-bottom: 1rem;
+    color: var(--text);
 }
 
 a {
-    color: var(--blue);
+    color: var(--btn-default);
     text-decoration: none;
     transition: color 0.2s ease;
 }
 
 a:hover {
-    color: var(--orange);
+    color: var(--accent-primary);
 }
 
 img {
     max-width: 100%;
     height: auto;
+}
+
+/* Make sure text colors are consistent */
+.welcome-title {
+    color: var(--accent-primary) !important;
+}
+
+.welcome-message {
+    color: var(--text) !important;
+}
+
+/* Footer styling */
+footer {
+    background-color: var(--topbar-bg);
+    color: var(--text);
+    padding: 1.5rem;
+    margin-top: auto;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+footer p {
+    margin: 0.5rem 0;
 }
 
 /* Container */
@@ -95,41 +135,60 @@ img {
 }
 
 .btn-primary {
-    background-color: var(--orange);
-    color: var(--white);
+    background-color: var(--btn-default);
+    color: var(--text);
 }
 
 .btn-primary:hover {
-    background-color: #e07b26;
+    background-color: color-mix(in srgb, var(--btn-default) 90%, black);
 }
 
 .btn-secondary {
-    background-color: var(--light-gray);
-    color: var(--dark-gray);
+    background-color: var(--dark-gray);
+    color: var(--text);
 }
 
 .btn-secondary:hover {
-    background-color: #d5d5d5;
+    background-color: color-mix(in srgb, var(--dark-gray) 90%, white);
 }
 
 .btn-danger {
     background-color: var(--danger);
-    color: var(--white);
+    color: var(--text);
 }
 
 .btn-danger:hover {
-    background-color: #d62c1a;
+    background-color: color-mix(in srgb, var(--danger) 90%, black);
+}
+
+.btn-submit {
+    background-color: var(--btn-submit);
+    color: var(--black);
+    font-weight: 600;
+}
+
+.btn-submit:hover {
+    background-color: color-mix(in srgb, var(--btn-submit) 90%, black);
+}
+
+.btn-discord {
+    background-color: var(--btn-discord);
+    color: var(--text);
+}
+
+.btn-discord:hover {
+    background-color: color-mix(in srgb, var(--btn-discord) 90%, black);
 }
 
 .btn-outline {
     background-color: transparent;
-    border: 1px solid var(--blue);
-    color: var(--blue);
+    border: 1px solid var(--btn-default);
+    color: var(--btn-default);
 }
 
 .btn-outline:hover {
-    background-color: var(--blue);
-    color: var(--white);
+    background-color: var(--btn-default);
+    color: var(--text);
 }
 
 /* Form elements */
@@ -720,32 +779,60 @@ footer p {
 }
 
 .btn-primary {
-    background-color: var(--secondary);
-    color: var(--dark);
+    background-color: var(--btn-default);
+    color: var(--text);
 }
 
 .btn-primary:hover {
-    background-color: #a88a54;
+    background-color: color-mix(in srgb, var(--btn-default) 90%, black);
 }
 
 .btn-secondary {
-    background-color: var(--dark);
-    color: var(--light);
-    border: 1px solid var(--secondary);
+    background-color: var(--dark-gray);
+    color: var(--text);
 }
 
 .btn-secondary:hover {
-    background-color: rgba(191, 157, 97, 0.1);
+    background-color: color-mix(in srgb, var(--dark-gray) 90%, white);
+}
+
+.btn-danger {
+    background-color: var(--danger);
+    color: var(--text);
+}
+
+.btn-danger:hover {
+    background-color: color-mix(in srgb, var(--danger) 90%, black);
+}
+
+.btn-submit {
+    background-color: var(--btn-submit);
+    color: var(--black);
+    font-weight: 600;
+}
+
+.btn-submit:hover {
+    background-color: color-mix(in srgb, var(--btn-submit) 90%, black);
+}
+
+.btn-discord {
+    background-color: var(--btn-discord);
+    color: var(--text);
+}
+
+.btn-discord:hover {
+    background-color: color-mix(in srgb, var(--btn-discord) 90%, black);
 }
 
 .btn-outline {
     background-color: transparent;
-    color: var(--secondary);
-    border: 1px solid var(--secondary);
+    border: 1px solid var(--btn-default);
+    color: var(--btn-default);
 }
 
 .btn-outline:hover {
-    background-color: rgba(191, 157, 97, 0.1);
+    background-color: var(--btn-default);
+    color: var(--text);
 }
 
 /* Ship Generator Results Styling */

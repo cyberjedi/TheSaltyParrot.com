@@ -1,0 +1,170 @@
+/**
+ * Account Page Styles
+ * Following The Salty Parrot color scheme
+ */
+
+.account-page {
+    background-color: var(--background);
+    color: var(--text);
+}
+
+.account-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: var(--popup-bg);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.account-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--accent-secondary);
+}
+
+.profile-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent-secondary);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.profile-image-placeholder {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-secondary);
+    font-size: 2rem;
+}
+
+.profile-info h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.profile-info p {
+    margin: 0.25rem 0 0;
+    color: var(--accent-secondary);
+    font-size: 1rem;
+    opacity: 0.8;
+}
+
+.account-section {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.account-section h2 {
+    color: var(--text);
+    margin: 0 0 1rem;
+    font-size: 1.2rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.account-section h2 i {
+    color: var(--accent-secondary);
+    font-size: 1.1rem;
+}
+
+/* Form elements */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--accent-secondary);
+}
+
+.photo-preview {
+    margin-top: 1rem;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--accent-secondary);
+}
+
+.photo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background-color: var(--popup-bg);
+}
+
+/* Alert messages */
+.alert {
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    display: none;
+}
+
+.alert-success {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.alert-error {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.profile-form {
+    margin-top: 1rem;
+}
+
+/* Mobile adaptations */
+@media (max-width: 768px) {
+    .account-container {
+        margin: 1rem;
+        padding: 1rem;
+    }
+
+    .account-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    .btn {
+        width: 100%;
+    }
+} 
