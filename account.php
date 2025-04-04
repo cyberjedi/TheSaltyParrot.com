@@ -100,9 +100,6 @@ try {
                             <i class="fas fa-user"></i>
                         </div>
                     <?php endif; ?>
-                    <div class="edit-profile-photo" onclick="openPhotoManagement()">
-                        <i class="fas fa-pencil-alt"></i>
-                    </div>
                 </div>
                 <div class="profile-info">
                     <h1><?php echo htmlspecialchars($user['displayName']); ?></h1>
@@ -119,6 +116,10 @@ try {
                         <label for="displayName">Display Name</label>
                         <input type="text" id="displayName" value="<?php echo htmlspecialchars($user['displayName']); ?>" placeholder="Your display name">
                     </div>
+                    
+                    <button id="profile-image-btn" class="btn btn-secondary">
+                        <i class="fas fa-image"></i> Profile Image
+                    </button>
                     
                     <button id="save-profile" class="btn btn-submit">Save Profile</button>
                 </div>
@@ -209,103 +210,298 @@ try {
     <script src="js/account.js"></script>
     
     <!-- Photo Management Modal -->
-    <div id="photo-management-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" id="close-photo-modal">&times;</span>
-            <h3>Profile Photo</h3>
-            <div class="photo-management-content">
-                <div class="current-photo">
-                    <h4>Current Photo</h4>
-                    <img id="current-profile-photo" src="<?php echo htmlspecialchars($_SESSION['photoURL'] ?? 'assets/TSP_default_character.jpg'); ?>" alt="Current Photo">
+    <div id="photo-management-modal" class="photo-management-modal">
+        <div class="photo-management-container">
+            <div class="photo-management-header">
+                <h3>Manage Your Photos</h3>
+                <button class="photo-management-close" id="close-photo-management">&times;</button>
+            </div>
+            
+            <div class="upload-section">
+                <h4>Upload New Photo</h4>
+                <div id="photo-dropzone" class="upload-dropzone">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Drag and drop image here, or click to select a file</p>
                 </div>
-                <div class="photo-upload">
-                    <h4>Upload New Photo</h4>
-                    <form id="photo-upload-form">
-                        <div class="file-input-wrapper">
-                            <input type="file" id="profile_photo" name="profile_photo" accept="image/jpeg,image/png,image/gif">
-                            <p class="help-text">Recommended size: 200x200 pixels. Max file size: 2MB.</p>
-                        </div>
-                        <button type="submit" class="btn btn-danger">Upload Photo</button>
-                    </form>
+                <form id="upload-photo-form" class="upload-form">
+                    <input type="file" id="photo-upload" name="photo" accept="image/*">
+                </form>
+            </div>
+            
+            <h4>Your Photos</h4>
+            <div id="user-photos" class="photo-gallery">
+                <div class="loading-photos">
+                    <i class="fas fa-spinner fa-spin"></i> Loading your photos...
                 </div>
+            </div>
+            
+            <div class="photo-management-actions">
+                <button id="apply-selected-photo" class="btn" disabled>Use Selected Photo</button>
             </div>
         </div>
     </div>
     
     <script type="module">
         // Photo management
-        const photoModal = document.getElementById('photo-management-modal');
-        const closePhotoModal = document.getElementById('close-photo-modal');
-        const photoUploadForm = document.getElementById('photo-upload-form');
+        const photoManagementModal = document.getElementById('photo-management-modal');
+        const closePhotoManagement = document.getElementById('close-photo-management');
+        const photoDropzone = document.getElementById('photo-dropzone');
+        const photoUploadInput = document.getElementById('photo-upload');
+        const userPhotosContainer = document.getElementById('user-photos');
+        const applySelectedPhotoBtn = document.getElementById('apply-selected-photo');
         
-        // Close modal when clicking X or outside
-        closePhotoModal.addEventListener('click', () => {
-            photoModal.style.display = 'none';
+        let selectedPhotoUrl = null;
+        
+        // Open photo management modal
+        const profileImageBtn = document.getElementById('profile-image-btn');
+        profileImageBtn.addEventListener('click', function() {
+            photoManagementModal.style.display = 'block';
+            loadUserPhotos();
         });
         
-        window.addEventListener('click', (e) => {
-            if (e.target === photoModal) {
-                photoModal.style.display = 'none';
+        // Close photo management modal
+        closePhotoManagement.addEventListener('click', function() {
+            photoManagementModal.style.display = 'none';
+        });
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target === photoManagementModal) {
+                photoManagementModal.style.display = 'none';
             }
         });
         
-        // Function to open photo management modal
-        window.openPhotoManagement = function() {
-            // Show the modal
-            photoModal.style.display = 'flex';
-            
-            // Update current photo
-            const currentPhoto = document.getElementById('current-profile-photo');
-            const userPhoto = '<?php echo htmlspecialchars($_SESSION['photoURL'] ?? ""); ?>';
-            currentPhoto.src = userPhoto || 'assets/TSP_default_character.jpg';
-            currentPhoto.onerror = function() {
-                this.src = 'assets/TSP_default_character.jpg';
-            };
-        };
+        // Handle drag and drop for photo upload
+        photoDropzone.addEventListener('click', function() {
+            photoUploadInput.click();
+        });
         
-        // Handle photo upload
-        photoUploadForm.addEventListener('submit', async (e) => {
+        photoDropzone.addEventListener('dragover', function(e) {
             e.preventDefault();
+            this.classList.add('drag-over');
+        });
+        
+        photoDropzone.addEventListener('dragleave', function() {
+            this.classList.remove('drag-over');
+        });
+        
+        photoDropzone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
             
-            const fileInput = document.getElementById('profile_photo');
-            if (!fileInput.files || fileInput.files.length === 0) {
-                alert('Please select a file');
+            if (e.dataTransfer.files.length) {
+                photoUploadInput.files = e.dataTransfer.files;
+                uploadPhoto(e.dataTransfer.files[0]);
+            }
+        });
+        
+        // Handle file selection
+        photoUploadInput.addEventListener('change', function() {
+            if (this.files.length) {
+                uploadPhoto(this.files[0]);
+            }
+        });
+        
+        // Apply selected photo
+        applySelectedPhotoBtn.addEventListener('click', function() {
+            if (selectedPhotoUrl) {
+                updateProfilePhoto(selectedPhotoUrl);
+                photoManagementModal.style.display = 'none';
+            }
+        });
+        
+        // Load user photos using the character sheet API
+        function loadUserPhotos() {
+            userPhotosContainer.innerHTML = '<div class="loading-photos"><i class="fas fa-spinner fa-spin"></i> Loading your photos...</div>';
+            
+            fetch('sheets/api/get_user_photos.php')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to load photos');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        if (data.photos.length === 0) {
+                            userPhotosContainer.innerHTML = '<div class="no-photos">You haven\'t uploaded any photos yet.</div>';
+                        } else {
+                            userPhotosContainer.innerHTML = '';
+                            data.photos.forEach(photo => {
+                                const photoItem = document.createElement('div');
+                                photoItem.className = 'photo-item';
+                                photoItem.dataset.url = photo.url;
+                                
+                                photoItem.innerHTML = `
+                                    <img src="${photo.url}" alt="User photo">
+                                    <div class="photo-actions">
+                                        <button class="photo-action-btn photo-action-delete" title="Delete Photo">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                `;
+                                
+                                // Select photo on click
+                                photoItem.addEventListener('click', function(e) {
+                                    if (!e.target.closest('.photo-action-btn')) {
+                                        document.querySelectorAll('.photo-item').forEach(item => {
+                                            item.classList.remove('selected');
+                                        });
+                                        this.classList.add('selected');
+                                        selectedPhotoUrl = this.dataset.url;
+                                        applySelectedPhotoBtn.disabled = false;
+                                    }
+                                });
+                                
+                                // Delete button action
+                                const deleteBtn = photoItem.querySelector('.photo-action-delete');
+                                deleteBtn.addEventListener('click', function(e) {
+                                    e.stopPropagation();
+                                    if (confirm('Are you sure you want to delete this photo?')) {
+                                        deletePhoto(photo.id);
+                                    }
+                                });
+                                
+                                userPhotosContainer.appendChild(photoItem);
+                            });
+                        }
+                    } else {
+                        userPhotosContainer.innerHTML = `<div class="error-message">${data.message || 'Failed to load photos'}</div>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading photos:', error);
+                    userPhotosContainer.innerHTML = `<div class="error-message">Error loading photos: ${error.message}</div>`;
+                });
+        }
+        
+        // Upload a photo using the character sheet API
+        function uploadPhoto(file) {
+            if (!file || !file.type.match('image.*')) {
+                alert('Please select an image file');
                 return;
             }
             
             const formData = new FormData();
-            formData.append('profile_photo', fileInput.files[0]);
+            formData.append('photo', file);
             
-            try {
-                const response = await fetch('/api/update_profile_photo.php', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    // Update UI with new photo
-                    const userPhoto = document.getElementById('user-photo');
-                    if (userPhoto) {
-                        userPhoto.src = data.photo_url;
-                    }
-                    
-                    // Update session
-                    window.sessionStorage.setItem('photoURL', data.photo_url);
-                    
-                    // Close modal
-                    photoModal.style.display = 'none';
-                    
-                    // Reload page to refresh all instances of the user's photo
-                    window.location.reload();
-                } else {
-                    alert('Error updating photo: ' + data.error);
+            photoDropzone.innerHTML = '<i class="fas fa-spinner fa-spin"></i><p>Uploading...</p>';
+            
+            fetch('sheets/api/upload_photo.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Upload failed');
                 }
-            } catch (error) {
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    photoDropzone.innerHTML = '<i class="fas fa-check"></i><p>Upload successful!</p>';
+                    setTimeout(() => {
+                        photoDropzone.innerHTML = '<i class="fas fa-cloud-upload-alt"></i><p>Drag and drop image here, or click to select a file</p>';
+                    }, 2000);
+                    loadUserPhotos();
+                } else {
+                    throw new Error(data.message || 'Upload failed');
+                }
+            })
+            .catch(error => {
                 console.error('Error uploading photo:', error);
-                alert('Failed to upload photo');
+                photoDropzone.innerHTML = `<i class="fas fa-exclamation-triangle"></i><p>Error: ${error.message}</p>`;
+                setTimeout(() => {
+                    photoDropzone.innerHTML = '<i class="fas fa-cloud-upload-alt"></i><p>Drag and drop image here, or click to select a file</p>';
+                }, 3000);
+            });
+        }
+        
+        // Delete a photo
+        function deletePhoto(photoId) {
+            fetch('sheets/api/delete_photo.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id: photoId })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Delete failed');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    loadUserPhotos();
+                } else {
+                    throw new Error(data.message || 'Delete failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting photo:', error);
+                alert('Failed to delete photo: ' + error.message);
+            });
+        }
+        
+        // Update profile photo
+        function updateProfilePhoto(photoUrl) {
+            fetch('api/update_profile_photo.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ photoUrl: photoUrl })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Update failed');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    document.querySelector('.profile-image').src = photoUrl;
+                    showNotification('Profile photo updated successfully!', 'success');
+                } else {
+                    throw new Error(data.message || 'Update failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating profile photo:', error);
+                showNotification('Failed to update profile photo: ' + error.message, 'error');
+            });
+        }
+        
+        // Update the save profile function to only handle display name
+        document.getElementById('save-profile').addEventListener('click', function() {
+            const displayName = document.getElementById('displayName').value;
+            
+            if (!displayName) {
+                showNotification('Display name cannot be empty', 'error');
+                return;
             }
+            
+            fetch('api/update_profile.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ displayName: displayName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Profile updated successfully!', 'success');
+                } else {
+                    showNotification(data.message || 'Failed to update profile', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An error occurred. Please try again.', 'error');
+            });
         });
 
         // Party management functions
