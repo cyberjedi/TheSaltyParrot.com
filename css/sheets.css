@@ -506,6 +506,17 @@
     transform: translateY(-2px);
 }
 
+.btn-submit {
+    background-color: var(--btn-submit);
+    color: #000;
+    font-weight: 600;
+}
+
+.btn-submit:hover {
+    background-color: #e0b626;
+    transform: translateY(-2px);
+}
+
 .btn-danger {
     background-color: #e74c3c;
     color: var(--text);

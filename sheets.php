@@ -190,6 +190,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Track if we found an active sheet
         let foundActive = false;
+        let activeSheetId = null;
         
         // Add each sheet to the list
         sheets.forEach(sheet => {
@@ -218,16 +219,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Show/hide active star based on is_active field
             const activeStar = sheetElement.querySelector('.active-star');
-            if (sheet.is_active) {
+            activeStar.style.display = 'none'; // Hide by default
+            
+            if (sheet.is_active == 1) { // Explicitly check for 1
                 activeStar.style.display = 'flex';
                 foundActive = true;
-                
-                // Auto-select active sheet if no specific sheet was requested
-                if (!currentSheetId) {
-                    currentSheetId = sheet.id;
-                }
-            } else {
-                activeStar.style.display = 'none';
+                activeSheetId = sheet.id;
             }
             
             // Mark as active if this is the current sheet
@@ -249,10 +246,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // If we found an active sheet and no specific sheet is selected, display the active one
-        if (foundActive && !currentSheetId) {
-            loadSheetContent(currentSheetId);
-            sheetPlaceholder.style.display = 'none';
-            sheetDisplay.style.display = 'block';
+        if (foundActive && activeSheetId && !currentSheetId) {
+            selectSheet(activeSheetId);
         }
     }
     
@@ -303,6 +298,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // Build the sheet HTML based on its system
         let contentHTML = '';
         
+        // Check if this sheet is active
+        const isActive = sheet.is_active == 1;
+        const activeButtonClass = isActive ? 'btn-submit' : 'btn-secondary';
+        const activeButtonText = isActive ? 'Active Character' : 'Make Active';
+        
         // Common header
         contentHTML += `
             <div class="sheet-content-header">
@@ -311,8 +311,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     <span class="sheet-system-badge">${getSystemDisplayName(sheet.system)}</span>
                 </div>
                 <div class="sheet-actions">
-                    <button class="btn btn-primary make-active-btn" data-sheet-id="${sheet.id}">
-                        <i class="fas fa-star"></i> Make Active
+                    <button class="btn ${activeButtonClass} make-active-btn" data-sheet-id="${sheet.id}">
+                        <i class="fas fa-star"></i> ${activeButtonText}
                     </button>
                     <button class="btn btn-secondary edit-sheet-btn" data-sheet-id="${sheet.id}">
                         <i class="fas fa-edit"></i> Edit
