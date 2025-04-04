@@ -296,8 +296,8 @@ try {
                                     </p>
                                 </div>
                                 ${party.creator_id === '<?php echo $_SESSION['uid']; ?>' && member.uid !== '<?php echo $_SESSION['uid']; ?>' ? `
-                                    <button class="btn btn-danger btn-small" onclick="partySection.removeMember('${party.id}', '${member.uid}')">
-                                        <i class="fas fa-user-minus"></i> Kick
+                                    <button class="btn btn-small" onclick="partySection.removeMember('${party.id}', '${member.uid}')">
+                                        <i class="fas fa-user-minus"></i>
                                     </button>
                                 ` : ''}
                             </div>
