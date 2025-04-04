@@ -207,33 +207,110 @@ try {
     <script>
         window.DISCORD_CLIENT_ID = '<?php echo DISCORD_CLIENT_ID; ?>';
     </script>
+
+    <script src="js/auth.js"></script>
+    <script src="js/account.js"></script>
+    
+    <!-- Photo Management Modal -->
+    <div id="photo-management-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-photo-modal">&times;</span>
+            <h3>Profile Photo</h3>
+            <div class="photo-management-content">
+                <div class="current-photo">
+                    <h4>Current Photo</h4>
+                    <img id="current-profile-photo" src="<?php echo htmlspecialchars($_SESSION['photoURL'] ?? 'assets/TSP_default_character.jpg'); ?>" alt="Current Photo">
+                </div>
+                <div class="photo-upload">
+                    <h4>Upload New Photo</h4>
+                    <form id="photo-upload-form">
+                        <div class="file-input-wrapper">
+                            <input type="file" id="profile_photo" name="profile_photo" accept="image/jpeg,image/png,image/gif">
+                            <p class="help-text">Recommended size: 200x200 pixels. Max file size: 2MB.</p>
+                        </div>
+                        <button type="submit" class="btn btn-danger">Upload Photo</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script type="module">
-        import { initDiscordAuth } from './js/discord_integration.js';
-
-        // Handle Discord connection
-        const connectDiscordBtn = document.getElementById('connect-discord-btn');
-        if (connectDiscordBtn) {
-            connectDiscordBtn.addEventListener('click', () => {
-                initDiscordAuth();
-            });
-        }
-
-        // Handle sign out
-        const signOutBtn = document.getElementById('sign-out-btn');
-        if (signOutBtn) {
-            signOutBtn.addEventListener('click', async () => {
-                try {
-                    const { signOutUser } = await import('./js/firebase-auth.js');
-                    await signOutUser();
+        // Photo management
+        const photoModal = document.getElementById('photo-management-modal');
+        const closePhotoModal = document.getElementById('close-photo-modal');
+        const photoUploadForm = document.getElementById('photo-upload-form');
+        
+        // Close modal when clicking X or outside
+        closePhotoModal.addEventListener('click', () => {
+            photoModal.style.display = 'none';
+        });
+        
+        window.addEventListener('click', (e) => {
+            if (e.target === photoModal) {
+                photoModal.style.display = 'none';
+            }
+        });
+        
+        // Function to open photo management modal
+        window.openPhotoManagement = function() {
+            // Show the modal
+            photoModal.style.display = 'flex';
+            
+            // Update current photo
+            const currentPhoto = document.getElementById('current-profile-photo');
+            const userPhoto = '<?php echo htmlspecialchars($_SESSION['photoURL'] ?? ""); ?>';
+            currentPhoto.src = userPhoto || 'assets/TSP_default_character.jpg';
+            currentPhoto.onerror = function() {
+                this.src = 'assets/TSP_default_character.jpg';
+            };
+        };
+        
+        // Handle photo upload
+        photoUploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('profile_photo');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please select a file');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('profile_photo', fileInput.files[0]);
+            
+            try {
+                const response = await fetch('/api/update_profile_photo.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update UI with new photo
+                    const userPhoto = document.getElementById('user-photo');
+                    if (userPhoto) {
+                        userPhoto.src = data.photo_url;
+                    }
+                    
+                    // Update session
+                    window.sessionStorage.setItem('photoURL', data.photo_url);
+                    
+                    // Close modal
+                    photoModal.style.display = 'none';
+                    
+                    // Reload page to refresh all instances of the user's photo
                     window.location.reload();
-                } catch (error) {
-                    console.error('Error signing out:', error);
+                } else {
+                    alert('Error updating photo: ' + data.error);
                 }
-            });
-        }
-    </script>
+            } catch (error) {
+                console.error('Error uploading photo:', error);
+                alert('Failed to upload photo');
+            }
+        });
 
-    <script type="module">
         // Party management functions
         const partySection = {
             async init() {
@@ -285,21 +362,42 @@ try {
                     <div class="party-members">
                         ${members.map(member => `
                             <div class="party-member">
-                                <img src="${member.photoURL || 'assets/TSP_default_character.jpg'}" 
-                                     alt="${member.displayName}" 
-                                     class="party-member-avatar"
-                                     onerror="this.src='assets/TSP_default_character.jpg'">
+                                <div class="party-member-avatar-wrapper">
+                                    <img src="${member.activeCharacterImage || member.photo_url || 'assets/TSP_default_character.jpg'}" 
+                                         alt="${member.displayName}" 
+                                         class="party-member-avatar"
+                                         onerror="this.src='assets/TSP_default_character.jpg'">
+                                    ${member.uid === '<?php echo $_SESSION['uid']; ?>' ? `
+                                        <div class="edit-profile-photo">
+                                            <i class="fas fa-pencil-alt" onclick="openPhotoManagement()"></i>
+                                        </div>
+                                    ` : ''}
+                                </div>
                                 <div class="party-member-info">
                                     <p class="party-member-name">${member.displayName}</p>
-                                    <p class="party-member-role">
-                                        ${party.creator_id === member.uid ? 'Party Leader' : 'Member'}
+                                    <p class="party-member-character">${member.activeCharacterName || 'No Active Character'}</p>
+                                    <p class="party-member-role ${(party.game_master_id === member.uid) ? 'gm-role' : ''}">
+                                        ${party.game_master_id === member.uid ? '<strong>Game Master</strong>' : 
+                                          party.creator_id === member.uid ? 'Party Leader' : 'Member'}
                                     </p>
                                 </div>
-                                ${party.creator_id === '<?php echo $_SESSION['uid']; ?>' && member.uid !== '<?php echo $_SESSION['uid']; ?>' ? `
-                                    <button class="btn btn-small" onclick="partySection.removeMember('${party.id}', '${member.uid}')">
-                                        <i class="fas fa-user-minus"></i>
-                                    </button>
-                                ` : ''}
+                                <div class="party-member-actions">
+                                    ${party.creator_id === '<?php echo $_SESSION['uid']; ?>' && member.uid !== '<?php echo $_SESSION['uid']; ?>' ? `
+                                        <button class="btn btn-small" onclick="partySection.removeMember('${party.id}', '${member.uid}')">
+                                            <i class="fas fa-user-minus"></i>
+                                        </button>
+                                        <button class="btn btn-small ${party.game_master_id === member.uid ? 'active' : ''}" 
+                                                onclick="partySection.setGameMaster('${party.id}', '${member.uid}')">
+                                            <i class="fas fa-chess-king"></i>
+                                        </button>
+                                    ` : ''}
+                                    ${party.creator_id === '<?php echo $_SESSION['uid']; ?>' && member.uid === '<?php echo $_SESSION['uid']; ?>' && party.game_master_id !== member.uid ? `
+                                        <button class="btn btn-small" 
+                                                onclick="partySection.setGameMaster('${party.id}', '${member.uid}')">
+                                            <i class="fas fa-chess-king"></i>
+                                        </button>
+                                    ` : ''}
+                                </div>
                             </div>
                         `).join('')}
                     </div>
@@ -325,7 +423,28 @@ try {
                     });
 
                     const data = await response.json();
-                    return data.success ? data.members : [];
+                    if (data.success) {
+                        // Fetch active character info for each member
+                        const members = await Promise.all(data.members.map(async (member) => {
+                            try {
+                                const charResponse = await fetch(`/api/get_active_character.php?user_id=${member.uid}`);
+                                const charData = await charResponse.json();
+                                
+                                if (charData.success && charData.character) {
+                                    return {
+                                        ...member,
+                                        activeCharacterName: charData.character.name,
+                                        activeCharacterImage: charData.character.image_path
+                                    };
+                                }
+                            } catch (err) {
+                                console.error('Error getting active character:', err);
+                            }
+                            return member;
+                        }));
+                        return members;
+                    }
+                    return [];
                 } catch (error) {
                     console.error('Error getting party members:', error);
                     return [];
@@ -473,6 +592,32 @@ try {
                 } catch (error) {
                     console.error('Error leaving party:', error);
                     this.showError('Failed to leave party');
+                }
+            },
+
+            async setGameMaster(partyId, gmUserId) {
+                if (!confirm('Are you sure you want to set this member as Game Master?')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/party/api.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `action=set_game_master&party_id=${partyId}&gm_user_id=${gmUserId}`
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        await this.loadPartyInfo();
+                    } else {
+                        throw new Error(data.error);
+                    }
+                } catch (error) {
+                    console.error('Error setting game master:', error);
+                    this.showError('Failed to set game master');
                 }
             },
 

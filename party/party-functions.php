@@ -184,4 +184,38 @@ function removeMember($partyId, $userId, $requesterId) {
         error_log("Error removing party member: " . $e->getMessage());
         return ['success' => false, 'error' => 'Failed to remove member'];
     }
+}
+
+/**
+ * Set Game Master for a party
+ */
+function setGameMaster($partyId, $gmUserId, $requesterId) {
+    global $conn;
+    
+    try {
+        // Check if requester is party creator
+        $stmt = $conn->prepare("SELECT creator_id FROM parties WHERE id = ?");
+        $stmt->execute([$partyId]);
+        $party = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$party || $party['creator_id'] !== $requesterId) {
+            return ['success' => false, 'error' => 'Not authorized to set game master'];
+        }
+        
+        // Check if gmUserId is a member of the party
+        $stmt = $conn->prepare("SELECT id FROM party_members WHERE party_id = ? AND user_id = ?");
+        $stmt->execute([$partyId, $gmUserId]);
+        if (!$stmt->fetch()) {
+            return ['success' => false, 'error' => 'User is not a member of this party'];
+        }
+        
+        // Update the party with the new game master
+        $stmt = $conn->prepare("UPDATE parties SET game_master_id = ? WHERE id = ?");
+        $stmt->execute([$gmUserId, $partyId]);
+        
+        return ['success' => true];
+    } catch (PDOException $e) {
+        error_log("Error setting game master: " . $e->getMessage());
+        return ['success' => false, 'error' => 'Failed to set game master'];
+    }
 } 

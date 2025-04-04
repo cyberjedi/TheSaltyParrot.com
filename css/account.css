@@ -173,10 +173,8 @@
 .party-member {
     display: flex;
     align-items: center;
-    padding: 0.75rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    background-color: rgba(0, 0, 0, 0.2);
-    transition: background-color 0.2s ease;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .party-member:last-child {
@@ -187,16 +185,43 @@
     background-color: rgba(255, 255, 255, 0.05);
 }
 
+.party-member-avatar-wrapper {
+    position: relative;
+    margin-right: 1rem;
+}
+
 .party-member-avatar {
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px;
-    min-height: 40px;
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px;
+    min-height: 50px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid var(--accent-secondary);
     background-color: rgba(0, 0, 0, 0.2);
-    margin-right: 1rem;
+}
+
+.edit-profile-photo {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    width: 20px;
+    height: 20px;
+    background-color: var(--accent-secondary);
+    color: var(--text);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s;
+}
+
+.edit-profile-photo:hover {
+    background-color: var(--accent-primary);
+    transform: scale(1.1);
 }
 
 .party-member-info {
@@ -206,12 +231,18 @@
 
 .party-member-name {
     margin: 0;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text);
     font-size: 1rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.party-member-character {
+    margin: 0;
+    font-size: 0.85rem;
+    opacity: 0.8;
 }
 
 .party-member-role {
@@ -221,19 +252,32 @@
     opacity: 0.8;
 }
 
+.gm-role {
+    color: #ffcc00;
+}
+
+.party-member-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
 .party-member .btn-small {
     padding: 0.4rem 0.6rem;
     font-size: 0.8rem;
     min-width: unset;
-    background-color: rgba(220, 53, 69, 0.2);
-    color: var(--danger);
-    border: 1px solid var(--danger);
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+    border: 1px solid var(--text);
     margin-left: 0.5rem;
 }
 
 .party-member .btn-small:hover {
-    background-color: var(--danger);
-    color: var(--text);
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.party-member .btn-small.active {
+    background-color: var(--accent-secondary);
+    color: var(--topbar-bg);
 }
 
 .party-actions {
@@ -267,4 +311,76 @@
     .party-actions {
         flex-direction: column;
     }
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: var(--bg);
+    border-radius: 8px;
+    padding: 2rem;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.close-modal:hover {
+    opacity: 1;
+}
+
+.photo-management-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin-top: 1rem;
+}
+
+.current-photo {
+    text-align: center;
+}
+
+.current-photo img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--accent-secondary);
+    margin: 1rem auto;
+    display: block;
+}
+
+.photo-upload {
+    text-align: center;
+}
+
+.file-input-wrapper {
+    margin-bottom: 1rem;
+}
+
+.help-text {
+    font-size: 0.85rem;
+    opacity: 0.7;
+    margin-top: 0.5rem;
 } 

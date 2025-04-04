@@ -67,6 +67,16 @@ switch ($action) {
         echo json_encode(removeMember($partyId, $memberId, $userId));
         break;
 
+    case 'set_game_master':
+        $partyId = $data['party_id'] ?? '';
+        $gmUserId = $data['gm_user_id'] ?? '';
+        if (empty($partyId) || empty($gmUserId)) {
+            echo json_encode(['success' => false, 'error' => 'Party ID and Game Master ID are required']);
+            exit;
+        }
+        echo json_encode(setGameMaster($partyId, $gmUserId, $userId));
+        break;
+
     case 'get_party':
         $party = getUserParty($userId);
         echo json_encode(['success' => true, 'party' => $party]);
