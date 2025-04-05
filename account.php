@@ -91,6 +91,7 @@ try {
     
     <main class="main-content">
         <div class="account-container">
+            <div id="notification-area"></div>
             <div class="account-header">
                 <div class="profile-image-wrapper">
                     <?php if ($user['photoURL']): ?>
@@ -206,7 +207,7 @@ try {
         window.DISCORD_CLIENT_ID = '<?php echo DISCORD_CLIENT_ID; ?>';
     </script>
 
-    <script src="js/auth.js"></script>
+    <script type="module" src="js/firebase-auth.js"></script>
     <script src="js/account.js"></script>
     
     <!-- Photo Management Modal -->
@@ -241,7 +242,38 @@ try {
         </div>
     </div>
     
+    <!-- Create Party Modal -->
+    <div id="create-party-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Create New Party</h3>
+            <form id="create-party-form">
+                <div class="form-group">
+                    <label for="party-name">Party Name</label>
+                    <input type="text" id="party-name" required>
+                </div>
+                <button type="submit" class="btn btn-submit">Create Party</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Join Party Modal -->
+    <div id="join-party-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Join Existing Party</h3>
+            <form id="join-party-form">
+                <div class="form-group">
+                    <label for="party-code">Party Code</label>
+                    <input type="text" id="party-code" required>
+                </div>
+                <button type="submit" class="btn btn-submit">Join Party</button>
+            </form>
+        </div>
+    </div>
+    
     <script type="module">
+      document.addEventListener('DOMContentLoaded', () => {
         // Photo management
         const photoManagementModal = document.getElementById('photo-management-modal');
         const closePhotoManagement = document.getElementById('close-photo-management');
@@ -383,7 +415,7 @@ try {
             }
             
             const formData = new FormData();
-            formData.append('photo', file);
+            formData.append('image', file);
             
             photoDropzone.innerHTML = '<i class="fas fa-spinner fa-spin"></i><p>Uploading...</p>';
             
@@ -462,7 +494,31 @@ try {
             })
             .then(data => {
                 if (data.success) {
-                    document.querySelector('.profile-image').src = photoUrl;
+                    const wrapperElement = document.querySelector('.profile-image-wrapper');
+
+                    if (wrapperElement) {
+                        // Check if an img already exists inside the wrapper
+                        let profileImageElement = wrapperElement.querySelector('.profile-image');
+                        
+                        if (profileImageElement) {
+                            // If it exists, update src
+                            profileImageElement.src = photoUrl;
+                        } else {
+                            // If it doesn't exist, remove placeholder (if any) and create the img
+                            const placeholderElement = wrapperElement.querySelector('.profile-image-placeholder');
+                            if (placeholderElement) {
+                                placeholderElement.remove();
+                            }
+                            const newImg = document.createElement('img');
+                            newImg.src = photoUrl;
+                            newImg.alt = 'Profile Photo';
+                            newImg.className = 'profile-image';
+                            wrapperElement.appendChild(newImg);
+                        }
+                    } else {
+                        console.error('Could not find profile image wrapper to update photo.');
+                    }
+
                     showNotification('Profile photo updated successfully!', 'success');
                 } else {
                     throw new Error(data.message || 'Update failed');
@@ -838,6 +894,11 @@ try {
                 document.body.style.overflow = '';
             }
         };
+
+        // Make modals globally available if needed by inline onclick handlers etc.
+        window.modals = modals;
+      });
     </script>
+    <script src="js/utils.js" defer></script>
 </body>
 </html> 

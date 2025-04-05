@@ -24,35 +24,46 @@ if (!isset($conn)) {
             $_SERVER['DOCUMENT_ROOT'] . '/../../private/secure_variables.php' // Another alt production
         ];
         
-        $config = null;
+        // Check if config file was actually loaded (require_once returns 1 on success for define-only files)
+        $configLoaded = false;
         foreach ($possible_config_paths as $path) {
-            error_log("Checking config path: " . $path);
             if (file_exists($path)) {
-                error_log("Found config file at: " . $path);
-                $config = require_once($path);
+                require_once($path);
+                $configLoaded = true;
+                error_log("Loaded config file: " . $path);
                 break;
             }
         }
-        
-        if ($config === null) {
+
+        if (!$configLoaded) {
             throw new Exception('Database configuration file not found. Checked paths: ' . implode(', ', $possible_config_paths));
         }
         
-        // Log the database configuration being used (without sensitive data)
-        error_log("Using database: host=" . ($config['host'] ?? 'not set') . 
-                 ", dbname=" . ($config['dbname'] ?? 'not set'));
-        
-        // Extract DB credentials - using the format from secure_variables.php
-        $db_host = $config['host'] ?? 'localhost';
-        $db_name = $config['dbname'] ?? 'theshfmb_SPDB';
-        $db_user = $config['username'] ?? '';
-        $db_pass = $config['password'] ?? '';
-        
+        // Extract DB credentials using defined constants
+        $db_host = defined('DB_HOST') ? DB_HOST : 'localhost';
+        $db_port = defined('DB_PORT') ? DB_PORT : '3306'; // Default MySQL port
+        $db_name = defined('DB_NAME') ? DB_NAME : ''; // No sensible default, fail if not defined
+        $db_user = defined('DB_USER') ? DB_USER : '';
+        $db_pass = defined('DB_PASS') ? DB_PASS : '';
+
+        if (empty($db_name)) {
+            throw new Exception('DB_NAME is not defined in secure_variables.php');
+        }
+
+        // Log the database configuration being used
+        error_log("Attempting DB connection: host=$db_host, port=$db_port, dbname=$db_name, user=$db_user");
+
+        // Build DSN (Data Source Name)
+        $dsn = "mysql:host=$db_host;dbname=$db_name;charset=utf8mb4";
+        if ($db_port !== '3306') {
+            $dsn .= ";port=$db_port";
+        }
+
         // Create PDO connection
         $conn = new PDO(
-            "mysql:host=$db_host;dbname=$db_name;charset=utf8mb4",
-            $db_user,
-            $db_pass,
+            $dsn,
+            $db_user, 
+            $db_pass, 
             [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,

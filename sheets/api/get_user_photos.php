@@ -41,9 +41,16 @@ try {
     
     // Add database photos to the list
     foreach ($db_photos as $path) {
-        if (file_exists('../' . $path)) {
+        // Ensure the path from DB is also root-relative
+        $web_path = ltrim($path, './'); // Remove leading ./ or ../
+        if (strpos($web_path, 'uploads/') !== 0) { // Add uploads/ if missing (basic check)
+            // This might need refinement depending on how paths are stored
+            // $web_path = 'uploads/character_sheets/' . basename($web_path); 
+        }
+
+        if (file_exists('../../' . $web_path)) { // Check existence relative to script location
             $photos[] = [
-                'path' => $path,
+                'url' => $web_path, // Use the root-relative path for the browser
                 'source' => 'database'
             ];
         }
@@ -60,12 +67,12 @@ try {
             
             // Check if the filename contains the user's ID
             if (strpos($file, $user_id . '_') === 0) {
-                $path = '../uploads/character_sheets/' . $file;
+                $web_path = 'uploads/character_sheets/' . $file; // Removed ../
                 
                 // Check if this path is already in our photos array
                 $exists = false;
                 foreach ($photos as $photo) {
-                    if ($photo['path'] === $path) {
+                    if ($photo['url'] === $web_path) { // Check against 'url'
                         $exists = true;
                         break;
                     }
@@ -73,7 +80,7 @@ try {
                 
                 if (!$exists) {
                     $photos[] = [
-                        'path' => $path,
+                        'url' => $web_path, // Use the root-relative path
                         'source' => 'filesystem'
                     ];
                 }
@@ -84,7 +91,7 @@ try {
     // Return photos as JSON
     echo json_encode([
         'success' => true,
-        'photos' => $photos
+        'photos' => $photos // Ensure the key is 'photos' as expected by JS
     ]);
     
 } catch (Exception $e) {

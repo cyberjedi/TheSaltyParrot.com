@@ -1,0 +1,26 @@
+# Ignore private configuration files
+private/
+
+# Ignore OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# Ignore Composer dependencies
+vendor/
+
+# Ignore Node dependencies
+node_modules/
+
+# Ignore log files
+*.log
+logs/
+
+# Ignore environment files
+.env
+.env.*
+!.env.example 

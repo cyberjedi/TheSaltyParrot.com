@@ -7,7 +7,8 @@ import {
     signInWithPopup,
     GoogleAuthProvider,
     signOut,
-    onAuthStateChanged
+    onAuthStateChanged,
+    connectAuthEmulator
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 
 // Your web app's Firebase configuration
@@ -23,6 +24,12 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+
+// Connect to Firebase Auth Emulator if running locally
+if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+    console.log("Connecting to Firebase Auth Emulator");
+    connectAuthEmulator(auth, "http://localhost:9099");
+}
 
 // Google Auth Provider
 const googleProvider = new GoogleAuthProvider();

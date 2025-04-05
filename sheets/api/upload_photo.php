@@ -48,7 +48,7 @@ try {
     $file_extension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
     $new_filename = $user_id . '_' . time() . '.' . $file_extension;
     $upload_path = $upload_dir . $new_filename;
-    $relative_path = '../uploads/character_sheets/' . $new_filename;
+    $relative_path = 'uploads/character_sheets/' . $new_filename;
     
     // Move the uploaded file
     if (!move_uploaded_file($_FILES['image']['tmp_name'], $upload_path)) {

@@ -4,7 +4,7 @@
  * Syncs Firebase user data with MySQL users table
  */
 
-require_once '../config/database.php';
+require_once '../config/db_connect.php';
 require_once '../config/firebase-config.php';
 
 function syncUser($uid, $email = null, $displayName = null, $photoURL = null) {

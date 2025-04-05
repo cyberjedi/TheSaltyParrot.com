@@ -13,19 +13,21 @@ if (session_status() == PHP_SESSION_NONE) {
 header('Content-Type: application/json');
 
 // Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['uid'])) {
+    http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Not logged in']);
     exit;
 }
 
 // Get user ID from session
-$userId = $_SESSION['user_id'];
+$userId = $_SESSION['uid'];
 
 // Decode JSON input
 $data = json_decode(file_get_contents('php://input'), true);
 
 // Check if photoUrl was provided
-if (!isset($data['photoUrl'])) {
+if (!isset($data['photoUrl']) || empty($data['photoUrl'])) {
+    http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'No photo URL provided']);
     exit;
 }
@@ -33,20 +35,33 @@ if (!isset($data['photoUrl'])) {
 $photoUrl = $data['photoUrl'];
 
 // Include database connection
-require_once '../config/database.php';
+require_once '../config/db_connect.php';
 
 try {
+    if (!isset($conn) || $conn === null) {
+        throw new PDOException('Database connection failed in db_connect.php');
+    }
+    
     // Update the user's photo URL in the database
-    $stmt = $pdo->prepare("UPDATE users SET photoURL = :photoUrl WHERE id = :userId");
+    $stmt = $conn->prepare("UPDATE users SET photo_url = :photoUrl WHERE uid = :uid");
     $stmt->bindParam(':photoUrl', $photoUrl, PDO::PARAM_STR);
-    $stmt->bindParam(':userId', $userId, PDO::PARAM_INT);
+    $stmt->bindParam(':uid', $userId, PDO::PARAM_STR);
     $result = $stmt->execute();
 
     if ($result) {
+        // Update session photo URL as well
+        $_SESSION['photoURL'] = $photoUrl;
         echo json_encode(['success' => true]);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to update profile photo']);
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Failed to update profile photo in database']);
     }
 } catch (PDOException $e) {
-    echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+    error_log("Database error in update_profile_photo: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Database error: Could not update photo']);
+} catch (Exception $e) {
+    error_log("General error in update_profile_photo: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'An unexpected error occurred']);
 } 

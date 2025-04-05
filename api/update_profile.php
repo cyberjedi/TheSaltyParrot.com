@@ -19,13 +19,13 @@ error_reporting(E_ALL);
 header('Content-Type: application/json');
 
 // Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['uid'])) {
     echo json_encode(['success' => false, 'message' => 'Not logged in']);
     exit;
 }
 
 // Get user ID from session
-$userId = $_SESSION['user_id'];
+$userId = $_SESSION['uid'];
 
 // Get POST data
 $data = json_decode(file_get_contents('php://input'), true);
@@ -40,49 +40,55 @@ $displayName = trim($data['displayName']);
 
 // Update profile in database
 try {
-    require_once '../config/database.php';
+    require_once '../config/db_connect.php';
     
-    if (!isset($pdo) || $pdo === null) {
+    if (!isset($conn) || $conn === null) {
         throw new Exception('Database connection failed');
     }
     
-    error_log("Updating profile for user: " . $userId);
+    error_log("Updating profile for user UID: " . $userId);
     
-    // Check if user exists
-    $stmt = $pdo->prepare("SELECT id FROM users WHERE id = :userId");
-    $stmt->bindParam(':userId', $userId, PDO::PARAM_INT);
+    // Check if user exists using UID
+    $stmt = $conn->prepare("SELECT uid FROM users WHERE uid = :uid");
+    $stmt->bindParam(':uid', $userId, PDO::PARAM_STR);
     $stmt->execute();
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $userExists = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    if (!$user) {
-        // Create user if not exists
-        $stmt = $pdo->prepare("INSERT INTO users (id, display_name) VALUES (:userId, :displayName)");
+    if (!$userExists) {
+        // This case might need review - should an update create a user? 
+        // For now, let's assume the user MUST exist for an update.
+        error_log("User with UID " . $userId . " not found for update.");
+        throw new Exception('User profile not found'); 
+        
+        /* // Original INSERT logic (commented out for now, as update shouldn't typically create)
+        $stmt = $conn->prepare("INSERT INTO users (uid, display_name) VALUES (:uid, :displayName)"); // Use uid
         if (!$stmt) {
-            error_log("Failed to prepare INSERT statement: " . print_r($pdo->errorInfo(), true));
-            throw new Exception('Failed to prepare INSERT statement: ' . implode(' ', $pdo->errorInfo()));
+            error_log("Failed to prepare INSERT statement: " . print_r($conn->errorInfo(), true));
+            throw new Exception('Failed to prepare INSERT statement: ' . implode(' ', $conn->errorInfo()));
         }
         
         $success = $stmt->execute([
-            ':userId' => $userId,
+            ':uid' => $userId, // Use uid
             ':displayName' => $displayName
         ]);
         
         if (!$success) {
-            throw new Exception('Failed to create user profile');
+            throw new Exception('Failed to create user profile during update attempt');
         }
+        */
     } else {
-        // Update user profile
-        $stmt = $pdo->prepare("UPDATE users SET display_name = :displayName WHERE id = :userId");
+        // Update user profile using UID
+        $stmt = $conn->prepare("UPDATE users SET display_name = :displayName WHERE uid = :uid");
         if (!$stmt) {
-            error_log("Failed to prepare UPDATE statement: " . print_r($pdo->errorInfo(), true));
-            throw new Exception('Failed to prepare UPDATE statement: ' . implode(' ', $pdo->errorInfo()));
+            error_log("Failed to prepare UPDATE statement: " . print_r($conn->errorInfo(), true));
+            throw new Exception('Failed to prepare UPDATE statement: ' . implode(' ', $conn->errorInfo()));
         }
         
-        error_log("Executing UPDATE with parameters: " . $displayName . ", " . $userId);
+        error_log("Executing UPDATE with parameters: displayName=" . $displayName . ", uid=" . $userId);
         
         $success = $stmt->execute([
             ':displayName' => $displayName,
-            ':userId' => $userId
+            ':uid' => $userId
         ]);
         
         error_log("Update result: " . ($success ? "Success" : "Failed"));
@@ -97,24 +103,30 @@ try {
         error_log("Rows affected by UPDATE: " . $rowCount);
         
         if ($rowCount === 0) {
-            error_log("Warning: UPDATE statement didn't modify any rows, even though user exists");
+            // This can happen if the new display name is the same as the old one. Not necessarily an error.
+            error_log("Warning: UPDATE statement didn't modify any rows. Display name might be unchanged.");
         }
         
         // Verify the update
-        $verifyStmt = $pdo->prepare("SELECT display_name FROM users WHERE id = :userId");
-        $verifyStmt->bindParam(':userId', $userId, PDO::PARAM_INT);
+        $verifyStmt = $conn->prepare("SELECT display_name FROM users WHERE uid = :uid");
+        $verifyStmt->bindParam(':uid', $userId, PDO::PARAM_STR);
         $verifyStmt->execute();
         $updated = $verifyStmt->fetch(PDO::FETCH_ASSOC);
         
         if (!$updated) {
             error_log("Verification failed: couldn't retrieve user after update");
         } else {
-            error_log("Verification successful. Updated display_name: " . $updated['display_name']);
+             if ($updated['display_name'] === $displayName) {
+                error_log("Verification successful. Updated display_name: " . $updated['display_name']);
+            } else {
+                 error_log("Verification discrepancy! DB has: " . $updated['display_name'] . " but expected: " . $displayName);
+                 // Still treat as success for now, as the UPDATE reported success.
+            }
         }
     }
     
     // Update session
-    $_SESSION['display_name'] = $displayName;
+    $_SESSION['displayName'] = $displayName;
     
     echo json_encode([
         'success' => true,
