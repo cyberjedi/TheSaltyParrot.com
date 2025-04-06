@@ -40,7 +40,7 @@ try {
     }
     
     // Generate unique filename
-    $upload_dir = '../../uploads/character_sheets/';
+    $upload_dir = '../uploads/character_sheets/';
     if (!is_dir($upload_dir)) {
         mkdir($upload_dir, 0777, true);
     }
@@ -57,7 +57,7 @@ try {
     
     // If a sheet ID was provided, update that sheet's image
     if ($sheet_id) {
-        require_once '../../config/db_connect.php';
+        require_once '../config/db_connect.php';
         
         if (!isset($conn) || $conn === null) {
             throw new Exception('Database connection failed');

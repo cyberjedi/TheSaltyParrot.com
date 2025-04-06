@@ -32,7 +32,7 @@ function initPhotoManager(callback) {
     photoManagerSuccess = document.getElementById('photo-manager-success');
 
     if (!photoManagementModal || !closePhotoManagement || !photoDropzone || !photoUploadInput || !userPhotosContainer || !applySelectedPhotoBtn || !photoManagerError || !photoManagerSuccess) {
-        console.error('Photo Manager Error: Could not find all required modal elements. Make sure components/photo_manager_modal.php is included.');
+        console.error('Photo Manager Error: Could not find all required modal elements. Make sure the modal PHP is included.');
         return;
     }
 
@@ -119,7 +119,7 @@ function loadUserPhotos() {
     photoManagerError.style.display = 'none';
     photoManagerSuccess.style.display = 'none';
 
-    fetch('/sheets/api/get_user_photos.php') // Use root-relative path
+    fetch('/image_management/get_user_photos.php') // UPDATED path
         .then(response => {
             if (!response.ok) {
                 throw new Error('Failed to load photos list');
@@ -165,9 +165,8 @@ function loadUserPhotos() {
                         deleteBtn.addEventListener('click', (e) => {
                             e.stopPropagation();
                             const photoIdToDelete = photoItem.dataset.id; // Get the photo ID
-                            if (confirm('Are you sure you want to delete this photo? This cannot be undone.')) {
-                                deletePhoto(photoIdToDelete); // Pass ID to delete function
-                            }
+                            // Confirmation now happens inside deletePhoto
+                            deletePhoto(photoIdToDelete); // Pass ID to delete function
                         });
                         userPhotosContainer.appendChild(photoItem);
                     });
@@ -201,7 +200,7 @@ function uploadPhoto(file) {
     photoDropzone.innerHTML = '<i class="fas fa-spinner fa-spin"></i><p>Uploading...</p>';
     displayPhotoManagerMessage('', false); // Clear previous messages
 
-    fetch('/sheets/api/upload_photo.php', { // Use root-relative path
+    fetch('/image_management/upload_photo.php', { // UPDATED path
         method: 'POST',
         body: formData
     })
@@ -239,89 +238,78 @@ function uploadPhoto(file) {
 }
 
 // Delete a photo
-function deletePhoto(imagePathToDelete) {
-    if (!currentSheetId && !currentUserId) { // Need context for user verification if not sheet-specific
-         console.error("Cannot delete photo: Missing context (currentSheetId or currentUserId).");
-         displayPhotoManagerMessage('Cannot delete photo without user context.', true);
-         return;
-    }
-
+function deletePhoto(photoIdToDelete) {
     displayPhotoManagerMessage('Checking photo usage...', false);
 
-    // 1. Check if the photo is in use
-    fetch('/sheets/api/check_photo_usage.php', {
-        method: 'POST',
+    // First, check usage - Use POST and send image_path
+    fetch(`/image_management/check_photo_usage.php`, { // UPDATED to POST
+        method: 'POST', // UPDATED to POST
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ image_path: imagePathToDelete })
+        body: JSON.stringify({ image_path: photoIdToDelete }) // UPDATED key to image_path
     })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => { throw new Error(err.error || 'Failed to check photo usage.'); });
-        }
-        return response.json();
-    })
-    .then(usageData => {
-        // 2. Construct confirmation message
-        let confirmMessage = "Are you sure you want to delete this photo? This cannot be undone.";
-        if (usageData.inUse) {
-            const names = usageData.characterNames.join(', ');
-            confirmMessage += `\n\nWARNING: This image is currently assigned to ${usageData.count} character(s): ${names}. Deleting it will remove it from them.`;
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to check photo usage');
         }
 
-        // 3. Show confirmation dialog
-        if (confirm(confirmMessage)) {
-            // 4. Proceed with deletion if confirmed
-            displayPhotoManagerMessage('Deleting...', false);
-            
-            // The existing delete_photo.php expects photo_id and character_id.
-            // Since we now identify photos by path, we need to adapt.
-            // Option A: Modify delete_photo.php to accept image_path and delete by path.
-            // Option B: Keep delete_photo.php as is, but find the relevant character_id(s)
-            //           and call delete_photo.php once per character (less ideal).
-            // Let's assume we modify delete_photo.php (Option A) - This requires server-side change.
-            
-            // Placeholder for fetch call to the *modified* delete_photo.php (needs backend change)
-            // This call needs to send the image_path.
-            fetch('/sheets/api/delete_photo.php', { 
+        // Use data.characterNames instead of data.sheets
+        const characterNames = data.characterNames || []; // Use the correct key
+        let confirmMsg = 'Are you sure you want to delete this photo?';
+        if (characterNames.length > 0) { // Check length of the correct array
+            const namesString = characterNames.join(', '); // Join the names directly
+            confirmMsg += `\n\nWarning: This photo is used by: ${namesString}. It will be replaced with the default image.`;
+        }
+
+        if (confirm(confirmMsg)) {
+            // Proceed with deletion
+            return fetch('/image_management/delete_photo.php', { // Path is correct
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
-                    image_path: imagePathToDelete, 
-                    // We might still need user_id for verification on the backend
-                    // user_id: currentUserId // Assuming currentUserId is available globally/scoped
-                }) 
-            })
-            .then(response => response.json()) // Assume server always returns JSON
-            .then(data => {
-                if (data.success) {
-                    displayPhotoManagerMessage(data.message || 'Photo reference potentially removed successfully.', false); // Message adjusted
-                    loadUserPhotos(); // Refresh gallery
-                } else {
-                    throw new Error(data.message || 'Delete failed for an unknown reason.');
-                }
-            })
-            .catch(error => {
-                console.error('Error deleting photo:', error);
-                displayPhotoManagerMessage('Error deleting photo: ' + error.message, true);
+                body: JSON.stringify({ image_path: photoIdToDelete }) // UPDATED key to image_path
             });
         } else {
             // User cancelled
-            displayPhotoManagerMessage('Deletion cancelled.', false);
+            return Promise.reject('Deletion cancelled by user.');
+        }
+    })
+    .then(response => {
+        if (!response) return; // Handle cancellation
+        return response.json();
+     })
+    .then(data => {
+        if (!data) return; // Handle cancellation
+        if (data.success) {
+            displayPhotoManagerMessage('Photo deleted successfully!', false);
+            loadUserPhotos(); // Refresh the gallery
+            // Optionally deselect if the deleted photo was selected
+            if (selectedPhotoUrl && data.deleted_path && selectedPhotoUrl === data.deleted_path) {
+                 selectedPhotoUrl = null;
+                 applySelectedPhotoBtn.disabled = true;
+                 // Remove 'selected' class from DOM if needed, though loadUserPhotos should handle it
+            }
+        } else {
+            throw new Error(data.error || 'Failed to delete photo');
         }
     })
     .catch(error => {
-        console.error('Error checking photo usage:', error);
-        displayPhotoManagerMessage('Error checking photo usage: ' + error.message, true);
+        if (error !== 'Deletion cancelled by user.') { // Don't show error if user cancelled
+            console.error('Error deleting photo:', error);
+            displayPhotoManagerMessage('Deletion Error: ' + error.message, true);
+        } else {
+             displayPhotoManagerMessage('Deletion cancelled.', false);
+        }
     });
 }
 
-// Make functions available globally or export if using modules more formally
+// Make functions available globally if needed (e.g., called from inline HTML)
 window.photoManager = {
     init: initPhotoManager,
     show: showPhotoManager,
-    hide: hidePhotoManager
+    hide: hidePhotoManager,
+    loadPhotos: loadUserPhotos // Expose loadUserPhotos if needed externally
 }; 

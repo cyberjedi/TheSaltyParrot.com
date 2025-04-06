@@ -42,7 +42,7 @@ if (empty($image_path)) {
     exit;
 }
 
-require_once '../../config/db_connect.php';
+require_once '../config/db_connect.php';
 
 try {
     error_log("delete_photo.php: Attempting to remove association for path: {$image_path} for user: {$user_id}");
@@ -69,7 +69,7 @@ try {
         
         // Now, attempt to delete the physical file
         $file_deleted = false;
-        $file_path_relative_to_script = '../../' . $image_path; 
+        $file_path_relative_to_script = '../' . $image_path;
         if (file_exists($file_path_relative_to_script)) {
             if (unlink($file_path_relative_to_script)) {
                 error_log("delete_photo.php: Successfully deleted file: {$file_path_relative_to_script}");

@@ -28,7 +28,7 @@ $response = ['success' => false, 'message' => 'An error occurred while fetching 
 $photos_list = [];
 
 try {
-    $upload_dir_relative_to_script = '../../uploads/character_sheets/';
+    $upload_dir_relative_to_script = '../uploads/character_sheets/';
     $web_base_path = 'uploads/character_sheets/'; // Path for browser access
 
     // Ensure the directory exists

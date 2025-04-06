@@ -33,7 +33,7 @@ if (empty($image_path)) {
     exit;
 }
 
-require_once '../../config/db_connect.php';
+require_once '../config/db_connect.php';
 
 try {
     if (!isset($conn) || $conn === null) {
@@ -60,6 +60,7 @@ try {
         $response['characterNames'] = array_column($characters, 'name');
     }
 
+    $response['success'] = true;
     echo json_encode($response);
 
 } catch (PDOException $e) {

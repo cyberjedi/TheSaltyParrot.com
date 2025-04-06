@@ -210,7 +210,7 @@ try {
     <script type="module" src="js/firebase-auth.js"></script>
     <script src="js/account.js"></script>
     
-    <?php include 'components/photo_manager_modal.php'; // Include the shared modal ?>
+    <?php include 'image_management/photo_manager_modal.php'; // UPDATED path ?>
     
     <!-- Create Party Modal -->
     <div id="create-party-modal" class="modal">
@@ -247,7 +247,7 @@ try {
         // Define the callback for when a photo is selected from the manager
         function handleProfilePhotoUpdate(photoUrl) {
             // This function replaces the old inline updateProfilePhoto JS function
-            const profileApiUrl = '/api/update_profile_photo.php'; // Root relative path
+            const profileApiUrl = '/image_management/update_profile_photo.php'; // UPDATED path
             
             fetch(profileApiUrl, {
                 method: 'POST',
@@ -687,6 +687,6 @@ try {
       }); // End of DOMContentLoaded listener
     </script>
     <script src="js/utils.js" defer></script>
-    <script src="js/photo_manager.js" defer></script> <!-- Include the shared photo manager script -->
+    <script src="image_management/photo_manager.js" defer></script> <!-- UPDATED path -->
 </body>
 </html> 

@@ -430,7 +430,7 @@ if (!$sheet) {
         </div>
     </div>
     
-    <?php include '../components/photo_manager_modal.php'; // Include shared modal ?>
+    <?php include '../image_management/photo_manager_modal.php'; // UPDATED path ?>
 
     <!-- Delete Photo Confirmation Modal (Keep this one for now as it has sheet-specific checks) -->
     <div id="delete-photo-modal" class="delete-photo-modal">
@@ -591,7 +591,7 @@ if (!$sheet) {
         function confirmDeletePhoto(path) {
             photoToDelete = path; 
             const checkPath = path.startsWith('../') ? path.substring(3) : path; // Ensure root-relative
-            fetch(`/sheets/api/check_photo_usage.php?path=${encodeURIComponent(checkPath)}`)
+            fetch(`/image_management/check_photo_usage.php?path=${encodeURIComponent(checkPath)}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -631,7 +631,7 @@ if (!$sheet) {
             }
             const deletePath = photoToDelete.startsWith('../') ? photoToDelete.substring(3) : photoToDelete;
 
-            fetch('/sheets/api/delete_photo.php', { // Needs root path
+            fetch('/image_management/delete_photo.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -677,6 +677,6 @@ if (!$sheet) {
         }
         
     </script>
-    <script src="../js/photo_manager.js" defer></script> <!-- Include shared JS -->
+    <script src="../image_management/photo_manager.js" defer></script> <!-- UPDATED path -->
 </body>
 </html> 
