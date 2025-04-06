@@ -601,4 +601,155 @@
 /* Add some spacing between profile buttons */
 #profile-image-btn {
     margin-bottom: 1rem;
+}
+
+/* --- Discord Webhooks Section --- */
+
+.discord-webhooks-section .description {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-bottom: 1.5rem;
+}
+
+.webhook-form h3 {
+    font-size: 1.1rem;
+    color: var(--text);
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.webhook-form {
+    margin-bottom: 0;
+}
+
+.webhook-form .form-grid {
+    margin-bottom: 1rem;
+}
+
+.webhook-form .form-group-url,
+.webhook-form .form-group-desc {
+    grid-column: 1 / -1;
+}
+
+#add-webhook-btn {
+    margin-top: 0.5rem;
+}
+
+.discord-webhooks-section > h3 {
+    font-size: 1.1rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.webhook-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.webhook-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    gap: 1rem;
+}
+
+.webhook-item-info {
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.webhook-item-name {
+    font-weight: 500;
+    color: var(--text);
+    font-size: 1rem;
+    margin-bottom: 0.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.webhook-item-channel {
+    font-size: 0.85rem;
+    color: var(--accent-secondary);
+    opacity: 0.8;
+    margin-bottom: 0.2rem;
+}
+
+.webhook-item-desc {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.webhook-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+}
+
+.webhook-actions button,
+.webhook-actions a {
+    background: none;
+    border: none;
+    color: var(--accent-secondary);
+    cursor: pointer;
+    padding: 0.25rem;
+    font-size: 1rem;
+    transition: color 0.2s, transform 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+}
+
+.webhook-actions button:hover,
+.webhook-actions a:hover {
+    color: var(--accent-primary);
+    transform: scale(1.1);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.webhook-actions .is-default .fa-star {
+    color: var(--accent-primary);
+}
+
+.webhook-actions .fa-star {
+    color: var(--accent-secondary);
+}
+
+#show-add-webhook-modal-btn {
+    margin-bottom: 1rem;
+}
+
+#test-webhook-btn {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+#modal-webhook-alert {
+    display: none;
+}
+
+/* Mobile adjustments if necessary */
+@media (max-width: 600px) {
+    .webhook-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .webhook-actions {
+        margin-top: 0.5rem;
+        align-self: flex-end;
+    }
 } 

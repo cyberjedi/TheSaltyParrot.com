@@ -151,7 +151,7 @@ class WebhookService {
                 return $webhooks;
             }
             
-            $stmt = $this->conn->prepare("SELECT * FROM discord_webhooks 
+            $stmt = $this->conn->prepare("SELECT id, server_name, discord_channel_name, webhook_id, webhook_token, is_default FROM discord_webhooks 
                                          WHERE user_id = :user_id AND is_active = 1 
                                          ORDER BY is_default DESC, last_updated DESC");
             $stmt->bindParam(':user_id', $this->userId);
@@ -182,7 +182,7 @@ class WebhookService {
             }
             
             // First try to get default webhook
-            $stmt = $this->conn->prepare("SELECT id, webhook_name, channel_name, is_default FROM discord_webhooks 
+            $stmt = $this->conn->prepare("SELECT id, server_name, discord_channel_name, is_default FROM discord_webhooks 
                                         WHERE user_id = :user_id AND is_active = 1 AND is_default = 1 
                                         LIMIT 1");
             $stmt->bindParam(':user_id', $this->userId);
@@ -191,7 +191,7 @@ class WebhookService {
             
             // If no default webhook is set, get the most recently updated one
             if (!$webhook) {
-                $stmt = $this->conn->prepare("SELECT id, webhook_name, channel_name, is_default FROM discord_webhooks 
+                $stmt = $this->conn->prepare("SELECT id, server_name, discord_channel_name, is_default FROM discord_webhooks 
                                            WHERE user_id = :user_id AND is_active = 1 
                                            ORDER BY last_updated DESC LIMIT 1");
                 $stmt->bindParam(':user_id', $this->userId);
@@ -231,12 +231,11 @@ class WebhookService {
      * Add a new webhook
      * 
      * @param string $webhookUrl The Discord webhook URL
-     * @param string $webhookName Custom name for the webhook
-     * @param string $channelName Name of the Discord channel
-     * @param string $description Optional description
+     * @param string $serverName Custom name for the server (user-provided)
+     * @param string $discordChannelName Name of the Discord channel (user-provided)
      * @return array Response with status and message
      */
-    public function addWebhook($webhookUrl, $webhookName, $channelName, $description = '') {
+    public function addWebhook($webhookUrl, $serverName, $discordChannelName) {
         try {
             if (!$this->userId) {
                 return [
@@ -280,26 +279,21 @@ class WebhookService {
             $guildId = $webhookData['guild_id'] ?? '';
             $channelId = $webhookData['channel_id'] ?? '';
             
-            // Generate a sharing code
-            $sharingCode = substr(md5($webhookId . $webhookToken . time()), 0, 10);
-            
             // Insert webhook into database
             $stmt = $this->conn->prepare("INSERT INTO discord_webhooks 
-                (user_id, server_id, channel_id, channel_name, webhook_id, webhook_token, webhook_name, webhook_description, 
-                 sharing_code, is_shared, is_active, created_at, last_updated) 
+                (user_id, server_id, channel_id, discord_channel_name, webhook_id, webhook_token, server_name, 
+                 is_active, created_at, last_updated) 
                 VALUES 
-                (:user_id, :server_id, :channel_id, :channel_name, :webhook_id, :webhook_token, :webhook_name, :webhook_description,
-                 :sharing_code, 0, 1, NOW(), NOW())");
+                (:user_id, :server_id, :channel_id, :discord_channel_name, :webhook_id, :webhook_token, :server_name,
+                 1, NOW(), NOW())");
                 
             $stmt->bindParam(':user_id', $this->userId);
             $stmt->bindParam(':server_id', $guildId);
             $stmt->bindParam(':channel_id', $channelId);
-            $stmt->bindParam(':channel_name', $channelName);
+            $stmt->bindParam(':discord_channel_name', $discordChannelName);
             $stmt->bindParam(':webhook_id', $webhookId);
             $stmt->bindParam(':webhook_token', $webhookToken);
-            $stmt->bindParam(':webhook_name', $webhookName);
-            $stmt->bindParam(':webhook_description', $description);
-            $stmt->bindParam(':sharing_code', $sharingCode);
+            $stmt->bindParam(':server_name', $serverName);
             
             $stmt->execute();
             
@@ -321,115 +315,14 @@ class WebhookService {
     }
 
     /**
-     * Import a shared webhook
-     * 
-     * @param string $sharingCode Code to identify the shared webhook
-     * @return array Response with status and message
-     */
-    public function importSharedWebhook($sharingCode) {
-        try {
-            if (!$this->userId) {
-                return [
-                    'status' => 'error',
-                    'message' => 'Not authenticated with Discord'
-                ];
-            }
-            
-            // Look up the webhook by sharing code
-            $stmt = $this->conn->prepare("SELECT * FROM discord_webhooks WHERE sharing_code = :sharing_code");
-            $stmt->bindParam(':sharing_code', $sharingCode);
-            $stmt->execute();
-            $sharedWebhook = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$sharedWebhook) {
-                return [
-                    'status' => 'error',
-                    'message' => 'Invalid sharing code. The webhook could not be found.'
-                ];
-            }
-            
-            // Check if user already has this webhook
-            $webhookId = $sharedWebhook['webhook_id'];
-            $stmt = $this->conn->prepare("SELECT id FROM discord_webhooks WHERE user_id = :user_id AND webhook_id = :webhook_id");
-            $stmt->bindParam(':user_id', $this->userId);
-            $stmt->bindParam(':webhook_id', $webhookId);
-            $stmt->execute();
-            
-            if ($stmt->rowCount() > 0) {
-                return [
-                    'status' => 'error',
-                    'message' => 'You already have this webhook added to your account'
-                ];
-            }
-            
-            // Verify the webhook still exists
-            $webhookToken = $sharedWebhook['webhook_token'];
-            $url = "https://discord.com/api/webhooks/{$webhookId}/{$webhookToken}";
-            
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-            
-            if ($httpCode !== 200) {
-                return [
-                    'status' => 'error',
-                    'message' => 'This webhook no longer exists or is invalid'
-                ];
-            }
-            
-            // Clone the webhook for this user
-            $stmt = $this->conn->prepare("INSERT INTO discord_webhooks 
-                (user_id, server_id, channel_id, channel_name, webhook_id, webhook_token, webhook_name, webhook_description,
-                 sharing_code, is_shared, is_active, created_at, last_updated) 
-                VALUES 
-                (:user_id, :server_id, :channel_id, :channel_name, :webhook_id, :webhook_token, :webhook_name, :webhook_description,
-                 :sharing_code, 1, 1, NOW(), NOW())");
-                
-            $webhookName = $sharedWebhook['webhook_name'] . ' (Shared)';
-            
-            $stmt->bindParam(':user_id', $this->userId);
-            $stmt->bindParam(':server_id', $sharedWebhook['server_id']);
-            $stmt->bindParam(':channel_id', $sharedWebhook['channel_id']);
-            $stmt->bindParam(':channel_name', $sharedWebhook['channel_name']);
-            $stmt->bindParam(':webhook_id', $webhookId);
-            $stmt->bindParam(':webhook_token', $webhookToken);
-            $stmt->bindParam(':webhook_name', $webhookName);
-            $stmt->bindParam(':webhook_description', $sharedWebhook['webhook_description']);
-            $stmt->bindParam(':sharing_code', $sharingCode);
-            
-            $stmt->execute();
-            
-            // Check if this is the user's first webhook and make it default
-            $this->ensureDefaultWebhook();
-            
-            return [
-                'status' => 'success',
-                'message' => 'Shared webhook imported successfully',
-                'webhook_id' => $this->conn->lastInsertId()
-            ];
-        } catch (PDOException $e) {
-            error_log('WebhookService - Error importing webhook: ' . $e->getMessage());
-            return [
-                'status' => 'error',
-                'message' => 'Error importing webhook: ' . $e->getMessage()
-            ];
-        }
-    }
-
-    /**
      * Update a webhook
      * 
      * @param int $webhookId ID of the webhook to update
-     * @param string $webhookName New name for the webhook
-     * @param string $channelName New channel name
-     * @param string $description New description
+     * @param string $serverName New server name
+     * @param string $discordChannelName New channel name
      * @return array Response with status and message
      */
-    public function updateWebhook($webhookId, $webhookName, $channelName, $description = '') {
+    public function updateWebhook($webhookId, $serverName, $discordChannelName) {
         try {
             if (!$this->userId) {
                 return [
@@ -448,15 +341,13 @@ class WebhookService {
             
             // Update webhook details
             $stmt = $this->conn->prepare("UPDATE discord_webhooks SET 
-                webhook_name = :webhook_name, 
-                webhook_description = :webhook_description, 
-                channel_name = :channel_name,
+                server_name = :server_name, 
+                discord_channel_name = :discord_channel_name,
                 last_updated = NOW() 
                 WHERE id = :id AND user_id = :user_id");
                 
-            $stmt->bindParam(':webhook_name', $webhookName);
-            $stmt->bindParam(':webhook_description', $description);
-            $stmt->bindParam(':channel_name', $channelName);
+            $stmt->bindParam(':server_name', $serverName);
+            $stmt->bindParam(':discord_channel_name', $discordChannelName);
             $stmt->bindParam(':id', $webhookId);
             $stmt->bindParam(':user_id', $this->userId);
             
@@ -507,19 +398,23 @@ class WebhookService {
                 ];
             }
             
-            // Delete from Discord if not shared
-            if (!$webhook['is_shared']) {
-                $url = "https://discord.com/api/webhooks/{$webhook['webhook_id']}/{$webhook['webhook_token']}";
-                
-                $ch = curl_init();
-                curl_setopt($ch, CURLOPT_URL, $url);
-                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                
-                curl_exec($ch);
-                curl_close($ch);
-            }
+            // Delete from Discord (always attempt now)
+            $url = "https://discord.com/api/webhooks/{$webhook['webhook_id']}/{$webhook['webhook_token']}";
             
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            
+            curl_exec($ch);
+            $http_code_delete = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            // Log if Discord delete failed, but continue DB delete regardless
+            if ($http_code_delete !== 204 && $http_code_delete !== 404) { // 404 means it was already gone
+                 error_log("WebhookService - Failed to delete webhook from Discord API (HTTP: {$http_code_delete}). URL: {$url}");
+            }
+
             // Delete from database
             $stmt = $this->conn->prepare("DELETE FROM discord_webhooks WHERE id = :id AND user_id = :user_id");
             $stmt->bindParam(':id', $webhookId);
@@ -579,7 +474,7 @@ class WebhookService {
             $stmt->execute();
             
             // Get the updated webhook details and update the session
-            $webhookStmt = $this->conn->prepare("SELECT id, webhook_name, channel_name, is_default, is_active, server_id 
+            $webhookStmt = $this->conn->prepare("SELECT id, server_name, discord_channel_name, is_default, is_active, server_id 
                                                 FROM discord_webhooks 
                                                 WHERE id = :id");
             $webhookStmt->bindParam(':id', $webhookId);
@@ -678,17 +573,21 @@ class WebhookService {
                 ];
             }
             
-            // Create test message
-            $message = [
+            // Get user's Discord info from session for username/avatar
+            $discordUsername = $_SESSION['discord_user']['username'] ?? 'The Salty Parrot'; // Fallback name
+            $discordAvatarUrl = $_SESSION['discord_user']['avatar_url'] ?? null; // Use stored avatar URL
+            
+            // Create test message payload
+            $messagePayload = [
+                'username' => $discordUsername, // Use user's Discord name
+                'avatar_url' => $discordAvatarUrl, // Use user's Discord avatar
                 'content' => null,
                 'embeds' => [
                     [
-                        'title' => '🧪 Test Message from The Salty Parrot (New UI)',
+                        'title' => '🧪 Test Message from The Salty Parrot', // Removed (New UI)
                         'description' => 'This is a test message to verify your webhook is working correctly. You can now send generated content from The Salty Parrot to this Discord channel!',
                         'color' => 0xbf9d61, // Gold color
-                        'footer' => [
-                            'text' => 'The Salty Parrot - A Pirate Borg Toolbox'
-                        ],
+                        // REMOVED footer
                         'timestamp' => date('c')
                     ]
                 ]
@@ -700,7 +599,7 @@ class WebhookService {
             $ch = curl_init($url);
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
             curl_setopt($ch, CURLOPT_POST, 1);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($message));
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($messagePayload)); // Use updated payload
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             
             $response = curl_exec($ch);
@@ -768,6 +667,15 @@ class WebhookService {
             error_log('WebhookService - Error logging webhook usage: ' . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * Check if the user ID was successfully initialized based on the session.
+     * 
+     * @return bool True if userId is set, false otherwise.
+     */
+    public function isUserInitialized() {
+        return $this->userId !== null;
     }
 }
 

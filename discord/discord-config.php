@@ -41,10 +41,15 @@ if ($config && isset($config['discord']) && is_array($config['discord'])) {
         define('DISCORD_CLIENT_SECRET', $config['discord']['client_secret'] ?? '');
     }
     if (!defined('DISCORD_REDIRECT_URI')) {
-        if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'dev.') === 0) {
+        $host = $_SERVER['HTTP_HOST'] ?? '';
+        // Use dev URI for localhost, 127.0.0.1, or hostnames starting with 'dev.'
+        if ($host === 'localhost' || $host === '127.0.0.1' || strpos($host, ':') !== false || strpos($host, 'dev.') === 0) {
             define('DISCORD_REDIRECT_URI', $config['discord']['dev_redirect_uri'] ?? '');
+            error_log("Using Discord Dev Redirect URI: " . ($config['discord']['dev_redirect_uri'] ?? '')); // Added logging
         } else {
+            // Otherwise, use the production URI
             define('DISCORD_REDIRECT_URI', $config['discord']['redirect_uri'] ?? '');
+             error_log("Using Discord Prod Redirect URI: " . ($config['discord']['redirect_uri'] ?? '')); // Added logging
         }
     }
 } else {

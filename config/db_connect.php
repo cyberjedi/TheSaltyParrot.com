@@ -26,28 +26,39 @@ if (!isset($conn)) {
         
         // Check if config file was actually loaded (require_once returns 1 on success for define-only files)
         $configLoaded = false;
+        $config = null; // Initialize config array
         foreach ($possible_config_paths as $path) {
             if (file_exists($path)) {
-                require_once($path);
+                // Load the array returned by secure_variables.php
+                $config = require($path); 
                 $configLoaded = true;
                 error_log("Loaded config file: " . $path);
                 break;
             }
         }
 
-        if (!$configLoaded) {
-            throw new Exception('Database configuration file not found. Checked paths: ' . implode(', ', $possible_config_paths));
+        if (!$configLoaded || !is_array($config)) {
+            throw new Exception('Database configuration file not found or did not return an array. Checked paths: ' . implode(', ', $possible_config_paths));
         }
         
-        // Extract DB credentials using defined constants
-        $db_host = defined('DB_HOST') ? DB_HOST : 'localhost';
-        $db_port = defined('DB_PORT') ? DB_PORT : '3306'; // Default MySQL port
-        $db_name = defined('DB_NAME') ? DB_NAME : ''; // No sensible default, fail if not defined
-        $db_user = defined('DB_USER') ? DB_USER : '';
-        $db_pass = defined('DB_PASS') ? DB_PASS : '';
+        // Extract DB credentials from the config array
+        $db_host = $config['DB_HOST'] ?? 'localhost';
+        $db_port = $config['DB_PORT'] ?? '3306';
+        $db_name = $config['DB_NAME'] ?? null;
+        $db_user = $config['DB_USER'] ?? null;
+        $db_pass = $config['DB_PASS'] ?? null;
 
-        if (empty($db_name)) {
-            throw new Exception('DB_NAME is not defined in secure_variables.php');
+        // Validate required database credentials
+        if (empty($db_name) || empty($db_user)) { // Password can potentially be empty for local root
+            // Log detailed error
+            $missing_keys = [];
+            if (empty($db_name)) $missing_keys[] = 'DB_NAME';
+            if (empty($db_user)) $missing_keys[] = 'DB_USER';
+            // Add DB_PASS here if you require it: if (is_null($db_pass)) $missing_keys[] = 'DB_PASS';
+            
+            $error_message = 'Required database configuration keys missing in secure_variables.php: ' . implode(', ', $missing_keys);
+            error_log($error_message);
+            throw new Exception($error_message);
         }
 
         // Log the database configuration being used
