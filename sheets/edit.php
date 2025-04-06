@@ -178,20 +178,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 // Commit transaction for new sheet
                 $conn->commit();
                 $success_message = "Character sheet created successfully!";
-                
-                // Reload the sheet data after creation
-                $stmt = $conn->prepare("SELECT * FROM character_sheets WHERE id = ? AND user_id = ?");
-                $stmt->execute([$sheet_id, $user_id]);
-                $sheet = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-                if ($sheet && $sheet['system'] === 'pirate_borg') {
-                    $stmt = $conn->prepare("SELECT * FROM pirate_borg_sheets WHERE sheet_id = ?");
-                    $stmt->execute([$sheet_id]);
-                    $system_data = $stmt->fetch(PDO::FETCH_ASSOC);
-                    if ($system_data) {
-                        $sheet = array_merge($sheet, $system_data);
-                    }
-                }
+                header("Location: ../sheets.php?sheet=" . $sheet_id); // Redirect to the main sheets page
+                exit; // Stop script execution after redirect
 
             } else {
                 // First update the main sheet data
@@ -226,20 +214,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 // Commit transaction for update
                 $conn->commit();
                 $success_message = "Character sheet updated successfully!";
-
-                // Reload the sheet data after update
-                $stmt = $conn->prepare("SELECT * FROM character_sheets WHERE id = ? AND user_id = ?");
-                $stmt->execute([$sheet_id, $user_id]);
-                $sheet = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-                if ($sheet && $sheet['system'] === 'pirate_borg') {
-                    $stmt = $conn->prepare("SELECT * FROM pirate_borg_sheets WHERE sheet_id = ?");
-                    $stmt->execute([$sheet_id]);
-                    $system_data = $stmt->fetch(PDO::FETCH_ASSOC);
-                    if ($system_data) {
-                        $sheet = array_merge($sheet, $system_data);
-                    }
-                }
+                header("Location: ../sheets.php?sheet=" . $sheet_id); // Redirect to the main sheets page
+                exit; // Stop script execution after redirect
             }
             
         } catch (PDOException $e) {

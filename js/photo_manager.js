@@ -16,6 +16,7 @@ let selectedPhotoUrl = null;
 let applyCallback = null; // Function to call when photo is selected
 let currentContext = null; // 'profile' or 'sheet'
 let currentSheetId = null; // Only used when context is 'sheet'
+let currentUserId = null; // Added for user context
 
 function initPhotoManager(callback) {
     applyCallback = callback;
@@ -135,6 +136,7 @@ function loadUserPhotos() {
                         const photoItem = document.createElement('div');
                         photoItem.className = 'photo-item';
                         photoItem.dataset.url = photo.url; // Expecting root-relative URL
+                        photoItem.dataset.id = photo.id; // Store the photo ID
 
                         photoItem.innerHTML = `
                             <img src="/${photo.url}" alt="User photo" onerror="this.style.display='none'; this.parentElement.classList.add('img-error')">
@@ -153,7 +155,7 @@ function loadUserPhotos() {
                                     item.classList.remove('selected');
                                 });
                                 photoItem.classList.add('selected');
-                                selectedPhotoUrl = photoItem.dataset.url;
+                                selectedPhotoUrl = photoItem.dataset.url; // Still useful for applying the photo
                                 applySelectedPhotoBtn.disabled = false;
                             }
                         });
@@ -162,15 +164,17 @@ function loadUserPhotos() {
                         const deleteBtn = photoItem.querySelector('.photo-action-delete');
                         deleteBtn.addEventListener('click', (e) => {
                             e.stopPropagation();
-                            if (confirm('Are you sure you want to delete this photo? This might remove it from character sheets currently using it.')) {
-                                deletePhoto(photo.url); // Pass URL to delete function
+                            const photoIdToDelete = photoItem.dataset.id; // Get the photo ID
+                            if (confirm('Are you sure you want to delete this photo? This cannot be undone.')) {
+                                deletePhoto(photoIdToDelete); // Pass ID to delete function
                             }
                         });
                         userPhotosContainer.appendChild(photoItem);
                     });
                 }
             } else {
-                 displayPhotoManagerMessage(data.error || 'Failed to load photos', true);
+                 // Use message from response if available
+                 displayPhotoManagerMessage(data.message || 'Failed to load photos', true);
                 userPhotosContainer.innerHTML = '<div class="no-photos error-message">Could not load photos.</div>';
             }
         })
@@ -234,43 +238,85 @@ function uploadPhoto(file) {
     });
 }
 
-// Delete a photo - NOTE: Deleting by URL might be fragile. Needs server-side logic.
-// The server-side script sheets/api/delete_photo.php currently doesn't exist.
-// We need to create it or adapt this logic.
-function deletePhoto(photoUrl) {
-    displayPhotoManagerMessage('Deleting...', false);
-    
-    // *** TODO: Implement sheets/api/delete_photo.php on the server ***
-    // It should take photoUrl, find the actual file, delete it, 
-    // and potentially update any database records (users.photo_url, character_sheets.image_path)
-    // that reference this URL, setting them to null or a default.
-    
-    /* Example Fetch (needs server endpoint):
-    fetch('/sheets/api/delete_photo.php', {
+// Delete a photo
+function deletePhoto(imagePathToDelete) {
+    if (!currentSheetId && !currentUserId) { // Need context for user verification if not sheet-specific
+         console.error("Cannot delete photo: Missing context (currentSheetId or currentUserId).");
+         displayPhotoManagerMessage('Cannot delete photo without user context.', true);
+         return;
+    }
+
+    displayPhotoManagerMessage('Checking photo usage...', false);
+
+    // 1. Check if the photo is in use
+    fetch('/sheets/api/check_photo_usage.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ photoUrl: photoUrl })
+        body: JSON.stringify({ image_path: imagePathToDelete })
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            displayPhotoManagerMessage('Photo deleted.', false);
-            loadUserPhotos(); // Refresh gallery
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { throw new Error(err.error || 'Failed to check photo usage.'); });
+        }
+        return response.json();
+    })
+    .then(usageData => {
+        // 2. Construct confirmation message
+        let confirmMessage = "Are you sure you want to delete this photo? This cannot be undone.";
+        if (usageData.inUse) {
+            const names = usageData.characterNames.join(', ');
+            confirmMessage += `\n\nWARNING: This image is currently assigned to ${usageData.count} character(s): ${names}. Deleting it will remove it from them.`;
+        }
+
+        // 3. Show confirmation dialog
+        if (confirm(confirmMessage)) {
+            // 4. Proceed with deletion if confirmed
+            displayPhotoManagerMessage('Deleting...', false);
+            
+            // The existing delete_photo.php expects photo_id and character_id.
+            // Since we now identify photos by path, we need to adapt.
+            // Option A: Modify delete_photo.php to accept image_path and delete by path.
+            // Option B: Keep delete_photo.php as is, but find the relevant character_id(s)
+            //           and call delete_photo.php once per character (less ideal).
+            // Let's assume we modify delete_photo.php (Option A) - This requires server-side change.
+            
+            // Placeholder for fetch call to the *modified* delete_photo.php (needs backend change)
+            // This call needs to send the image_path.
+            fetch('/sheets/api/delete_photo.php', { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    image_path: imagePathToDelete, 
+                    // We might still need user_id for verification on the backend
+                    // user_id: currentUserId // Assuming currentUserId is available globally/scoped
+                }) 
+            })
+            .then(response => response.json()) // Assume server always returns JSON
+            .then(data => {
+                if (data.success) {
+                    displayPhotoManagerMessage(data.message || 'Photo reference potentially removed successfully.', false); // Message adjusted
+                    loadUserPhotos(); // Refresh gallery
+                } else {
+                    throw new Error(data.message || 'Delete failed for an unknown reason.');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting photo:', error);
+                displayPhotoManagerMessage('Error deleting photo: ' + error.message, true);
+            });
         } else {
-            throw new Error(data.error || 'Delete failed');
+            // User cancelled
+            displayPhotoManagerMessage('Deletion cancelled.', false);
         }
     })
     .catch(error => {
-        console.error('Error deleting photo:', error);
-        displayPhotoManagerMessage('Error deleting photo: ' + error.message, true);
+        console.error('Error checking photo usage:', error);
+        displayPhotoManagerMessage('Error checking photo usage: ' + error.message, true);
     });
-    */
-    
-    // Placeholder until server endpoint exists:
-    console.warn('Delete photo functionality requires server-side implementation at /sheets/api/delete_photo.php');
-    displayPhotoManagerMessage('Delete function not yet implemented.', true); 
 }
 
 // Make functions available globally or export if using modules more formally

@@ -53,11 +53,8 @@ if (!isset($conn)) {
         // Log the database configuration being used
         error_log("Attempting DB connection: host=$db_host, port=$db_port, dbname=$db_name, user=$db_user");
 
-        // Build DSN (Data Source Name)
-        $dsn = "mysql:host=$db_host;dbname=$db_name;charset=utf8mb4";
-        if ($db_port !== '3306') {
-            $dsn .= ";port=$db_port";
-        }
+        // Build DSN (Data Source Name) - Always include the port
+        $dsn = "mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4";
 
         // Create PDO connection
         $conn = new PDO(
@@ -84,4 +81,3 @@ if (!isset($conn)) {
         throw new Exception('Database configuration error: ' . $e->getMessage());
     }
 }
-?>

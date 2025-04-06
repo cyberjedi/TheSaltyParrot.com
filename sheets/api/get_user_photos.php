@@ -1,8 +1,9 @@
 <?php
 /**
- * Get User Photos API
+ * Get User Photos API (Filesystem Scan Version)
  * 
- * Retrieves all photos uploaded by the current user
+ * Retrieves all photos uploaded by the current user by scanning the upload directory
+ * for filenames starting with the user's UID.
  */
 
 // Start the session if not started
@@ -16,88 +17,66 @@ header('Content-Type: application/json');
 // Check if user is logged in
 if (!isset($_SESSION['uid'])) {
     http_response_code(401);
-    echo json_encode(['error' => 'Not authenticated']);
+    echo json_encode(['success' => false, 'message' => 'User not logged in.']);
     exit;
 }
 
 $user_id = $_SESSION['uid'];
+error_log("get_user_photos.php: Scanning for photos for user ID: " . $user_id);
+
+$response = ['success' => false, 'message' => 'An error occurred while fetching photos.', 'photos' => []];
+$photos_list = [];
 
 try {
-    // Include database connection
-    require_once '../../config/db_connect.php';
-    
-    if (!isset($conn) || $conn === null) {
-        throw new Exception('Database connection failed');
+    $upload_dir_relative_to_script = '../../uploads/character_sheets/';
+    $web_base_path = 'uploads/character_sheets/'; // Path for browser access
+
+    // Ensure the directory exists
+    if (!is_dir($upload_dir_relative_to_script)) {
+         // If the directory doesn't exist, there are no photos. Return success with empty list.
+         $response['success'] = true;
+         $response['photos'] = [];
+         $response['message'] = 'Upload directory not found.'; // Or 'No photos found.'
+         echo json_encode($response);
+         exit;
     }
 
-    // Get the upload directory path
-    $upload_dir = '../../uploads/character_sheets/';
-    $photos = [];
+    // Scan the directory
+    $files = scandir($upload_dir_relative_to_script);
     
-    // First, get all photos from the database that belong to this user's sheets
-    $stmt = $conn->prepare("SELECT DISTINCT image_path FROM character_sheets WHERE user_id = ? AND image_path IS NOT NULL AND image_path != '../assets/TSP_default_character.jpg'");
-    $stmt->execute([$user_id]);
-    $db_photos = $stmt->fetchAll(PDO::FETCH_COLUMN);
-    
-    // Add database photos to the list
-    foreach ($db_photos as $path) {
-        // Ensure the path from DB is also root-relative
-        $web_path = ltrim($path, './'); // Remove leading ./ or ../
-        if (strpos($web_path, 'uploads/') !== 0) { // Add uploads/ if missing (basic check)
-            // This might need refinement depending on how paths are stored
-            // $web_path = 'uploads/character_sheets/' . basename($web_path); 
-        }
-
-        if (file_exists('../../' . $web_path)) { // Check existence relative to script location
-            $photos[] = [
-                'url' => $web_path, // Use the root-relative path for the browser
-                'source' => 'database'
-            ];
-        }
+    if ($files === false) {
+        throw new Exception('Could not scan upload directory.');
     }
-    
-    // Now scan the uploads directory for any photos with the user's ID in the filename
-    if (is_dir($upload_dir)) {
-        $files = scandir($upload_dir);
-        foreach ($files as $file) {
-            // Skip . and .. directories
-            if ($file === '.' || $file === '..') {
-                continue;
-            }
-            
-            // Check if the filename contains the user's ID
-            if (strpos($file, $user_id . '_') === 0) {
-                $web_path = 'uploads/character_sheets/' . $file; // Removed ../
-                
-                // Check if this path is already in our photos array
-                $exists = false;
-                foreach ($photos as $photo) {
-                    if ($photo['url'] === $web_path) { // Check against 'url'
-                        $exists = true;
-                        break;
-                    }
-                }
-                
-                if (!$exists) {
-                    $photos[] = [
-                        'url' => $web_path, // Use the root-relative path
-                        'source' => 'filesystem'
-                    ];
-                }
+
+    // Filter files: must start with user_id + "_"
+    $user_prefix = $user_id . '_';
+    foreach ($files as $file) {
+        // Skip directories and ensure it starts with the user's prefix
+        if ($file !== '.' && $file !== '..' && strpos($file, $user_prefix) === 0) {
+            $full_file_path = $upload_dir_relative_to_script . $file;
+            // Ensure it's actually a file (not a subdir named like a file)
+            if (is_file($full_file_path)) {
+                 $web_path = $web_base_path . $file;
+                 $photos_list[] = [
+                    'id' => $web_path,  // Use path as ID for now
+                    'url' => $web_path
+                 ];
             }
         }
     }
-    
-    // Return photos as JSON
-    echo json_encode([
-        'success' => true,
-        'photos' => $photos // Ensure the key is 'photos' as expected by JS
-    ]);
-    
+
+    // Optional: Sort photos, e.g., by filename (which includes timestamp)
+    // sort($photos_list); // Or use usort for custom sorting
+
+    $response['success'] = true;
+    $response['photos'] = $photos_list;
+    $response['message'] = 'Photos loaded successfully.';
+
 } catch (Exception $e) {
+    error_log("General Error (get_user_photos - filesystem): " . $e->getMessage());
+    $response['message'] = 'An internal error occurred while scanning for photos.';
     http_response_code(500);
-    echo json_encode([
-        'error' => 'Failed to load photos: ' . $e->getMessage()
-    ]);
-    exit;
-} 
+}
+
+echo json_encode($response);
+exit;

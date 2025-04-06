@@ -25,9 +25,14 @@
 - This file is **required** for the application to connect to the database locally.
 - It is correctly ignored by Git (via `.gitignore`) to prevent committing sensitive credentials.
 - Key constants defined in this file:
-    - `DB_HOST`: Set to `127.0.0.1`.
-    - `DB_PORT`: Set to `3306` (standard MySQL port used by MAMP).
+    - `DB_HOST`: Set to `localhost` or `127.0.0.1`.
+    - `DB_PORT`: Set to `3306` (the standard MySQL port used by MAMP).
     - `DB_NAME`: Set to `theshfmb_SPDB` (based on the provided SQL dump).
     - `DB_USER`: Set to `root` (MAMP default).
     - `DB_PASS`: Set to `root` (MAMP default).
-- The database connection script `config/db_connect.php` has been updated to correctly load these defined constants. 
+- The database connection script `config/db_connect.php` has been updated to correctly load these defined constants.
+- **PHP Error Log:** MAMP's PHP error log, which is useful for debugging database connection issues and other PHP errors, is typically located at `/Applications/MAMP/logs/php_error.log`.
+
+## Backend / PHP Notes
+
+- **Session Key:** The user identifier stored in the PHP session (`$_SESSION`) is consistently named `uid`, **not** `user_id`. Ensure all API scripts that check for a logged-in user use `$_SESSION['uid']`. 
