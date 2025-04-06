@@ -11,8 +11,8 @@ require_once __DIR__ . '/../config/firebase-config.php';
 <div class="topbar">
     <div class="topbar-container">
         <!-- Logo in the upper left corner -->
-        <a href="index.php" class="topbar-logo">
-            <img src="assets/TSP_Logo_3inch.svg" alt="The Salty Parrot" height="40">
+        <a href="/index.php" class="topbar-logo">
+            <img src="/assets/TSP_Logo_3inch.svg" alt="The Salty Parrot" height="40">
         </a>
 
         <!-- Navigation buttons -->
@@ -54,10 +54,10 @@ require_once __DIR__ . '/../config/firebase-config.php';
         <!-- Navigation Links -->
         <div class="dropdown-section">
             <h3>Navigation</h3>
-            <a href="generators.php" class="menu-item">
+            <a href="/generators.php" class="menu-item">
                 <i class="fas fa-dice"></i> Generators
             </a>
-            <a href="sheets.php" class="menu-item">
+            <a href="/sheets.php" class="menu-item">
                 <i class="fas fa-scroll"></i> Character Sheets
             </a>
         </div>
@@ -66,7 +66,7 @@ require_once __DIR__ . '/../config/firebase-config.php';
             <!-- Account Options -->
             <div class="dropdown-section">
                 <h3>Account</h3>
-                <a href="account.php" class="menu-item">
+                <a href="/account.php" class="menu-item">
                     <i class="fas fa-user"></i> Account Settings
                 </a>
                 <button id="mobile-signout-btn" class="menu-item">

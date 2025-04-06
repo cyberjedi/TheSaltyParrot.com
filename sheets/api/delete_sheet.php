@@ -50,7 +50,7 @@ try {
     }
 
     // First, check if the sheet exists and belongs to this user
-    $checkStmt = $conn->prepare("SELECT id, system, image_path FROM character_sheets WHERE id = ? AND user_id = ?");
+    $checkStmt = $conn->prepare("SELECT id, `system`, image_path FROM character_sheets WHERE id = ? AND user_id = ?");
     $checkStmt->execute([$sheet_id, $user_id]);
     $sheet = $checkStmt->fetch(PDO::FETCH_ASSOC);
     

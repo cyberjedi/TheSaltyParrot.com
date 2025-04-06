@@ -154,86 +154,174 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             // Start a transaction for saving to multiple tables
             $conn->beginTransaction();
             
-            try {
-                // If sheet_id is empty, this is a new sheet
-                if (empty($sheet_id)) {
-                    // First insert the main sheet data
-                    $query = "INSERT INTO character_sheets (user_id, system, name, image_path, created_at, updated_at) 
-                             VALUES (?, ?, ?, ?, ?, ?)";
+            // If sheet_id is empty, this is a new sheet
+            if (empty($sheet_id)) {
+                // First insert the main sheet data
+                $query = "INSERT INTO character_sheets (user_id, `system`, name, image_path, created_at, updated_at) 
+                         VALUES (?, ?, ?, ?, ?, ?)";
+                
+                $stmt = $conn->prepare($query);
+                $stmt->execute([$user_id, $system, $name, $image_path, $now, $now]);
+                
+                // Get the new sheet ID
+                $sheet_id = $conn->lastInsertId();
+                
+                // Insert system-specific data
+                if ($system === 'pirate_borg') {
+                    $query = "INSERT INTO pirate_borg_sheets (sheet_id, character_type, strength, agility, presence, toughness, spirit, notes) 
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
                     
                     $stmt = $conn->prepare($query);
-                    $stmt->execute([$user_id, $system, $name, $image_path, $now, $now]);
-                    
-                    // Get the new sheet ID
-                    $sheet_id = $conn->lastInsertId();
-                    
-                    // Insert system-specific data
-                    if ($system === 'pirate_borg') {
-                        $query = "INSERT INTO pirate_borg_sheets (sheet_id, character_type, strength, agility, presence, toughness, spirit, notes) 
-                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-                        
-                        $stmt = $conn->prepare($query);
-                        $stmt->execute([$sheet_id, $_POST['character_type'], $strength, $agility, $presence, $toughness, $spirit, $notes]);
-                    }
-                    
-                    $success_message = "Character sheet created successfully!";
-                } else {
-                    // First update the main sheet data
-                    $query = "UPDATE character_sheets SET system = ?, name = ?, image_path = ?, updated_at = ? 
-                             WHERE id = ? AND user_id = ?";
-                    
-                    $stmt = $conn->prepare($query);
-                    $stmt->execute([$system, $name, $image_path, $now, $sheet_id, $user_id]);
-                    
-                    // Update system-specific data based on selected system
-                    if ($system === 'pirate_borg') {
-                        // Check if system data exists
-                        $check = $conn->prepare("SELECT 1 FROM pirate_borg_sheets WHERE sheet_id = ?");
-                        $check->execute([$sheet_id]);
-                        
-                        if ($check->fetchColumn()) {
-                            // Update
-                            $query = "UPDATE pirate_borg_sheets SET character_type = ?, strength = ?, agility = ?, presence = ?, 
-                                    toughness = ?, spirit = ?, notes = ? WHERE sheet_id = ?";
-                            
-                            $stmt = $conn->prepare($query);
-                            $stmt->execute([$_POST['character_type'], $strength, $agility, $presence, $toughness, $spirit, $notes, $sheet_id]);
-                        } else {
-                            // Insert
-                            $query = "INSERT INTO pirate_borg_sheets (sheet_id, character_type, strength, agility, presence, toughness, spirit, notes) 
-                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-                            
-                            $stmt = $conn->prepare($query);
-                            $stmt->execute([$sheet_id, $_POST['character_type'], $strength, $agility, $presence, $toughness, $spirit, $notes]);
-                        }
-                    }
-                    
-                    $success_message = "Character sheet updated successfully!";
+                    $stmt->execute([$sheet_id, $_POST['character_type'], $strength, $agility, $presence, $toughness, $spirit, $notes]);
                 }
                 
-                // Commit transaction
+                // Commit transaction for new sheet
                 $conn->commit();
+                $success_message = "Character sheet created successfully!";
                 
-                // Redirect to the sheets page after successful save
-                header("Location: /sheets.php?success=1&id={$sheet_id}");
-                exit;
+                // Reload the sheet data after creation
+                $stmt = $conn->prepare("SELECT * FROM character_sheets WHERE id = ? AND user_id = ?");
+                $stmt->execute([$sheet_id, $user_id]);
+                $sheet = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+                if ($sheet && $sheet['system'] === 'pirate_borg') {
+                    $stmt = $conn->prepare("SELECT * FROM pirate_borg_sheets WHERE sheet_id = ?");
+                    $stmt->execute([$sheet_id]);
+                    $system_data = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if ($system_data) {
+                        $sheet = array_merge($sheet, $system_data);
+                    }
+                }
+
+            } else {
+                // First update the main sheet data
+                $query = "UPDATE character_sheets SET `system` = ?, name = ?, image_path = ?, updated_at = ? 
+                         WHERE id = ? AND user_id = ?";
                 
-            } catch (Exception $e) {
-                // Rollback transaction on error
-                $conn->rollBack();
-                throw $e;
+                $stmt = $conn->prepare($query);
+                $stmt->execute([$system, $name, $image_path, $now, $sheet_id, $user_id]);
+                
+                // Update system-specific data based on selected system
+                if ($system === 'pirate_borg') {
+                    // Check if system data exists
+                    $check = $conn->prepare("SELECT 1 FROM pirate_borg_sheets WHERE sheet_id = ?");
+                    $check->execute([$sheet_id]);
+                    
+                    if ($check->fetchColumn()) {
+                        // Update
+                        $query = "UPDATE pirate_borg_sheets SET character_type = ?, strength = ?, agility = ?, presence = ?, 
+                                toughness = ?, spirit = ?, notes = ? WHERE sheet_id = ?";
+                        
+                        $stmt = $conn->prepare($query);
+                        $stmt->execute([$_POST['character_type'], $strength, $agility, $presence, $toughness, $spirit, $notes, $sheet_id]);
+                    } else {
+                         // Insert if it somehow didn't exist (data inconsistency?)
+                         $query = "INSERT INTO pirate_borg_sheets (sheet_id, character_type, strength, agility, presence, toughness, spirit, notes) 
+                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                         $stmt = $conn->prepare($query);
+                         $stmt->execute([$sheet_id, $_POST['character_type'], $strength, $agility, $presence, $toughness, $spirit, $notes]);
+                    }
+                }
+                
+                // Commit transaction for update
+                $conn->commit();
+                $success_message = "Character sheet updated successfully!";
+
+                // Reload the sheet data after update
+                $stmt = $conn->prepare("SELECT * FROM character_sheets WHERE id = ? AND user_id = ?");
+                $stmt->execute([$sheet_id, $user_id]);
+                $sheet = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+                if ($sheet && $sheet['system'] === 'pirate_borg') {
+                    $stmt = $conn->prepare("SELECT * FROM pirate_borg_sheets WHERE sheet_id = ?");
+                    $stmt->execute([$sheet_id]);
+                    $system_data = $stmt->fetch(PDO::FETCH_ASSOC);
+                    if ($system_data) {
+                        $sheet = array_merge($sheet, $system_data);
+                    }
+                }
             }
             
         } catch (PDOException $e) {
-            $error_message = "Database error: " . $e->getMessage();
-        } catch (Exception $e) {
-            $error_message = "Error: " . $e->getMessage();
+            // Roll back the transaction if something failed
+            if ($conn->inTransaction()) {
+                 $conn->rollBack();
+            }
+            // Log the detailed error
+            error_log("Database error saving character sheet (User: $user_id, Sheet: $sheet_id): " . $e->getMessage());
+            // Set generic error message for the user
+            $error_message = "An error occurred while saving the character sheet. Please try again or contact support if the problem persists.";
         }
     }
 }
 
-// Include header
-require_once '../components/topbar.php';
+// Prepare display data (ensure $sheet exists even after failed save attempt)
+// Re-fetch or use existing $sheet data before displaying the form
+// This part might need adjustment depending on how you want to handle partial data after save failure
+if (empty($sheet) && !empty($sheet_id)) {
+     // If save failed and $sheet got wiped, try reloading
+      try {
+         if (isset($conn) && $conn !== null) {
+             // Load main sheet data
+             $stmt = $conn->prepare("SELECT * FROM character_sheets WHERE id = ? AND user_id = ?");
+             $stmt->execute([$sheet_id, $user_id]);
+             $sheet = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+             if ($sheet) {
+                 // Load system-specific data
+                 if ($sheet['system'] === 'pirate_borg') {
+                     $stmt = $conn->prepare("SELECT * FROM pirate_borg_sheets WHERE sheet_id = ?");
+                     $stmt->execute([$sheet_id]);
+                     $system_data = $stmt->fetch(PDO::FETCH_ASSOC);
+                     if ($system_data) {
+                         $sheet = array_merge($sheet, $system_data);
+                     }
+                 }
+                 // Add other systems
+             }
+         }
+     } catch (PDOException $e) {
+         // Log error if reload fails too
+         error_log("Database error reloading sheet after save failure (User: $user_id, Sheet: $sheet_id): " . $e->getMessage());
+         if (empty($error_message)) { // Don't overwrite the save error
+            $error_message = "An error occurred while loading character sheet data.";
+         }
+         // Potentially clear $sheet or redirect? For now, let the form potentially show defaults/old data.
+          $sheet = null; // Prevent potential errors trying to access properties of null
+     }
+}
+
+// If still no sheet (e.g., new sheet creation failed), use default template
+if (!$sheet) {
+    $default_image_path = '/assets/TSP_default_character.jpg'; // Use root-relative path
+    $sheet = [
+        'id' => null,
+        'user_id' => $user_id,
+        'system' => 'pirate_borg',
+        'name' => isset($_POST['name']) ? htmlspecialchars($_POST['name']) : 'New Character', // Preserve submitted name on failure
+        'image_path' => isset($_POST['selected_image_path']) && !empty($_POST['selected_image_path']) ? htmlspecialchars($_POST['selected_image_path']) : $default_image_path, // Preserve selected image
+        'strength' => isset($_POST['strength']) ? (int)$_POST['strength'] : 0,
+        'agility' => isset($_POST['agility']) ? (int)$_POST['agility'] : 0,
+        'presence' => isset($_POST['presence']) ? (int)$_POST['presence'] : 0,
+        'toughness' => isset($_POST['toughness']) ? (int)$_POST['toughness'] : 0,
+        'spirit' => isset($_POST['spirit']) ? (int)$_POST['spirit'] : 0,
+        'notes' => isset($_POST['notes']) ? htmlspecialchars($_POST['notes']) : '',
+        'character_type' => isset($_POST['character_type']) ? htmlspecialchars($_POST['character_type']) : '',
+        'created_at' => null,
+        'updated_at' => null
+    ];
+} else {
+     // Ensure image path is root-relative for display
+     if (strpos($sheet['image_path'], '../') === 0) {
+         $sheet['image_path'] = substr($sheet['image_path'], 3); // Remove ../
+     }
+      if ($sheet['image_path'] === 'assets/TSP_default_character.jpg') {
+         $sheet['image_path'] = '/assets/TSP_default_character.jpg'; // Ensure leading slash
+     } elseif (!empty($sheet['image_path']) && strpos($sheet['image_path'], '/') !== 0) {
+         // Assume it's in uploads if not default and not starting with /
+         $sheet['image_path'] = '/uploads/character_sheets/' . basename($sheet['image_path']);
+     }
+}
 ?>
 
 <!DOCTYPE html>
@@ -253,6 +341,8 @@ require_once '../components/topbar.php';
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <?php include '../components/topbar.php'; // Adjusted path ?>
+
     <div class="main-content-new">
         <div class="page-container">
             <div class="sheet-container">
@@ -287,7 +377,7 @@ require_once '../components/topbar.php';
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="name">Character Name</label>
-                                    <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($sheet['name']); ?>" required>
+                                    <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($sheet['name'] ?? ''); ?>" required>
                                 </div>
                             </div>
                             
@@ -302,10 +392,10 @@ require_once '../components/topbar.php';
                                 <div class="form-group">
                                     <label for="image">Character Image</label>
                                     <div class="profile-image-preview">
-                                        <img id="image-preview" src="<?php echo htmlspecialchars($sheet['image_path']); ?>" 
+                                        <img id="image-preview" src="<?php echo htmlspecialchars($sheet['image_path'] ?? '/assets/TSP_default_character.jpg'); ?>" 
                                              alt="Character Portrait" 
-                                             onerror="this.src='../assets/TSP_default_character.jpg'">
-                                        <div class="edit-icon" onclick="openPhotoManagement(<?php echo $sheet_id ? $sheet_id : 'null'; ?>)">
+                                             onerror="this.src='/assets/TSP_default_character.jpg'">
+                                        <div class="edit-icon" onclick="openSharedPhotoManager(<?php echo $sheet_id ? $sheet_id : 'null'; ?>)">
                                             <i class="fas fa-pencil-alt"></i>
                                         </div>
                                     </div>
@@ -322,23 +412,23 @@ require_once '../components/topbar.php';
                                 <div class="attributes-grid">
                                     <div class="attribute-item">
                                         <label for="strength">Strength</label>
-                                        <input type="text" id="strength" name="strength" value="<?php echo (int)$sheet['strength']; ?>" class="attribute-field">
+                                        <input type="text" id="strength" name="strength" value="<?php echo (int)($sheet['strength'] ?? 0); ?>" class="attribute-field">
                                     </div>
                                     <div class="attribute-item">
                                         <label for="agility">Agility</label>
-                                        <input type="text" id="agility" name="agility" value="<?php echo (int)$sheet['agility']; ?>" class="attribute-field">
+                                        <input type="text" id="agility" name="agility" value="<?php echo (int)($sheet['agility'] ?? 0); ?>" class="attribute-field">
                                     </div>
                                     <div class="attribute-item">
                                         <label for="presence">Presence</label>
-                                        <input type="text" id="presence" name="presence" value="<?php echo (int)$sheet['presence']; ?>" class="attribute-field">
+                                        <input type="text" id="presence" name="presence" value="<?php echo (int)($sheet['presence'] ?? 0); ?>" class="attribute-field">
                                     </div>
                                     <div class="attribute-item">
                                         <label for="toughness">Toughness</label>
-                                        <input type="text" id="toughness" name="toughness" value="<?php echo (int)$sheet['toughness']; ?>" class="attribute-field">
+                                        <input type="text" id="toughness" name="toughness" value="<?php echo (int)($sheet['toughness'] ?? 0); ?>" class="attribute-field">
                                     </div>
                                     <div class="attribute-item">
                                         <label for="spirit">Spirit</label>
-                                        <input type="text" id="spirit" name="spirit" value="<?php echo (int)$sheet['spirit']; ?>" class="attribute-field">
+                                        <input type="text" id="spirit" name="spirit" value="<?php echo (int)($sheet['spirit'] ?? 0); ?>" class="attribute-field">
                                     </div>
                                 </div>
                             </div>
@@ -346,7 +436,7 @@ require_once '../components/topbar.php';
                             <div class="edit-section">
                                 <div class="form-group">
                                     <label for="notes">Notes</label>
-                                    <textarea id="notes" name="notes"><?php echo htmlspecialchars($sheet['notes']); ?></textarea>
+                                    <textarea id="notes" name="notes"><?php echo htmlspecialchars($sheet['notes'] ?? ''); ?></textarea>
                                 </div>
                             </div>
                         </div>
@@ -363,41 +453,9 @@ require_once '../components/topbar.php';
         </div>
     </div>
     
-    <!-- Photo Management Modal -->
-    <div id="photo-management-modal" class="photo-management-modal">
-        <div class="photo-management-container">
-            <div class="photo-management-header">
-                <h3>Character Image Manager</h3>
-                <button class="photo-management-close">&times;</button>
-            </div>
-            
-            <div class="photo-gallery" id="photo-gallery">
-                <!-- Photos will be loaded here -->
-                <div class="loading-photos">
-                    <i class="fas fa-spinner fa-spin"></i> Loading photos...
-                </div>
-            </div>
-            
-            <div class="upload-section">
-                <h4>Upload New Image</h4>
-                <div class="upload-dropzone" id="upload-dropzone">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <p>Drag and drop an image here, or click to select a file</p>
-                </div>
-                <form id="upload-form" class="upload-form" enctype="multipart/form-data">
-                    <input type="file" id="file-input" name="image" accept="image/*" style="display: none;">
-                    <input type="hidden" id="sheet-id-input" name="sheet_id">
-                </form>
-            </div>
-            
-            <div class="photo-management-actions">
-                <button id="cancel-photo-selection" class="btn btn-secondary">Cancel</button>
-                <button id="apply-photo-selection" class="btn btn-primary">Apply Selected Photo</button>
-            </div>
-        </div>
-    </div>
+    <?php include '../components/photo_manager_modal.php'; // Include shared modal ?>
 
-    <!-- Delete Photo Confirmation Modal -->
+    <!-- Delete Photo Confirmation Modal (Keep this one for now as it has sheet-specific checks) -->
     <div id="delete-photo-modal" class="delete-photo-modal">
         <div class="delete-photo-container">
             <div class="delete-photo-header">
@@ -419,193 +477,144 @@ require_once '../components/topbar.php';
     </div>
     
     <script>
-        // Image preview functionality
-        document.getElementById('image').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    document.getElementById('image-preview').src = event.target.result;
-                };
-                reader.readAsDataURL(file);
+        document.addEventListener('DOMContentLoaded', function() {
+            // Image preview functionality
+            const imageInput = document.getElementById('image');
+            if (imageInput) {
+                imageInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            const preview = document.getElementById('image-preview');
+                            if (preview) {
+                                preview.src = event.target.result;
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
             }
-        });
+            
+            // Show/hide system-specific fields based on system selection
+            const systemSelect = document.getElementById('system');
+            if (systemSelect) {
+                systemSelect.addEventListener('change', function() {
+                    const system = this.value;
+                    document.querySelectorAll('.system-specific-fields').forEach(el => {
+                        el.classList.remove('active');
+                    });
+                    // Construct the ID correctly (replace underscore with hyphen if needed)
+                    const systemId = system.replace('_', '-') + '-fields'; 
+                    const fieldsToShow = document.getElementById(systemId);
+                    if (fieldsToShow) {
+                        fieldsToShow.classList.add('active');
+                    } else {
+                        console.warn('Could not find system fields div with ID:', systemId);
+                    }
+                });
+                // Trigger change once on load to set initial state
+                systemSelect.dispatchEvent(new Event('change')); 
+            }
+
+            // Input validation for attribute fields
+            document.querySelectorAll('.attribute-field').forEach(input => {
+                // Allow only numbers (including negative)
+                input.addEventListener('input', function(e) {
+                    let value = this.value;
+                    if (value.startsWith('-')) {
+                        value = '-' + value.substring(1).replace(/[^\d]/g, '');
+                    } else {
+                        value = value.replace(/[^\d]/g, '');
+                    }
+                    // Prevent multiple leading zeros unless it's just '0'
+                    if (value.length > 1 && value.startsWith('0')) {
+                        value = value.substring(1);
+                    }
+                    if (value.length > 2 && value.startsWith('-0')) {
+                         value = '-' + value.substring(2);
+                    }
+                    this.value = value;
+                });
+
+                // Ensure proper number formatting when focus is lost
+                input.addEventListener('blur', function() {
+                    if (this.value === '' || this.value === '-') {
+                        this.value = '0';
+                    } else {
+                         // Convert to number and back to string to remove leading zeros like 05 -> 5
+                         this.value = parseInt(this.value, 10).toString(); 
+                    }
+                });
+            });
+
+            // Form validation
+            const sheetForm = document.getElementById('sheet-form');
+            if (sheetForm) {
+                sheetForm.addEventListener('submit', function(e) {
+                    const attributeFields = document.querySelectorAll('.attribute-field');
+                    let isValid = true;
+                    attributeFields.forEach(field => {
+                        field.style.borderColor = ''; // Reset border color
+                        if (field.value === '' || isNaN(parseInt(field.value))) {
+                            isValid = false;
+                            field.style.borderColor = 'red';
+                        }
+                    });
+                    
+                    if (!isValid) {
+                        e.preventDefault();
+                        alert('Please enter valid numbers for all attributes');
+                    }
+                });
+            }
+
+            // Initialize the shared photo manager
+            if (window.photoManager) {
+                function handleSheetPhotoUpdate(photoUrl) {
+                    const previewImg = document.getElementById('image-preview');
+                    if (previewImg) {
+                        previewImg.src = '/' + photoUrl; // Use root-relative path
+                    }
+                    const hiddenInput = document.getElementById('selected_image_path');
+                    if (hiddenInput) {
+                        hiddenInput.value = photoUrl; // Store root-relative path
+                    }
+                }
+                window.photoManager.init(handleSheetPhotoUpdate);
+            } else {
+                console.error("Photo Manager script not loaded or failed to initialize.");
+            }
+            
+            // Keep the delete photo modal logic for now as it's sheet-specific
+            const confirmDeleteBtn = document.getElementById('confirm-photo-delete');
+            const cancelDeleteBtn = document.getElementById('cancel-photo-delete');
+            if (confirmDeleteBtn) {
+                confirmDeleteBtn.addEventListener('click', deletePhoto);
+            }
+             if (cancelDeleteBtn) {
+                cancelDeleteBtn.addEventListener('click', closeDeletePhotoModal);
+            }
+
+        }); // End of DOMContentLoaded listener
+
+        // Function to open the shared photo manager (can be defined outside DOMContentLoaded)
+        function openSharedPhotoManager(sheetId) {
+             if (window.photoManager && typeof window.photoManager.show === 'function') {
+                 window.photoManager.show('sheet', sheetId); // Pass context and sheet ID
+             } else {
+                  console.error("Cannot open Photo Manager: Not initialized or show function missing.");
+                  alert("Error: Could not open the photo manager. Please refresh the page.");
+             }
+        }
         
-        // Show/hide system-specific fields based on system selection
-        document.getElementById('system').addEventListener('change', function() {
-            const system = this.value;
-            
-            // Hide all system-specific fields
-            document.querySelectorAll('.system-specific-fields').forEach(el => {
-                el.classList.remove('active');
-            });
-            
-            // Show the selected system's fields
-            if (system === 'pirate_borg') {
-                document.getElementById('pirate-borg-fields').classList.add('active');
-            }
-            // Add more system handlers here in the future
-        });
-
-        // Input validation for attribute fields
-        document.querySelectorAll('.attribute-field').forEach(input => {
-            // Allow only numbers (including negative)
-            input.addEventListener('input', function(e) {
-                let value = this.value;
-                // Remove any non-digit characters except minus sign at the beginning
-                if (value.startsWith('-')) {
-                    value = '-' + value.substring(1).replace(/[^\d]/g, '');
-                } else {
-                    value = value.replace(/[^\d]/g, '');
-                }
-                this.value = value;
-            });
-
-            // Ensure proper number formatting when focus is lost
-            input.addEventListener('blur', function() {
-                if (this.value === '') {
-                    this.value = '0';
-                } else if (this.value === '-') {
-                    this.value = '0';
-                }
-            });
-        });
-
-        // Form validation
-        document.getElementById('sheet-form').addEventListener('submit', function(e) {
-            // Ensure all attribute fields contain valid numbers
-            const attributeFields = document.querySelectorAll('.attribute-field');
-            let isValid = true;
-            
-            attributeFields.forEach(field => {
-                if (field.value === '' || isNaN(parseInt(field.value))) {
-                    isValid = false;
-                    field.style.borderColor = 'red';
-                }
-            });
-            
-            if (!isValid) {
-                e.preventDefault();
-                alert('Please enter valid numbers for all attributes');
-            }
-        });
-
-        // Photo management functionality
-        let currentPhotoManagementSheetId = null;
-        let selectedPhotoPath = null;
+        // Delete photo modal functions (can be defined outside DOMContentLoaded)
         let photoToDelete = null;
 
-        // Open photo management modal
-        function openPhotoManagement(sheetId) {
-            currentPhotoManagementSheetId = sheetId;
-            document.getElementById('sheet-id-input').value = sheetId;
-            document.getElementById('photo-management-modal').style.display = 'block';
-            loadUserPhotos();
-        }
-
-        // Close photo management modal
-        function closePhotoManagement() {
-            document.getElementById('photo-management-modal').style.display = 'none';
-            document.getElementById('photo-gallery').innerHTML = '';
-            currentPhotoManagementSheetId = null;
-            selectedPhotoPath = null;
-        }
-
-        // Load user photos
-        function loadUserPhotos() {
-            const photoGallery = document.getElementById('photo-gallery');
-            photoGallery.innerHTML = '<div class="loading-photos"><i class="fas fa-spinner fa-spin"></i> Loading photos...</div>';
-            
-            fetch('../sheets/api/get_user_photos.php')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        renderPhotoGallery(data.photos);
-                    } else {
-                        photoGallery.innerHTML = `<div class="error-message">${data.error || 'Failed to load photos'}</div>`;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading photos:', error);
-                    photoGallery.innerHTML = '<div class="error-message">Failed to load photos. Please try again.</div>';
-                });
-        }
-
-        // Render photo gallery
-        function renderPhotoGallery(photos) {
-            const photoGallery = document.getElementById('photo-gallery');
-            
-            if (!photos || photos.length === 0) {
-                photoGallery.innerHTML = '<div class="no-photos">You don\'t have any uploaded photos yet.</div>';
-                return;
-            }
-            
-            // Get current image path
-            let currentImagePath = document.getElementById('image-preview').src;
-            // Convert relative URL to path if needed
-            if (currentImagePath.includes('/')) {
-                const pathParts = currentImagePath.split('/');
-                const filename = pathParts[pathParts.length - 1];
-                if (filename !== 'TSP_default_character.jpg') {
-                    currentImagePath = '../uploads/character_sheets/' + filename;
-                }
-            }
-            
-            // Create gallery HTML
-            photoGallery.innerHTML = '';
-            photos.forEach(photo => {
-                const isSelected = photo.path === currentImagePath || photo.path === selectedPhotoPath;
-                const photoItem = document.createElement('div');
-                photoItem.className = `photo-item ${isSelected ? 'selected' : ''}`;
-                photoItem.innerHTML = `
-                    <img src="${photo.path}" alt="Character Photo">
-                    <div class="photo-actions">
-                        <button class="photo-action-btn" onclick="selectPhoto('${photo.path}', this.parentNode.parentNode)">
-                            <i class="fas fa-check"></i>
-                        </button>
-                        <button class="photo-action-btn photo-action-delete" onclick="confirmDeletePhoto('${photo.path}')">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                `;
-                photoGallery.appendChild(photoItem);
-            });
-        }
-
-        // Select a photo
-        function selectPhoto(path, photoElement) {
-            selectedPhotoPath = path;
-            
-            // Update selected class
-            document.querySelectorAll('.photo-item').forEach(item => {
-                item.classList.remove('selected');
-            });
-            
-            photoElement.classList.add('selected');
-        }
-
-        // Apply selected photo to the form
-        function applySelectedPhoto() {
-            if (!selectedPhotoPath) {
-                return;
-            }
-            
-            // Update the preview image
-            document.getElementById('image-preview').src = selectedPhotoPath;
-            
-            // Set the value in the hidden input
-            document.getElementById('selected_image_path').value = selectedPhotoPath;
-            
-            // Close the modal
-            closePhotoManagement();
-        }
-
-        // Confirm photo deletion
         function confirmDeletePhoto(path) {
-            photoToDelete = path;
-            
-            // Check if the photo is used by any sheets
-            fetch(`../sheets/api/check_photo_usage.php?path=${encodeURIComponent(path)}`)
+            photoToDelete = path; 
+            const checkPath = path.startsWith('../') ? path.substring(3) : path; // Ensure root-relative
+            fetch(`/sheets/api/check_photo_usage.php?path=${encodeURIComponent(checkPath)}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -625,7 +634,10 @@ require_once '../components/topbar.php';
                             deletePhotoSheets.style.display = 'none';
                         }
                         
-                        document.getElementById('delete-photo-modal').style.display = 'flex';
+                        const deleteModal = document.getElementById('delete-photo-modal');
+                         if (deleteModal) {
+                            deleteModal.style.display = 'flex';
+                         }
                     } else {
                         alert(data.error || 'Failed to check photo usage');
                     }
@@ -636,34 +648,38 @@ require_once '../components/topbar.php';
                 });
         }
 
-        // Delete photo
         function deletePhoto() {
             if (!photoToDelete) {
                 return;
             }
-            
-            fetch('../sheets/api/delete_photo.php', {
+            const deletePath = photoToDelete.startsWith('../') ? photoToDelete.substring(3) : photoToDelete;
+
+            fetch('/sheets/api/delete_photo.php', { // Needs root path
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    path: photoToDelete
+                    path: deletePath // Send root-relative path
                 })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Close delete modal
                     closeDeletePhotoModal();
-                    
-                    // Reload photos
-                    loadUserPhotos();
-                    
-                    // If the current image was this photo, reset it to default
-                    if (document.getElementById('image-preview').src.includes(photoToDelete)) {
-                        document.getElementById('image-preview').src = '../assets/TSP_default_character.jpg';
-                        document.getElementById('selected_image_path').value = '';
+                    const previewImg = document.getElementById('image-preview');
+                    if (previewImg && previewImg.src.includes(deletePath)) {
+                         // Use root-relative default path
+                         previewImg.src = '/assets/TSP_default_character.jpg'; 
+                         const hiddenInput = document.getElementById('selected_image_path');
+                         if (hiddenInput) {
+                            hiddenInput.value = '';
+                         }
+                    }
+                    alert('Photo deleted. You may need to reopen the manager to see the change.');
+                    // Potentially call photoManager.loadPhotos() if the shared modal might be open?
+                    if (window.photoManager && typeof window.photoManager.loadPhotos === 'function') {
+                         window.photoManager.loadPhotos(); // Refresh the shared gallery if it's defined
                     }
                 } else {
                     alert(data.error || 'Failed to delete photo');
@@ -675,125 +691,15 @@ require_once '../components/topbar.php';
             });
         }
 
-        // Close delete photo modal
         function closeDeletePhotoModal() {
-            document.getElementById('delete-photo-modal').style.display = 'none';
+            const deleteModal = document.getElementById('delete-photo-modal');
+             if (deleteModal) {
+                 deleteModal.style.display = 'none';
+             }
             photoToDelete = null;
         }
-
-        // Set up upload functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const photoManagementModal = document.getElementById('photo-management-modal');
-            const photoManagementClose = document.querySelector('.photo-management-close');
-            const uploadDropzone = document.getElementById('upload-dropzone');
-            const fileInput = document.getElementById('file-input');
-            const uploadForm = document.getElementById('upload-form');
-            const applyPhotoBtn = document.getElementById('apply-photo-selection');
-            const cancelPhotoBtn = document.getElementById('cancel-photo-selection');
-            const confirmDeleteBtn = document.getElementById('confirm-photo-delete');
-            const cancelDeleteBtn = document.getElementById('cancel-photo-delete');
-            
-            // Close photo management modal
-            photoManagementClose.addEventListener('click', closePhotoManagement);
-            cancelPhotoBtn.addEventListener('click', closePhotoManagement);
-            
-            // Close modal when clicking outside
-            window.addEventListener('click', function(event) {
-                if (event.target === photoManagementModal) {
-                    closePhotoManagement();
-                }
-            });
-            
-            // Apply selected photo
-            applyPhotoBtn.addEventListener('click', applySelectedPhoto);
-            
-            // Delete photo confirmation
-            confirmDeleteBtn.addEventListener('click', deletePhoto);
-            cancelDeleteBtn.addEventListener('click', closeDeletePhotoModal);
-            
-            // Upload dropzone click
-            uploadDropzone.addEventListener('click', function() {
-                fileInput.click();
-            });
-            
-            // File selection
-            fileInput.addEventListener('change', function() {
-                if (this.files.length > 0) {
-                    uploadPhoto(this.files[0]);
-                }
-            });
-            
-            // Drag and drop
-            uploadDropzone.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                this.style.borderColor = 'var(--accent-primary)';
-                this.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-            });
-            
-            uploadDropzone.addEventListener('dragleave', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                this.style.borderColor = 'var(--accent-secondary)';
-                this.style.backgroundColor = '';
-            });
-            
-            uploadDropzone.addEventListener('drop', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                this.style.borderColor = 'var(--accent-secondary)';
-                this.style.backgroundColor = '';
-                
-                if (e.dataTransfer.files.length > 0) {
-                    uploadPhoto(e.dataTransfer.files[0]);
-                }
-            });
-            
-            // Upload photo
-            function uploadPhoto(file) {
-                // Check file type
-                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-                if (!allowedTypes.includes(file.type)) {
-                    alert('Invalid file type. Please upload a JPEG, PNG, or GIF image.');
-                    return;
-                }
-                
-                // Create form data
-                const formData = new FormData();
-                formData.append('image', file);
-                formData.append('sheet_id', currentPhotoManagementSheetId);
-                
-                // Show loading state
-                uploadDropzone.innerHTML = '<i class="fas fa-spinner fa-spin"></i><p>Uploading...</p>';
-                
-                // Upload file
-                fetch('../sheets/api/upload_photo.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Reset dropzone
-                        uploadDropzone.innerHTML = '<i class="fas fa-cloud-upload-alt"></i><p>Drag and drop an image here, or click to select a file</p>';
-                        
-                        // Select the new photo
-                        selectedPhotoPath = data.path;
-                        
-                        // Reload photos
-                        loadUserPhotos();
-                    } else {
-                        alert(data.error || 'Failed to upload photo');
-                        uploadDropzone.innerHTML = '<i class="fas fa-cloud-upload-alt"></i><p>Drag and drop an image here, or click to select a file</p>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error uploading photo:', error);
-                    alert('Failed to upload photo. Please try again.');
-                    uploadDropzone.innerHTML = '<i class="fas fa-cloud-upload-alt"></i><p>Drag and drop an image here, or click to select a file</p>';
-                });
-            }
-        });
+        
     </script>
+    <script src="../js/photo_manager.js" defer></script> <!-- Include shared JS -->
 </body>
 </html> 

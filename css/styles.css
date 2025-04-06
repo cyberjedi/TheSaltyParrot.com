@@ -635,8 +635,15 @@ footer p {
 
 /* Main Content Area */
 .main-content {
-    flex: 1;
-    padding: 20px;
+    flex-grow: 1;
+    padding: 2rem;
+    margin-left: 250px;
+    transition: margin-left 0.3s ease;
+}
+
+.main-content-new {
+    flex-grow: 1;
+    padding: 2rem;
 }
 
 /* Dashboard/Home Page Styles */
@@ -1260,4 +1267,8 @@ body, .main-content, .app-container, main {
 
 .btn-discord:hover {
     background-color: #5b73c7;
+}
+
+html {
+    /* height: 100%; Removed - Allow content growth */
 }

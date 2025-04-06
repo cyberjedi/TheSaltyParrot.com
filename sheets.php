@@ -442,8 +442,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Delete a sheet
     function deleteSheet(id) {
-        fetch(`/sheets/api/delete_sheet.php?id=${id}`, {
-            method: 'DELETE'
+        fetch(`/sheets/api/delete_sheet.php`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id: id })
         })
         .then(response => response.json())
         .then(data => {

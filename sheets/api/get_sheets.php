@@ -44,7 +44,7 @@ try {
     }
     
     // Add order by
-    $query .= " ORDER BY updated_at DESC";
+    $query .= " ORDER BY is_active DESC, updated_at DESC";
     
     // Get all sheets for this user
     $stmt = $conn->prepare($query);
