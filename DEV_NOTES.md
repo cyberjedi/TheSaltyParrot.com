@@ -1,5 +1,9 @@
 # Development Notes
 
+## Color Scheme. 
+
+- Always check the /css/styles.css when building new elements to ensure the correct colors are used.
+
 ## Firebase Emulator
 
 - The application is configured to automatically connect to the Firebase Authentication Emulator when running on `localhost` or `127.0.0.1`.
