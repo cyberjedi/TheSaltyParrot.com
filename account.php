@@ -85,7 +85,7 @@ try {
     <link rel="stylesheet" href="css/account.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
-<body class="account-page">
+<body class="account-page" data-user-uid="<?php echo htmlspecialchars($_SESSION['uid']); ?>">
     <!-- Include the topbar -->
     <?php include 'components/topbar.php'; ?>
     
@@ -118,32 +118,20 @@ try {
                         <input type="text" id="displayName" value="<?php echo htmlspecialchars($user['displayName']); ?>" placeholder="Your display name">
                     </div>
                     
-                    <button id="profile-image-btn" class="btn btn-secondary">
+                    <button id="profile-image-btn" class="btn btn-submit">
                         <i class="fas fa-image"></i> Profile Image
                     </button>
+
+                    <button id="change-password-btn" class="btn btn-submit">
+                        <i class="fas fa-key"></i> Change Password
+                    </button>
                     
-                    <button id="save-profile" class="btn btn-submit">Save Profile</button>
+                    <button id="save-profile" class="btn btn-submit">
+                        <i class="fas fa-save"></i> Save Profile
+                    </button>
                 </div>
             </div>
             
-            <div class="account-section">
-                <h2><i class="fas fa-shield-alt"></i> Account Security</h2>
-                
-                <div id="security-alert" class="alert" role="alert"></div>
-                
-                <div class="form-group">
-                    <label for="password">New Password</label>
-                    <input type="password" id="password" placeholder="New password">
-                </div>
-                
-                <div class="form-group">
-                    <label for="confirm-password">Confirm New Password</label>
-                    <input type="password" id="confirm-password" placeholder="Confirm new password">
-                </div>
-                
-                <button id="change-password" class="btn btn-submit">Update Password</button>
-            </div>
-
             <div class="account-section">
                 <h2><i class="fab fa-discord"></i> Discord Integration</h2>
                 <?php if (isset($_SESSION['discord_user']) && isset($_SESSION['discord_user']['avatar_url'])): ?>
@@ -211,10 +199,29 @@ try {
                     
                     <!-- Party information will be loaded here -->
                     <div id="party-info" style="display: none;">
-                        <!-- Content will be dynamically updated -->
+                        <!-- Container for dynamic party details (name, code) -->
+                        <div id="party-details-content">
+                            <!-- Party name and code will be injected here by JS -->
+                        </div>
+                        
+                        <!-- Container for dynamic member list -->
+                        <h4>Members</h4>
+                        <div id="party-members-list" class="party-members">
+                             <!-- Member list will be injected here by JS -->
+                        </div>
+
+                        <!-- Party Member Actions (visible only when in a party) -->
+                        <div class="party-member-actions" style="display: none; margin-top: 1rem;">
+                             <button id="rename-party-btn" class="btn btn-submit">
+                                <i class="fas fa-edit"></i> Rename Party
+                            </button>
+                            <button id="leave-party-btn" class="btn btn-danger">
+                                <i class="fas fa-sign-out-alt"></i> Leave Party
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- Party Action Buttons -->
+                    <!-- Party Action Buttons (visible when not in a party)-->
                     <div id="party-forms" style="display: none;">
                         <div class="party-actions">
                             <button id="create-party-btn" class="btn btn-danger">
@@ -234,6 +241,26 @@ try {
         <p>The Salty Parrot is an independent production by Stuart Greenwell. It is not affiliated with Limithron LLC. It is published under the PIRATE BORG Third Party License. PIRATE BORG is ©2022 Limithron LLC.</p>
         <p>&copy; 2025 The Salty Parrot</p>
     </footer>
+
+    <!-- Change Password Modal -->
+    <div id="change-password-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" data-modal-id="change-password-modal">&times;</span>
+            <h3>Change Password</h3>
+            <div id="change-password-alert" class="alert" role="alert"></div>
+            <form id="change-password-form">
+                <div class="form-group">
+                    <label for="modal-password">New Password</label>
+                    <input type="password" id="modal-password" placeholder="New password" required>
+                </div>
+                <div class="form-group">
+                    <label for="modal-confirm-password">Confirm New Password</label>
+                    <input type="password" id="modal-confirm-password" placeholder="Confirm new password" required>
+                </div>
+                <button type="submit" id="update-password-btn" class="btn btn-submit">Update Password</button>
+            </form>
+        </div>
+    </div>
 
     <!-- Add Webhook Modal -->
     <div id="add-webhook-modal" class="modal">
@@ -300,8 +327,13 @@ try {
         window.DISCORD_CLIENT_ID = '<?php echo DISCORD_CLIENT_ID; ?>';
     </script>
 
-    <script type="module" src="js/firebase-auth.js"></script>
-    <script src="js/account.js"></script>
+    <!-- Firebase Libraries (Order is important!) -->
+    <script type="module" src="/js/firebase-auth.js"></script>
+    <script type="module" src="/js/account.js"></script>
+    <!-- Removed incorrect references to non-existent files below -->
+    <!-- <script type="module" src="/js/discord-webhooks.js"></script> -->
+    <!-- <script type="module" src="/js/party.js"></script> -->
+    <script type="module" src="/js/modal.js"></script>
     
     <?php include 'image_management/photo_manager_modal.php'; // UPDATED path ?>
     
@@ -334,6 +366,24 @@ try {
             </form>
         </div>
     </div>
+
+    <!-- Rename Party Modal -->
+    <div id="rename-party-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" data-modal-id="rename-party-modal">&times;</span>
+            <h3>Rename Party</h3>
+            <div id="rename-party-alert" class="alert" role="alert"></div>
+            <form id="rename-party-form">
+                <input type="hidden" id="rename-party-id" name="partyId"> <!-- Hidden field for ID -->
+                <div class="form-group">
+                    <label for="rename-party-name">New Party Name</label>
+                    <input type="text" id="rename-party-name" name="partyName" required>
+                </div>
+                <button type="submit" id="save-party-name-btn" class="btn btn-submit">Save Name</button>
+            </form>
+        </div>
+    </div>
+
     <script src="js/utils.js" defer></script>
 </body>
 </html>

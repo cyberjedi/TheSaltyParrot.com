@@ -218,4 +218,46 @@ function setGameMaster($partyId, $gmUserId, $requesterId) {
         error_log("Error setting game master: " . $e->getMessage());
         return ['success' => false, 'error' => 'Failed to set game master'];
     }
+}
+
+/**
+ * Rename a party
+ */
+function renameParty($partyId, $newName, $requesterId) {
+    global $conn;
+    
+    try {
+        // Check if requester is party creator
+        $stmt = $conn->prepare("SELECT creator_id FROM parties WHERE id = ?");
+        $stmt->execute([$partyId]);
+        $party = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$party) {
+             return ['success' => false, 'error' => 'Party not found.'];
+        }
+        
+        if ($party['creator_id'] !== $requesterId) {
+            return ['success' => false, 'error' => 'Not authorized to rename this party.'];
+        }
+        
+        // Validate new name (basic length check)
+        if (strlen(trim($newName)) === 0 || strlen(trim($newName)) > 100) {
+             return ['success' => false, 'error' => 'Invalid party name (must be 1-100 characters).'];
+        }
+
+        // Update the party name
+        $stmt = $conn->prepare("UPDATE parties SET name = ? WHERE id = ? AND creator_id = ?");
+        $stmt->execute([trim($newName), $partyId, $requesterId]);
+        
+        if ($stmt->rowCount() > 0) {
+            return ['success' => true, 'message' => 'Party renamed successfully.'];
+        } else {
+            // This might happen if the row wasn't found or wasn't updated for some reason
+            return ['success' => false, 'error' => 'Failed to update party name in database.'];
+        }
+        
+    } catch (PDOException $e) {
+        error_log("Error renaming party: " . $e->getMessage());
+        return ['success' => false, 'error' => 'Database error during rename: ' . $e->getMessage()];
+    }
 } 

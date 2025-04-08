@@ -690,6 +690,11 @@
     text-overflow: ellipsis;
 }
 
+/* Style the default indicator star */
+.webhook-item-name .webhook-default-icon.fas {
+    color: #FFD700; /* Gold/Yellow color for the filled default star */
+}
+
 .webhook-actions {
     display: flex;
     align-items: center;
@@ -752,4 +757,95 @@
         margin-top: 0.5rem;
         align-self: flex-end;
     }
+}
+
+/* Basic Modal Styles (Add to your main CSS or a dedicated modal CSS file if preferred) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+}
+
+.modal-content {
+    background-color: var(--background-color, #fefefe);
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 2rem;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+    max-width: 500px; /* Maximum width */
+    border-radius: 8px;
+    position: relative;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+}
+
+.close-modal {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-modal:hover,
+.close-modal:focus {
+    color: var(--primary-text-color, black);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: var(--primary-text-color);
+}
+
+.modal .form-group {
+    margin-bottom: 1rem;
+}
+
+.modal .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.modal .form-group input[type="password"],
+.modal .form-group input[type="url"],
+.modal .form-group input[type="text"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
+.modal .btn-submit {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.modal .alert {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.25rem;
+    display: none; /* Hidden by default */
+}
+
+.modal .alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.modal .alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
 } 

@@ -77,6 +77,19 @@ switch ($action) {
         echo json_encode(setGameMaster($partyId, $gmUserId, $userId));
         break;
 
+    case 'rename_party':
+        $partyId = $data['partyId'] ?? '';
+        $newName = $data['newName'] ?? '';
+        if (empty($partyId) || empty($newName)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Party ID and new name are required']);
+            exit;
+        }
+        // Assuming a function renameParty($partyId, $newName, $userId) exists in party-functions.php
+        // It should check if $userId is the creator before renaming.
+        echo json_encode(renameParty($partyId, $newName, $userId)); 
+        break;
+
     case 'get_party':
         $party = getUserParty($userId);
         echo json_encode(['success' => true, 'party' => $party]);

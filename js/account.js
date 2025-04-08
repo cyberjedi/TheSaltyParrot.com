@@ -1,3 +1,5 @@
+import { auth, updatePassword } from './firebase-auth.js'; // Import necessary functions
+
 document.addEventListener('DOMContentLoaded', () => {
     // Elements
     const saveProfileBtn = document.getElementById('save-profile');
@@ -188,18 +190,26 @@ document.addEventListener('DOMContentLoaded', () => {
             li.dataset.webhookUrl = hook.full_url; // Store full URL for copying
             li.dataset.isDefault = hook.is_default;
             
+            // Conditionally create the indicator and set default button HTML
+            const indicatorIconHtml = hook.is_default == 1 ? 
+                `<i class="fas fa-star webhook-default-icon" title="Default Webhook"></i>` : '';
+            
+            const setDefaultButtonHtml = hook.is_default != 1 ? `
+                <button class="set-default-btn" title="Set as Default">
+                    <i class="far fa-star"></i>
+                </button>
+            ` : '';
+
             li.innerHTML = `
                 <div class="webhook-item-info">
                     <div class="webhook-item-name">
-                        <i class="${hook.is_default == 1 ? 'fas' : 'far'} fa-star webhook-default-icon" title="Default Webhook"></i>
+                        ${indicatorIconHtml} <!-- Only show icon if default -->
                         ${hook.server_name || 'Unnamed Server'}
                     </div>
                     <div class="webhook-item-channel">${hook.discord_channel_name || 'Unknown Channel'}</div>
                 </div>
                 <div class="webhook-actions">
-                    <button class="set-default-btn" title="Set as Default">
-                        <i class="fas fa-star"></i>
-                    </button>
+                    ${setDefaultButtonHtml} <!-- Insert the button HTML here -->
                     <button class="edit-webhook-btn" title="Edit Webhook">
                         <i class="fas fa-edit"></i>
                     </button>
@@ -549,33 +559,56 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `).join('');
 
-            this.partyInfo.innerHTML = `
+            // Find the specific containers
+            const detailsContainer = this.partyInfo.querySelector('#party-details-content');
+            const membersContainer = this.partyInfo.querySelector('#party-members-list');
+
+            if (!detailsContainer || !membersContainer) {
+                console.error("Could not find party details or members list containers!");
+                return;
+            }
+
+            // Update party details section
+            detailsContainer.innerHTML = ` 
                 <h3>${party.name}</h3>
                 <p>Party Code: <span class="party-code">${party.code}</span> 
                    <button id="copy-party-code" class="btn-icon" title="Copy Code"><i class="fas fa-copy"></i></button>
                 </p>
-                <h4>Members</h4>
-                <div class="party-members">
-                    ${membersHtml}
-                </div>
-                 ${isMember ? `<button id="leave-party-btn" class="btn btn-danger">Leave Party</button>` : ''}
             `;
+            
+            // Update members list section
+            membersContainer.innerHTML = membersHtml;
              
+            // Show the main party info container
             this.partyInfo.style.display = 'block';
             if(this.partyForms) this.partyForms.style.display = 'none';
 
-            document.getElementById('copy-party-code')?.addEventListener('click', () => {
+            // Show the member action buttons div if the user is a member
+            const memberActionsDiv = this.partyInfo.querySelector('.party-member-actions');
+            if (isMember && memberActionsDiv) {
+                 memberActionsDiv.style.display = 'flex'; // Use flex to space buttons
+            }
+
+            // Add event listeners to buttons WITHIN the specific containers/divs
+            detailsContainer.querySelector('#copy-party-code')?.addEventListener('click', () => {
                 navigator.clipboard.writeText(party.code).then(() => {
                     showNotification('Party code copied!', 'success');
                 }).catch(err => {
                      showNotification('Failed to copy code', 'error');
                 });
             });
-            document.getElementById('leave-party-btn')?.addEventListener('click', () => this.leaveParty(party.id));
-            this.partyInfo.querySelectorAll('.btn-kick-member').forEach(btn => {
+
+            // Add listeners for Rename/Leave buttons
+            memberActionsDiv?.querySelector('#leave-party-btn')?.addEventListener('click', () => this.leaveParty(party.id));
+            memberActionsDiv?.querySelector('#rename-party-btn')?.addEventListener('click', () => {
+                this.showRenameModal(party.id, party.name); // Call function to show rename modal
+            });
+
+            // Add listeners for GM actions (kick/set GM) within the members list
+            membersContainer.querySelectorAll('.btn-kick-member').forEach(btn => {
                 btn.addEventListener('click', (e) => this.removeMember(party.id, e.currentTarget.dataset.memberId));
             });
-            this.partyInfo.querySelectorAll('.btn-set-gm').forEach(btn => {
+            membersContainer.querySelectorAll('.btn-set-gm').forEach(btn => {
                 btn.addEventListener('click', (e) => this.setGameMaster(party.id, e.currentTarget.dataset.memberId));
             });
         },
@@ -702,6 +735,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
              }
+
+            // Add listener for rename form
+            document.getElementById('rename-party-form')?.addEventListener('submit', (e) => this.handleRenamePartySubmit(e));
         },
 
         async removeMember(partyId, memberId) {
@@ -792,7 +828,77 @@ document.addEventListener('DOMContentLoaded', () => {
                  alert(message);
             }
              console.error('Party Error Displayed:', message); 
-        }
+        },
+
+        // Function to show the rename party modal
+        showRenameModal(partyId, partyName) {
+            const modal = document.getElementById('rename-party-modal');
+            const form = document.getElementById('rename-party-form');
+            const partyIdInput = document.getElementById('rename-party-id');
+            const partyNameInput = document.getElementById('rename-party-name');
+            const alertDiv = document.getElementById('rename-party-alert');
+
+            if (!modal || !form || !partyIdInput || !partyNameInput || !alertDiv) {
+                console.error('Could not find all elements for rename party modal.');
+                return;
+            }
+
+            partyIdInput.value = partyId;
+            partyNameInput.value = partyName; // Pre-fill with current name
+            alertDiv.style.display = 'none'; // Hide previous alerts
+
+            modal.style.display = 'flex'; // Show the modal (using flex as per other modals)
+        },
+
+        // Function to handle party rename form submission
+        async handleRenamePartySubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const partyId = form.elements['rename-party-id'].value;
+            const newName = form.elements['rename-party-name'].value.trim();
+            const submitButton = form.querySelector('#save-party-name-btn');
+            const alertDiv = document.getElementById('rename-party-alert');
+
+            if (!newName) {
+                alertDiv.textContent = 'Party name cannot be empty.';
+                alertDiv.className = 'alert alert-error';
+                alertDiv.style.display = 'block';
+                return;
+            }
+
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            alertDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/party/api.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded', 
+                    },
+                    body: `action=rename_party&partyId=${encodeURIComponent(partyId)}&newName=${encodeURIComponent(newName)}`
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification('Party renamed successfully!', 'success');
+                    document.getElementById('rename-party-modal').style.display = 'none';
+                    // Reload party info to show the new name
+                    await this.loadPartyInfo(); 
+                } else {
+                    throw new Error(data.error || 'Failed to rename party.');
+                }
+            } catch (error) {
+                console.error('Error renaming party:', error);
+                alertDiv.textContent = `Error: ${error.message}`;
+                alertDiv.className = 'alert alert-error';
+                alertDiv.style.display = 'block';
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerHTML = 'Save Name';
+            }
+        },
 
     };
 
@@ -831,6 +937,92 @@ document.addEventListener('DOMContentLoaded', () => {
                 submitButton.disabled = false;
                 submitButton.innerHTML = '<i class="fas fa-save"></i> Save Changes';
             }
+        });
+    }
+
+    const changePasswordButton = document.getElementById('change-password-btn');
+    const changePasswordModal = document.getElementById('change-password-modal');
+    const changePasswordForm = document.getElementById('change-password-form');
+    const modalPasswordInput = document.getElementById('modal-password');
+    const modalConfirmPasswordInput = document.getElementById('modal-confirm-password');
+    const updatePasswordBtn = document.getElementById('update-password-btn');
+    const changePasswordAlert = document.getElementById('change-password-alert');
+
+    // Function to display alerts in the modal
+    function showPasswordAlert(message, type = 'danger') {
+        changePasswordAlert.textContent = message;
+        changePasswordAlert.className = `alert alert-${type}`;
+        changePasswordAlert.style.display = 'block';
+    }
+
+    // Function to clear alerts
+    function clearPasswordAlert() {
+        changePasswordAlert.textContent = '';
+        changePasswordAlert.style.display = 'none';
+    }
+
+    // Show the change password modal
+    if (changePasswordButton && changePasswordModal) {
+        changePasswordButton.addEventListener('click', () => {
+            clearPasswordAlert();
+            modalPasswordInput.value = '';
+            modalConfirmPasswordInput.value = '';
+            changePasswordModal.style.display = 'block';
+        });
+    }
+
+    // Handle password change form submission using imported functions
+    if (changePasswordForm) {
+        changePasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearPasswordAlert();
+            updatePasswordBtn.disabled = true;
+            updatePasswordBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+
+            const newPassword = modalPasswordInput.value;
+            const confirmPassword = modalConfirmPasswordInput.value;
+
+            if (newPassword !== confirmPassword) {
+                showPasswordAlert('Passwords do not match.');
+                updatePasswordBtn.disabled = false;
+                updatePasswordBtn.innerHTML = 'Update Password';
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showPasswordAlert('Password must be at least 6 characters long.');
+                 updatePasswordBtn.disabled = false;
+                updatePasswordBtn.innerHTML = 'Update Password';
+                return;
+            }
+
+            const user = auth.currentUser;
+
+            if (user) {
+                try {
+                    await updatePassword(user, newPassword);
+                    showPasswordAlert('Password updated successfully!', 'success');
+                    
+                    setTimeout(() => {
+                         if (changePasswordModal) {
+                            changePasswordModal.style.display = 'none'; 
+                         }
+                         clearPasswordAlert();
+                    }, 2000);
+                } catch (error) {
+                    console.error('Error updating password:', error);
+                    let errorMessage = `Error updating password: ${error.message}`;
+                    if (error.code === 'auth/requires-recent-login') {
+                        errorMessage = 'For security, please log out and log back in before changing your password.';
+                    }
+                    showPasswordAlert(errorMessage);
+                }
+            } else {
+                showPasswordAlert('No user is currently signed in. Please refresh the page.');
+            }
+
+            updatePasswordBtn.disabled = false;
+            updatePasswordBtn.innerHTML = 'Update Password';
         });
     }
 
