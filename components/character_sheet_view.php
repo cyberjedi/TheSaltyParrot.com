@@ -127,6 +127,11 @@
                         <i class="fas fa-edit"></i>
                     </button>
                 </div>
+                <?php if (isset($character['system']) && $character['system'] === 'pirate_borg'): ?>
+                <div class="pirate-borg-logo">
+                    <img src="assets/Pirate_Borg_Compatible_Vert_White.png" alt="Pirate Borg Compatible">
+                </div>
+                <?php endif; ?>
             </div>
             
             <!-- Character Stats -->

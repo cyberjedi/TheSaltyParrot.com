@@ -71,7 +71,10 @@ if (!$sheet) {
         'presence' => 0,
         'toughness' => 0,
         'spirit' => 0,
+        'hp_max' => 10, // Default Max HP
+        'hp_current' => 10, // Default Current HP
         'notes' => '',
+        'character_type' => '',
         'created_at' => date('Y-m-d H:i:s'),
         'updated_at' => date('Y-m-d H:i:s')
     ];
@@ -83,6 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $sheet_id = isset($_POST['sheet_id']) && !empty($_POST['sheet_id']) ? (int)$_POST['sheet_id'] : null;
     $system = htmlspecialchars($_POST['system']); // Get the selected game system
     $name = htmlspecialchars($_POST['name']);
+    $character_type = htmlspecialchars($_POST['character_type'] ?? '');
     
     // Get system-specific attributes
     if ($system === 'pirate_borg') {
@@ -91,6 +95,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $presence = isset($_POST['presence']) ? (int)$_POST['presence'] : 0;
         $toughness = isset($_POST['toughness']) ? (int)$_POST['toughness'] : 0;
         $spirit = isset($_POST['spirit']) ? (int)$_POST['spirit'] : 0;
+        $hp_max = isset($_POST['hp_max']) ? (int)$_POST['hp_max'] : 1; // Ensure hp_max is at least 1
+        $hp_max = max(1, $hp_max); // Explicitly ensure it's >= 1
         $notes = htmlspecialchars($_POST['notes']);
     }
     
@@ -168,11 +174,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 
                 // Insert system-specific data
                 if ($system === 'pirate_borg') {
-                    $query = "INSERT INTO pirate_borg_sheets (sheet_id, character_type, strength, agility, presence, toughness, spirit, notes) 
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                    $query = "INSERT INTO pirate_borg_sheets (sheet_id, character_type, strength, agility, presence, toughness, spirit, hp_max, hp_current, notes)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                     
                     $stmt = $conn->prepare($query);
-                    $stmt->execute([$sheet_id, $_POST['character_type'], $strength, $agility, $presence, $toughness, $spirit, $notes]);
+                    // Set current HP to max HP for a new character
+                    $stmt->execute([$sheet_id, $character_type, $strength, $agility, $presence, $toughness, $spirit, $hp_max, $hp_max, $notes]);
                 }
                 
                 // Commit transaction for new sheet
@@ -196,18 +203,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     $check->execute([$sheet_id]);
                     
                     if ($check->fetchColumn()) {
+                        // Get current HP values before update
+                        $hpCheckStmt = $conn->prepare("SELECT hp_max, hp_current FROM pirate_borg_sheets WHERE sheet_id = ?");
+                        $hpCheckStmt->execute([$sheet_id]);
+                        $currentHpData = $hpCheckStmt->fetch(PDO::FETCH_ASSOC);
+                        $old_hp_max = $currentHpData ? (int)$currentHpData['hp_max'] : $hp_max;
+                        $old_hp_current = $currentHpData ? (int)$currentHpData['hp_current'] : $hp_max;
+
+                        // Determine the new current HP
+                        // Keep the existing current HP, but ensure it doesn't exceed the new max HP.
+                        $new_hp_current = $old_hp_current; 
+                        // Ensure current HP doesn't exceed the new max HP, and is not less than 0
+                        $new_hp_current = min($hp_max, $new_hp_current);
+                        $new_hp_current = max(0, $new_hp_current);
+
                         // Update
                         $query = "UPDATE pirate_borg_sheets SET character_type = ?, strength = ?, agility = ?, presence = ?, 
-                                toughness = ?, spirit = ?, notes = ? WHERE sheet_id = ?";
+                                toughness = ?, spirit = ?, hp_max = ?, hp_current = ?, notes = ? WHERE sheet_id = ?";
                         
                         $stmt = $conn->prepare($query);
-                        $stmt->execute([$_POST['character_type'], $strength, $agility, $presence, $toughness, $spirit, $notes, $sheet_id]);
+                        $stmt->execute([$character_type, $strength, $agility, $presence, $toughness, $spirit, $hp_max, $new_hp_current, $notes, $sheet_id]);
                     } else {
                          // Insert if it somehow didn't exist (data inconsistency?)
-                         $query = "INSERT INTO pirate_borg_sheets (sheet_id, character_type, strength, agility, presence, toughness, spirit, notes) 
-                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                         $query = "INSERT INTO pirate_borg_sheets (sheet_id, character_type, strength, agility, presence, toughness, spirit, hp_max, hp_current, notes)
+                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                          $stmt = $conn->prepare($query);
-                         $stmt->execute([$sheet_id, $_POST['character_type'], $strength, $agility, $presence, $toughness, $spirit, $notes]);
+                         // Set current HP to max HP when inserting missing record
+                         $stmt->execute([$sheet_id, $character_type, $strength, $agility, $presence, $toughness, $spirit, $hp_max, $hp_max, $notes]);
                     }
                 }
                 
@@ -281,11 +303,14 @@ if (!$sheet) {
         'presence' => isset($_POST['presence']) ? (int)$_POST['presence'] : 0,
         'toughness' => isset($_POST['toughness']) ? (int)$_POST['toughness'] : 0,
         'spirit' => isset($_POST['spirit']) ? (int)$_POST['spirit'] : 0,
+        'hp_max' => isset($_POST['hp_max']) ? (int)$_POST['hp_max'] : 10,
+        'hp_current' => isset($_POST['hp_max']) ? (int)$_POST['hp_max'] : 10, // Set current to max on failure recovery
         'notes' => isset($_POST['notes']) ? htmlspecialchars($_POST['notes']) : '',
         'character_type' => isset($_POST['character_type']) ? htmlspecialchars($_POST['character_type']) : '',
         'created_at' => null,
         'updated_at' => null
     ];
+    $sheet['hp_current'] = $sheet['hp_max']; // Ensure consistency
 } else {
      // Ensure image path is root-relative for display
      if (strpos($sheet['image_path'], '../') === 0) {
@@ -309,6 +334,7 @@ if (!$sheet) {
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/topbar.css">
     <link rel="stylesheet" href="../css/character-sheet.css">
+    <link rel="stylesheet" href="../css/size-adjustments.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0v4LLanw2qksYuRlEzO+tcaEPQogQ0KaoGN26/zrn20ImR1DfuLWnOo7aBA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
@@ -344,10 +370,14 @@ if (!$sheet) {
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="system">Game System</label>
-                                    <select id="system" name="system" class="form-control">
+                                    <select id="system" name="system" class="form-control" <?php echo !empty($sheet_id) ? 'disabled' : ''; ?>>
                                         <option value="pirate_borg" <?php echo (isset($sheet['system']) && $sheet['system'] === 'pirate_borg') ? 'selected' : ''; ?>>Pirate Borg</option>
                                         <!-- More game systems can be added here in the future -->
                                     </select>
+                                    <?php if (!empty($sheet_id)): ?>
+                                        <!-- Add a hidden input to submit the system value when disabled -->
+                                        <input type="hidden" name="system" value="<?php echo htmlspecialchars($sheet['system']); ?>">
+                                    <?php endif; ?>
                                 </div>
                             </div>
                             
@@ -386,26 +416,42 @@ if (!$sheet) {
                         <div id="pirate-borg-fields" class="system-specific-fields active">
                             <div class="edit-section">
                                 <h3>Attributes</h3>
-                                <div class="attributes-grid">
+                                <div class="attributes-grid edit-attributes-grid">
                                     <div class="attribute-item">
                                         <label for="strength">Strength</label>
-                                        <input type="text" id="strength" name="strength" value="<?php echo (int)($sheet['strength'] ?? 0); ?>" class="attribute-field">
+                                        <div class="input-with-controls">
+                                            <input type="number" id="strength" name="strength" value="<?php echo (int)($sheet['strength'] ?? 0); ?>" class="attribute-field">
+                                        </div>
                                     </div>
                                     <div class="attribute-item">
                                         <label for="agility">Agility</label>
-                                        <input type="text" id="agility" name="agility" value="<?php echo (int)($sheet['agility'] ?? 0); ?>" class="attribute-field">
+                                        <div class="input-with-controls">
+                                            <input type="number" id="agility" name="agility" value="<?php echo (int)($sheet['agility'] ?? 0); ?>" class="attribute-field">
+                                        </div>
                                     </div>
                                     <div class="attribute-item">
                                         <label for="presence">Presence</label>
-                                        <input type="text" id="presence" name="presence" value="<?php echo (int)($sheet['presence'] ?? 0); ?>" class="attribute-field">
+                                        <div class="input-with-controls">
+                                            <input type="number" id="presence" name="presence" value="<?php echo (int)($sheet['presence'] ?? 0); ?>" class="attribute-field">
+                                        </div>
                                     </div>
                                     <div class="attribute-item">
                                         <label for="toughness">Toughness</label>
-                                        <input type="text" id="toughness" name="toughness" value="<?php echo (int)($sheet['toughness'] ?? 0); ?>" class="attribute-field">
+                                        <div class="input-with-controls">
+                                            <input type="number" id="toughness" name="toughness" value="<?php echo (int)($sheet['toughness'] ?? 0); ?>" class="attribute-field">
+                                        </div>
                                     </div>
                                     <div class="attribute-item">
                                         <label for="spirit">Spirit</label>
-                                        <input type="text" id="spirit" name="spirit" value="<?php echo (int)($sheet['spirit'] ?? 0); ?>" class="attribute-field">
+                                        <div class="input-with-controls">
+                                            <input type="number" id="spirit" name="spirit" value="<?php echo (int)($sheet['spirit'] ?? 0); ?>" class="attribute-field">
+                                        </div>
+                                    </div>
+                                    <div class="attribute-item">
+                                        <label for="hp_max">Max HP</label>
+                                        <div class="input-with-controls">
+                                            <input type="number" id="hp_max" name="hp_max" value="<?php echo (int)($sheet['hp_max'] ?? 1); ?>" class="attribute-field" min="1">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -521,6 +567,31 @@ if (!$sheet) {
                     } else {
                          // Convert to number and back to string to remove leading zeros like 05 -> 5
                          this.value = parseInt(this.value, 10).toString(); 
+                    }
+                });
+            });
+
+            // Add event listeners for attribute adjustment buttons
+            document.querySelectorAll('.attr-adjust-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const targetId = this.dataset.target;
+                    const change = parseInt(this.dataset.change);
+                    const targetInput = document.getElementById(targetId);
+                    const minVal = this.dataset.min !== undefined ? parseInt(this.dataset.min) : null;
+
+                    if (targetInput) {
+                        let currentValue = parseInt(targetInput.value) || 0;
+                        let newValue = currentValue + change;
+                        
+                        // Apply minimum value constraint if present
+                        if (minVal !== null && newValue < minVal) {
+                            newValue = minVal;
+                        }
+
+                        targetInput.value = newValue;
+                        // Optionally trigger input or change event if needed by other scripts
+                        targetInput.dispatchEvent(new Event('input')); 
+                        targetInput.dispatchEvent(new Event('change'));
                     }
                 });
             });

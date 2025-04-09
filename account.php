@@ -329,10 +329,9 @@ try {
 
     <!-- Firebase Libraries (Order is important!) -->
     <script type="module" src="/js/firebase-auth.js"></script>
+    <script src="/image_management/photo_manager.js"></script>
     <script type="module" src="/js/account.js"></script>
-    <!-- Removed incorrect references to non-existent files below -->
-    <!-- <script type="module" src="/js/discord-webhooks.js"></script> -->
-    <!-- <script type="module" src="/js/party.js"></script> -->
+    <!-- Note: party functionality is now integrated directly in account.js -->
     <script type="module" src="/js/modal.js"></script>
     
     <?php include 'image_management/photo_manager_modal.php'; // UPDATED path ?>

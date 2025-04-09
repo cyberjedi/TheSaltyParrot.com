@@ -31,6 +31,7 @@ $page_title = 'Character Sheets';
     <link rel="stylesheet" href="css/sheets.css">
     <link rel="stylesheet" href="css/topbar.css">
     <link rel="stylesheet" href="css/character-sheet.css">
+    <link rel="stylesheet" href="css/size-adjustments.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0v4LLanw2qksYuRlEzO+tcaEPQogQ0KaoGN26/zrn20ImR1DfuLWnOo7aBA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
@@ -363,6 +364,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Render a Pirate Borg character sheet
     function renderPirateBorgSheet(sheet) {
+        const currentHp = sheet.hp_current !== undefined ? parseInt(sheet.hp_current) : 0;
+        const maxHp = sheet.hp_max !== undefined ? parseInt(sheet.hp_max) : 1; // Ensure maxHp is at least 1
+        
         return `
             <div class="character-header">
                 <div class="character-image">
@@ -375,6 +379,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p class="character-class">${sheet.character_type || 'Unknown Class'}</p>
                     <p class="character-background">${sheet.background || 'No background information'}</p>
                 </div>
+                ${sheet.system === 'pirate_borg' ? `
+                <div class="pirate-borg-logo">
+                    <img src="assets/Pirate_Borg_Compatible_Vert_White.png" alt="Pirate Borg Compatible">
+                </div>` : ''}
             </div>
             
             <div class="section">
@@ -399,6 +407,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="attribute">
                         <div class="attribute-label">Spirit</div>
                         <div class="attribute-value">${sheet.spirit !== undefined ? sheet.spirit : '?'}</div>
+                    </div>
+                    <div class="attribute hp-attribute" data-sheet-id="${sheet.id}">
+                        <div class="attribute-label">Hit Points</div>
+                        <div class="hp-value-controls-wrapper">
+                            <div class="hp-display">
+                                <span class="hp-value current-hp" id="hp-current-${sheet.id}">${currentHp}</span>
+                                <span class="hp-separator">/</span>
+                                <span class="hp-value max-hp" id="hp-max-${sheet.id}">${maxHp}</span>
+                            </div>
+                            <div class="hp-controls">
+                                <button class="hp-adjust-btn" data-change="-1" title="Decrease HP">-</button>
+                                <button class="hp-adjust-btn" data-change="1" title="Increase HP">+</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -558,6 +580,63 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error setting active sheet:', error);
                 alert('Failed to set active sheet. Please try again.');
             });
+    }
+
+    // Add event listeners using event delegation on sheetDisplay for HP buttons
+    sheetDisplay.addEventListener('click', function(event) {
+        if (event.target.classList.contains('hp-adjust-btn')) {
+            const button = event.target;
+            const attributeBox = button.closest('.hp-attribute'); // Find parent HP box
+            const sheetId = attributeBox.dataset.sheetId;
+            const change = parseInt(button.dataset.change);
+            
+            if(sheetId && !isNaN(change)) {
+                 updateHp(sheetId, change);
+            }
+        }
+    });
+
+    // Function to update HP via API
+    function updateHp(sheetId, change) {
+        fetch('/sheets/api/update_hp.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ sheet_id: parseInt(sheetId), change: change })
+        })
+        .then(response => {
+            if (!response.ok) {
+                // Try to parse error message from response body
+                 return response.json().then(err => {
+                    throw new Error(err.error || `HTTP error! status: ${response.status}`);
+                }).catch(() => {
+                    // If parsing error fails, throw generic HTTP error
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const currentHpElement = document.getElementById(`hp-current-${sheetId}`);
+                const maxHpElement = document.getElementById(`hp-max-${sheetId}`);
+                if (currentHpElement) {
+                    currentHpElement.textContent = data.hp_current;
+                }
+                // Optionally update max HP display if it could change (though not via +/- buttons)
+                // if (maxHpElement && data.hp_max !== undefined) {
+                //     maxHpElement.textContent = data.hp_max;
+                // }
+            } else {
+                console.error('Error updating HP:', data.error);
+                alert(`Failed to update HP: ${data.error || 'Unknown error'}`);
+            }
+        })
+        .catch(error => {
+            console.error('Error during fetch:', error);
+            alert(`Error updating HP: ${error.message}. Please check the console for details.`);
+        });
     }
 });
 </script>

@@ -540,7 +540,8 @@ document.addEventListener('DOMContentLoaded', () => {
              }
 
              const currentUserUid = document.body.dataset.userUid;
-             const isGM = party.gm_user_id === currentUserUid;
+             const isCreator = party.creator_id === currentUserUid;
+             const isGM = party.game_master_id === currentUserUid;
              const isMember = members.some(m => m.uid === currentUserUid);
 
             let membersHtml = members.map(member => `
@@ -549,12 +550,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         <img src="${member.photo_url || '/img/default-avatar.png'}" alt="${member.display_name}" class="party-member-avatar">
                     </div>
                     <div class="party-member-info">
-                        <p class="party-member-name">${member.display_name} ${member.uid === party.gm_user_id ? '<i class="fas fa-crown" title="Game Master"></i>' : ''}</p>
+                        <p class="party-member-name">
+                            ${member.display_name} 
+                            <span class="member-role-icons">
+                                ${member.uid === party.creator_id ? '<i class="fas fa-shield-alt owner-icon" title="Party Owner"></i>' : ''}
+                                ${member.uid === party.game_master_id ? '<i class="fas fa-crown gm-icon" title="Game Master"></i>' : ''}
+                            </span>
+                        </p>
                         ${member.activeCharacterName ? `<p class="party-member-character">Playing as: ${member.activeCharacterName}</p>` : '<p class="party-member-character" style="opacity: 0.6;">No active character</p>'}
                    </div>
-                    ${isGM && member.uid !== currentUserUid ? 
-                        `<button class="btn-kick-member" data-member-id="${member.uid}" title="Remove Member"><i class="fas fa-times"></i></button>
-                         <button class="btn-set-gm" data-member-id="${member.uid}" title="Set as Game Master"><i class="fas fa-crown"></i></button>` 
+                    ${isCreator ? 
+                        `<div class="party-member-actions-container">
+                            ${member.uid !== currentUserUid ? 
+                                `<button class="btn-kick-member" data-member-id="${member.uid}" title="Remove Member"><i class="fas fa-times"></i></button>` 
+                                : ''}
+                            ${member.uid !== party.game_master_id ? 
+                                `<button class="btn-set-gm" data-member-id="${member.uid}" title="Set as Game Master"><i class="fas fa-crown"></i></button>` 
+                                : ''}
+                         </div>` 
                         : ''}
                 </div>
             `).join('');
@@ -574,6 +587,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p>Party Code: <span class="party-code">${party.code}</span> 
                    <button id="copy-party-code" class="btn-icon" title="Copy Code"><i class="fas fa-copy"></i></button>
                 </p>
+                ${isCreator || isGM ? 
+                    `<div class="user-roles">
+                        <p>Your Role${isCreator && isGM ? 's' : ''}:
+                            ${isCreator ? '<span class="role-badge owner-badge"><i class="fas fa-shield-alt"></i> Owner</span>' : ''}
+                            ${isGM ? '<span class="role-badge gm-badge"><i class="fas fa-crown"></i> Game Master</span>' : ''}
+                        </p>
+                    </div>` 
+                : ''}
             `;
             
             // Update members list section

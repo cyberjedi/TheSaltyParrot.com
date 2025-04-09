@@ -174,11 +174,14 @@ onAuthStateChanged(auth, async (user) => {
 
     if (user) {
         // console.log('Auth state changed: User is signed in', user.uid); // Commented out for less console noise
-        if (isLoginPage) {
-             // console.log('User logged in, redirecting from login page to account...'); // Commented out for less console noise
-             window.location.href = '/account.php';
-             return;
-        }
+        // REMOVED: Redundant redirect causing loops. Navigation to account page
+        // should happen via user interaction with the topbar link/button,
+        // which appears based on the server-side session state.
+        // if (isLoginPage) {
+        //      // console.log('User logged in, redirecting from login page to account...'); // Commented out for less console noise
+        //      window.location.href = '/account.php';
+        //      return;
+        // }
         // console.log('User is signed in on a non-login page. Session should be valid or updating.'); // Commented out for less console noise
 
     } else {

@@ -88,6 +88,7 @@ $page_title = htmlspecialchars($sheet['name']) . ' - Character Sheet';
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/character-sheet.css">
     <link rel="stylesheet" href="../css/print.css">
+    <link rel="stylesheet" href="../css/size-adjustments.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -121,6 +122,11 @@ $page_title = htmlspecialchars($sheet['name']) . ' - Character Sheet';
                     <p class="character-class"><?php echo htmlspecialchars($sheet['character_type'] ?? 'Unknown Class'); ?></p>
                     <p class="character-background"><?php echo htmlspecialchars($sheet['background'] ?? ''); ?></p>
                 </div>
+                <?php if ($sheet['system'] === 'pirate_borg'): ?>
+                <div class="pirate-borg-logo">
+                    <img src="../assets/Pirate_Borg_Compatible_Vert_White.png" alt="Pirate Borg Compatible">
+                </div>
+                <?php endif; ?>
             </div>
             
             <div class="section">

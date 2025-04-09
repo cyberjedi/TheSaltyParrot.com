@@ -54,7 +54,8 @@ try {
     // For each sheet, get the system-specific data
     foreach ($sheets as $key => $sheet) {
         if ($sheet['system'] === 'pirate_borg') {
-            $stmt = $conn->prepare("SELECT * FROM pirate_borg_sheets WHERE sheet_id = ?");
+            // Select all columns including the new HP ones
+            $stmt = $conn->prepare("SELECT *, hp_current, hp_max FROM pirate_borg_sheets WHERE sheet_id = ?");
             $stmt->execute([$sheet['id']]);
             $system_data = $stmt->fetch(PDO::FETCH_ASSOC);
             

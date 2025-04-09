@@ -181,6 +181,7 @@
     align-items: center;
     padding: 1rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
 }
 
 .party-member:last-child {
@@ -848,4 +849,112 @@
     color: #155724;
     background-color: #d4edda;
     border-color: #c3e6cb;
+}
+
+/* Party Member Action Buttons */
+.party-member-actions-container {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+.btn-kick-member,
+.btn-set-gm {
+    background: none;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.btn-kick-member {
+    background-color: rgba(220, 53, 69, 0.2);
+}
+
+.btn-kick-member:hover {
+    background-color: rgba(220, 53, 69, 0.4);
+    color: #dc3545;
+}
+
+.btn-set-gm {
+    background-color: rgba(255, 204, 0, 0.2);
+}
+
+.btn-set-gm:hover {
+    background-color: rgba(255, 204, 0, 0.4);
+    color: #ffcc00;
+}
+
+.btn-kick-member i,
+.btn-set-gm i {
+    font-size: 14px;
+}
+
+/* Party Member Role Icons */
+.member-role-icons {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-left: 0.5rem;
+}
+
+.owner-icon {
+    color: #2c88d9; /* Blue color for owner shield */
+}
+
+.gm-icon {
+    color: #ffcc00; /* Gold/yellow color for GM crown */
+}
+
+.owner-icon,
+.gm-icon {
+    font-size: 0.9rem;
+    transition: transform 0.2s ease;
+}
+
+.owner-icon:hover,
+.gm-icon:hover {
+    transform: scale(1.2);
+}
+
+/* Party Role Badges */
+.user-roles {
+    margin-top: 0.75rem;
+}
+
+.user-roles p {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.owner-badge {
+    background-color: rgba(44, 136, 217, 0.2);
+    color: #2c88d9;
+    border: 1px solid rgba(44, 136, 217, 0.3);
+}
+
+.gm-badge {
+    background-color: rgba(255, 204, 0, 0.2);
+    color: #ffcc00;
+    border: 1px solid rgba(255, 204, 0, 0.3);
 } 

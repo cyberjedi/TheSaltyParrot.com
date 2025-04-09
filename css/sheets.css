@@ -648,4 +648,242 @@
 .placeholder-icon i {
     color: var(--accent-secondary);
     font-size: 4rem;
+}
+
+/* HP Attribute Specific Styles */
+.hp-attribute {
+    position: relative; /* Keep for button positioning */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 155px; /* Increased height again */
+    grid-column: 1 / 2; /* Span only the first column */
+}
+
+.hp-attribute .attribute-label {
+    text-align: center;
+    margin-bottom: 8px; /* Add standard margin */
+}
+
+.hp-value-controls-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.hp-display {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.hp-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+    line-height: 1;
+}
+
+.current-hp {
+    /* specific styles if needed */
+}
+
+.max-hp {
+    /* specific styles if needed */
+}
+
+.hp-separator {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+    margin: 0 4px;
+    line-height: 1;
+}
+
+.hp-controls {
+    display: flex;
+    gap: 8px;
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.hp-adjust-btn {
+    background-color: var(--off-white);
+    border: 1px solid var(--light-gray);
+    color: var(--dark-gray);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.hp-adjust-btn:hover {
+    background-color: var(--light-gray);
+    border-color: var(--gray);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.hp-adjust-btn:active {
+    background-color: var(--gray);
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Print Styles */
+@media print {
+    body {
+        background-color: #fff !important;
+        color: #000 !important;
+        margin: 0;
+        padding: 0;
+        font-size: 10pt; /* Adjust base font size for print */
+        min-height: unset;
+        display: block;
+    }
+
+    /* Hide elements not needed for printing */
+    .topbar, 
+    .sheets-sidebar, 
+    .sheets-header .btn, 
+    .sheets-filter, 
+    .sheet-actions, 
+    .hp-controls,
+    footer,
+    .modal {
+        display: none !important;
+    }
+
+    /* Adjust main containers */
+    .sheets-container {
+        display: block; /* Override flex */
+        margin-top: 0;
+    }
+
+    .sheets-content {
+        padding: 1cm; /* Add print margins */
+        width: 100%;
+        flex: none; /* Override flex sizing */
+        overflow: visible; /* Ensure content isn't clipped */
+        box-shadow: none;
+        background-color: #fff !important;
+    }
+
+    /* Reset section styling */
+    .section {
+        background-color: transparent !important;
+        box-shadow: none;
+        border: 1px solid #ccc; /* Add simple border for sections */
+        margin-bottom: 20px;
+        padding: 15px;
+    }
+
+    .section-title {
+        color: #000 !important;
+        border-bottom: 1px solid #000;
+    }
+
+    /* Header adjustments */
+     .sheet-content-header {
+        border-bottom: 1px solid #000;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .sheet-content-header .sheet-title h2,
+    .character-info h3 {
+        color: #000 !important;
+        font-size: 14pt;
+    }
+    
+    .sheet-system-badge {
+        border: 1px solid #000;
+        color: #000 !important;
+        background-color: transparent !important;
+    }
+    
+    .character-header {
+        background-color: transparent !important;
+        box-shadow: none;
+        border: 1px solid #ccc;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .character-image {
+        border: 1px solid #000;
+    }
+    
+    .character-class, .character-background {
+         color: #000 !important;
+    }
+
+    /* Attributes styling */
+    .attributes-grid {
+        gap: 10px;
+    }
+    
+    .attribute {
+        background-color: transparent !important;
+        box-shadow: none;
+        border: 1px solid #ccc;
+        padding: 10px;
+        transform: none !important; /* Remove hover effect */
+        min-height: unset; /* Allow height to shrink if needed */
+    }
+    
+    .attribute-label {
+         color: #000 !important;
+         font-size: 8pt;
+    }
+    
+    .attribute-value {
+        color: #000 !important;
+        font-size: 12pt;
+    }
+    
+    /* HP Box specific print adjustments */
+    .hp-attribute {
+        /* min-height: unset; Removed - Handled by .attribute print style */
+        border: 1px solid #ccc;
+        background-color: transparent !important;
+        padding: 10px;
+        grid-column: 1 / 2; /* Ensure it spans only the first column in print */
+    }
+    
+    .hp-value, .hp-separator {
+        color: #000 !important;
+        font-size: 12pt;
+    }
+    
+    .hp-separator {
+        font-size: 11pt;
+    }
+
+    /* Notes and Equipment */
+    .sheet-notes, .equipment-item {
+        background-color: transparent !important;
+        color: #000 !important;
+        border: 1px solid #eee;
+        font-size: 9pt;
+    }
+
+    a {
+        color: #000 !important;
+        text-decoration: none;
+    }
 } 
