@@ -397,10 +397,12 @@ document.addEventListener('DOMContentLoaded', function() {
         sheetDisplay.innerHTML = contentHTML;
 
         // *** Initialize Inventory System JS now that HTML is loaded ***
-        // console.log("Checking for window.initializeInventorySystem:", typeof window.initializeInventorySystem);
         if (window.initializeInventorySystem) {
-            // console.log("Calling window.initializeInventorySystem for sheet:", sheet.id);
-            window.initializeInventorySystem(sheet.id);
+            // Defer initialization slightly to ensure DOM is fully updated after innerHTML assignment
+            setTimeout(() => {
+                console.log("Deferred call to initializeInventorySystem for sheet:", sheet.id);
+                window.initializeInventorySystem(sheet.id);
+            }, 0); // Timeout 0 pushes execution after current stack clears
         } else {
             console.error("Inventory system script (initializeInventorySystem) not found!");
         }
@@ -709,7 +711,8 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
     <!-- Add the Inventory System Javascript -->
-    <script src="/inventory_system/inventory.js" defer></script>
+    <!-- Note: Core sheets page logic is in the script block below -->
+    <script src="inventory_system/inventory.js" defer></script>
 
 </body>
 </html> 

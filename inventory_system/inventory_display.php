@@ -114,17 +114,15 @@ try {
         <div class="inventory-dropzone" data-container-id="root">
             <table class="inventory-table" style="width:100%; table-layout:fixed; border-collapse:collapse;">
                 <colgroup>
-                    <col style="width:40%;"> <!-- Name -->
-                    <col style="width:15%;"> <!-- Type -->
+                    <col style="width:55%;"> <!-- Name + Tag -->
                     <col style="width:25%;"> <!-- Qty Controls -->
                     <col style="width:20%;"> <!-- Actions -->
                 </colgroup>
                 <thead>
                     <tr>
                         <th class="item-name-col" style="text-align:left;">Item</th>
-                        <th class="item-type-col" style="text-align:left;">Type</th>
-                        <th class="item-qty-col" style="text-align:left;">Qty</th>
-                        <th class="item-actions-col" style="text-align:left;">Actions</th>
+                        <th class="item-qty-col" style="text-align:center;">Qty</th>
+                        <th class="item-actions-col" style="text-align:center;">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="inventory-table-body">
@@ -133,31 +131,46 @@ try {
                     function renderInventoryItemRow($item, $containerLevel = 0, $parent_container_id = 'root', $all_container_items = []) {
                         global $sheet_id; // Make sheet_id accessible
                         $isContainer = ($item['item_type'] === 'Container');
+                        $isSource = ($item['item_type'] === 'Source'); // Check if it's a Source type
+                        $canContain = $isContainer || $isSource; // Can contain if Container or Source
                         $mapId = $item['map_id']; // This is the unique ID in the inventory_map table
                         $itemId = $item['item_id']; // This is the ID from the inventory_items table
                         $hasContents = isset($all_container_items[$mapId]) && !empty($all_container_items[$mapId]);
-                        $indentStyle = ($containerLevel > 0) ? "style='padding-left:" . ($containerLevel * 20) . "px;'" : "";
-                        $rowClass = "inventory-item" . ($isContainer ? ' container-item' : '') . ($hasContents ? ' has-contents' : '') . " container-level-" . $containerLevel;
+                        $indentPixels = $containerLevel * 30; // Increased indentation to 30px per level
+                        $indentStyle = ($containerLevel > 0) ? "style='padding-left:{$indentPixels}px;'" : "";
+                        // Add 'droppable-container' class if it can contain items
+                        $rowClass = "inventory-item" . ($canContain ? ' droppable-container' : '') . ($hasContents ? ' has-contents' : '') . " container-level-" . $containerLevel;
+                        $itemType = htmlspecialchars($item['item_type']);
+                        
+                        // Determine tag color class based on type
+                        $tagColorClass = 'item-tag-default'; // Default color
+                        if ($itemType === 'Relic') {
+                            $tagColorClass = 'item-tag-magic';
+                        }
+                        // Add more conditions for other types/colors here
                     ?>
                     <tr class="<?php echo $rowClass; ?>" 
                         data-item-id="<?php echo $itemId; ?>" 
                         data-map-id="<?php echo $mapId; ?>"
-                        data-item-type="<?php echo htmlspecialchars($item['item_type']); ?>"
+                        data-item-type="<?php echo $itemType; ?>"
                         data-container-id="<?php echo $parent_container_id; ?>"
-                        draggable="<?php echo $isContainer ? 'false' : 'true'; /* Allow dragging items, not containers for now */ ?>">
+                        data-can-contain="<?php echo $canContain ? 'true' : 'false'; ?>"
+                        draggable="true">
                         
-                        <!-- Item Name -->
+                        <!-- Item Name (with Type Tag) -->
                         <td class="item-name">
                             <span class="item-name-text" <?php echo $indentStyle; ?> title="<?php echo htmlspecialchars($item['item_description'] ?? ''); ?>">
                                 <?php if ($isContainer): ?>
                                     <i class="fas fa-box" style="margin-right: 5px;"></i>
+                                <?php elseif ($isSource): ?>
+                                    <i class="fas fa-database" style="margin-right: 5px;"></i> <!-- Example icon for Source -->
                                 <?php endif; ?>
-                                <?php echo htmlspecialchars($item['item_name']); ?>
+                                <span class="item-name-value"><?php echo htmlspecialchars($item['item_name']); ?></span>
+                                <?php if (!empty($itemType)): ?>
+                                    <span class="item-type-tag <?php echo $tagColorClass; ?>"><?php echo $itemType; ?></span>
+                                <?php endif; ?>
                             </span>
                         </td>
-
-                        <!-- Item Type -->
-                        <td class="item-type"><?php echo htmlspecialchars($item['item_type']); ?></td>
 
                         <!-- Quantity Controls -->
                         <td class="item-quantity">

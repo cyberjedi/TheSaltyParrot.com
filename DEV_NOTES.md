@@ -82,3 +82,15 @@ There are two primary button styles used throughout the application for consiste
     *   **Example:** `<button class="inventory-action-btn inventory-delete-btn" title="Remove Item"> <i class="fas fa-trash-alt"></i> </button>`
 
 Always refer to `css/styles.css` for base button styles and color variables, and specific component CSS (like `inventory_system/inventory_system.css` or `css/account.css`) for specialized button implementations. 
+
+## Inventory Item Type Tags
+
+Inventory items display their type as a colored tag next to the item name. This uses a base CSS class `.item-type-tag` for structure and color modifier classes for appearance.
+
+- **Base Class:** `.item-type-tag` (in `inventory_system/inventory_system.css`) defines padding, border-radius, font size, etc.
+- **Color Modifier Classes:**
+    - `.item-tag-default`: Default style (Teal, using `--accent-secondary`). Applied to most item types.
+    - `.item-tag-magic`: Magic item style (Gold/Yellow, using `#FBD029`). Applied to `Relic` type items currently.
+    - *Add more classes here as needed (e.g., `.item-tag-consumable`, `.item-tag-gear`).*
+- **PHP Implementation:** The `inventory_system/inventory_display.php` script determines which modifier class to add based on the `item_type` fetched from the database.
+- **Consistency:** When adding new item types or desiring different colors, create a new modifier class in `inventory_system/inventory_system.css` and update the conditional logic in `inventory_system/inventory_display.php`. 

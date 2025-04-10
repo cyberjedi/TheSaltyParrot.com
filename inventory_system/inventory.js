@@ -41,13 +41,25 @@ async function fetchInventoryAPI(endpoint, method = 'GET', body = null) {
     try {
         const response = await fetch(`/inventory_system/${endpoint}`, options);
         if (!response.ok) {
-            let errorMsg = `HTTP error! Status: ${response.status}`;
+            let errorMsg = `HTTP error! Status: ${response.status} ${response.statusText}`;
             try {
-                const errorData = await response.json();
-                errorMsg = errorData.message || errorMsg;
-            } catch (e) { /* Ignore if response body is not JSON */ }
+                // Try to get more info from the response body
+                const errorBody = await response.text(); // Read as text first
+                try {
+                     // Attempt to parse as JSON, maybe it is JSON after all
+                     const errorData = JSON.parse(errorBody);
+                     errorMsg = errorData.message || errorMsg;
+                } catch (jsonError) {
+                     // If JSON parsing fails, use the first part of the text body (if any)
+                     errorMsg = errorBody.substring(0, 100) || errorMsg; 
+                }
+            } catch (e) { 
+                // If reading response body text fails, stick with the status message
+                console.warn("Could not read error response body", e);
+            }
             throw new Error(errorMsg);
         }
+        // If response.ok is true, expect valid JSON
         return await response.json();
     } catch (error) {
         console.error(`API call failed (${endpoint}):`, error);
@@ -59,8 +71,25 @@ async function fetchInventoryAPI(endpoint, method = 'GET', body = null) {
 // Modal Helpers
 function openModal(modal) {
     if (modal) {
+        // Directly set position using absolute values rather than flex
         modal.style.display = 'block';
-        // console.log('Opened modal:', modal.id);
+        
+        // Explicitly position the modal content at the top
+        const modalContent = modal.querySelector('.modal-content');
+        if (modalContent) {
+            // Force the content to appear at the top with fixed positioning
+            modalContent.style.position = 'relative';
+            modalContent.style.margin = '80px auto';  // 80px from top, auto left/right for centering
+            modalContent.style.maxHeight = '75vh';    // Slightly smaller to ensure it fits
+        }
+        
+        // Set modal to take the full screen but with proper z-index
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.overflow = 'auto';
     } else {
         console.error("Attempted to open a null modal");
     }
@@ -123,8 +152,20 @@ function renderAvailableItems(items) {
         const div = document.createElement('div');
         div.classList.add('available-item');
         div.dataset.itemId = item.item_id;
+        
+        // Determine tag class (similar logic to inventory_display.php)
+        const itemType = item.item_type || '';
+        let tagColorClass = 'item-tag-default';
+        if (itemType === 'Relic') {
+            tagColorClass = 'item-tag-magic';
+        }
+        // Add more conditions here if other tag colors are defined
+        
         div.innerHTML = `
-            <span class="available-item-name" title="${item.item_description || ''}">${item.item_name} (${item.item_type})</span>
+            <span class="available-item-name" title="${item.item_description || ''}">
+                 <span class="item-name-value">${item.item_name}</span> 
+                 ${itemType ? `<span class="item-type-tag ${tagColorClass}">${itemType}</span>` : ''}
+            </span>
             <button class="btn btn-sm btn-add-this-item" title="Add ${item.item_name}">
                 <i class="fas fa-plus"></i> Add
             </button>
@@ -213,7 +254,10 @@ async function handleAddItem(itemId, containerId = null) {
 
 // Handle Removing an Item via API
 async function handleRemoveItem(mapId, itemName) {
-    if (!confirm(`Are you sure you want to remove "${itemName}"? This cannot be undone.`)) return;
+    // Standardized confirmation message
+    const confirmMessage = `Are you sure you want to remove "${itemName}" from your inventory? This action cannot be undone.`;
+    if (!confirm(confirmMessage)) return;
+
     // console.log(`Attempting to remove item with map_id ${mapId}`);
     try {
         const data = await fetchInventoryAPI('remove_item.php', 'POST', { map_id: mapId }); // Using POST for simplicity, DELETE preferred
@@ -255,7 +299,9 @@ async function handleUpdateQuantity(mapId, change) {
     // If decreasing quantity to 0 or less, trigger remove action instead
     if (currentQuantity + change <= 0) {
         console.log(`Quantity for map_id ${mapId} reached zero, triggering removal.`);
-        handleRemoveItem(mapId, row.querySelector('.item-name-text')?.textContent || 'Item');
+        // Get the name specifically from the item-name-value span
+        const itemName = row.querySelector('.item-name-value')?.textContent || 'Item'; 
+        handleRemoveItem(mapId, itemName.trim()); 
         return;
     }
 
@@ -288,18 +334,53 @@ async function handleUpdateQuantity(mapId, change) {
     } catch (error) { /* Handled by fetchInventoryAPI */ }
  }
 
-// Reload Inventory Section Helper (assumes fetchSheetDetails exists globally)
-function reloadInventorySection() {
+// Reload Inventory Section Helper (Targets only the inventory container)
+async function reloadInventorySection() {
     // Get sheetId dynamically from the container when needed
-    const sheetId = document.querySelector('#sheet-display .character-inventory .inventory-container')?.dataset.sheetId;
-    // console.log("Requesting inventory reload via fetchSheetDetails for sheet ID:", sheetId);
-    if (sheetId && typeof fetchSheetDetails === 'function') {
-         // Assumes fetchSheetDetails(sheetId) in sheets.php re-fetches sheet data
-         // and updates the #sheet-display innerHTML, triggering initializeInventorySystem again.
-         fetchSheetDetails(sheetId);
-    } else {
-        console.error("Cannot reload inventory automatically: sheetId missing or fetchSheetDetails function not available.");
+    const inventoryContainer = document.querySelector('#sheet-display .character-inventory .inventory-container');
+    const sheetId = inventoryContainer?.dataset.sheetId;
+    const inventoryWrapper = document.querySelector('#sheet-display .inventory-section-wrapper'); // Target the wrapper div
+
+    if (!sheetId || !inventoryWrapper || !inventoryContainer) {
+        console.error("Cannot reload inventory: Missing sheetId, wrapper, or inventory container.");
         showFeedback("Inventory updated. Please refresh the page if changes are not reflected.", "warning");
+        return;
+    }
+
+    // --- Store current scroll position --- 
+    const storedScrollY = window.scrollY;
+
+    // Show a temporary loading state inside the wrapper
+    inventoryWrapper.innerHTML = '<div class="loading-items"><i class="fas fa-spinner fa-spin"></i> Reloading Inventory...</div>';
+
+    try {
+        const response = await fetch(`/inventory_system/get_inventory_html.php?sheet_id=${sheetId}`);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || `HTTP error ${response.status}`);
+        }
+        const newInventoryHtml = await response.text();
+        
+        // Replace the content of the wrapper
+        inventoryWrapper.innerHTML = newInventoryHtml;
+
+        // Re-initialize inventory interactions AND restore scroll position, deferred slightly
+        setTimeout(() => {
+             // console.log("Re-initializing inventory system after partial reload for sheet:", sheetId);
+             if (window.initializeInventorySystem) {
+                 window.initializeInventorySystem(sheetId);
+             } else {
+                 console.error("initializeInventorySystem function not found after inventory reload!");
+             }
+             // --- Restore scroll position --- 
+             window.scrollTo(0, storedScrollY);
+             // console.log("Restored scroll position to:", storedScrollY);
+         }, 0);
+
+    } catch (error) {
+        console.error('Error reloading inventory section:', error);
+        inventoryWrapper.innerHTML = `<div class="alert alert-danger">Failed to reload inventory: ${error.message || 'Unknown error'}</div>`;
+        showFeedback("Failed to update inventory view.", "error");
     }
 }
 
@@ -341,6 +422,222 @@ function checkIfInventoryEmpty() {
     }
  }
 
+// --- Drag and Drop Functionality ---
+function setupDragAndDrop(inventoryTableBody, inventoryContainer) {
+    let draggedItem = null;
+    let originalContainerId = null;
+
+    inventoryTableBody.addEventListener('dragstart', (e) => {
+        // Ensure we are dragging an inventory item row
+        if (e.target.classList.contains('inventory-item') && e.target.draggable) {
+            draggedItem = e.target;
+            originalContainerId = draggedItem.dataset.containerId;
+            e.dataTransfer.setData('text/plain', draggedItem.dataset.mapId); // Store map_id
+            e.dataTransfer.effectAllowed = 'move';
+            draggedItem.classList.add('dragging');
+            // console.log(`Drag Start: Item map_id=${draggedItem.dataset.mapId}, Original container: ${originalContainerId}`);
+        }
+    });
+
+    inventoryTableBody.addEventListener('dragover', (e) => {
+        e.preventDefault(); // Necessary to allow dropping
+        const targetRow = e.target.closest('tr.inventory-item');
+
+        if (targetRow && targetRow !== draggedItem) {
+            const canContain = targetRow.dataset.canContain === 'true';
+            const isDroppableContainer = targetRow.classList.contains('droppable-container');
+            const targetMapId = targetRow.dataset.mapId;
+
+            // Prevent dropping on itself or into a non-container that isn't the root dropzone area
+            if (targetMapId === draggedItem.dataset.mapId) {
+                 e.dataTransfer.dropEffect = 'none';
+                 removeDragOverStyles();
+                 return;
+            }
+
+            if (isDroppableContainer && canContain) {
+                e.dataTransfer.dropEffect = 'move';
+                removeDragOverStyles(); // Clear previous highlights
+                targetRow.classList.add('drag-over');
+            } else {
+                e.dataTransfer.dropEffect = 'none';
+                removeDragOverStyles();
+            }
+        } else {
+            // Allow dropping on the main table body/dropzone area (representing root)
+            const targetDropzone = e.target.closest('.inventory-dropzone');
+            if (targetDropzone && targetDropzone.dataset.containerId === 'root') {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                removeDragOverStyles();
+                targetDropzone.classList.add('drag-over');
+            } else {
+                 e.dataTransfer.dropEffect = 'none';
+                 removeDragOverStyles();
+            }
+        }
+    });
+
+    inventoryTableBody.addEventListener('dragleave', (e) => {
+        // Remove visual feedback ONLY if leaving the element triggering the event
+        // This prevents flickering when moving over child elements within the target
+        if (e.target.classList && (e.target.classList.contains('drag-over') || e.target.closest('.drag-over'))) {
+             // Check relatedTarget - if it's null or outside the current element, remove highlight
+             if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) {
+                 removeDragOverStyles();
+             }
+         } else if (e.target.closest && !e.target.closest('.inventory-item, .inventory-dropzone')) {
+             // If we moved completely out of the table area
+             removeDragOverStyles();
+         }
+    });
+
+    inventoryTableBody.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        if (!draggedItem) return;
+
+        const targetRow = e.target.closest('tr.inventory-item.droppable-container.drag-over');
+        const targetDropzone = e.target.closest('.inventory-dropzone.drag-over');
+        let targetContainerMapId = 'root'; // Default to root
+
+        removeDragOverStyles(); // Clean up highlights
+
+        // Determine the target container map_id
+        if (targetRow && targetRow.dataset.canContain === 'true' && targetRow !== draggedItem) {
+            targetContainerMapId = targetRow.dataset.mapId;
+            // console.log(`Drop Target: Container Item map_id=${targetContainerMapId}`);
+        } else if (targetDropzone && targetDropzone.dataset.containerId === 'root') {
+            targetContainerMapId = 'root';
+            // console.log(`Drop Target: Root`);
+        } else {
+            // console.log("Drop: Invalid target.");
+            clearDragState();
+            return; // Dropped on an invalid area
+        }
+
+        // Prevent dropping item into itself (already checked in dragover, but good failsafe)
+        if (draggedItem.dataset.mapId === targetContainerMapId) {
+            // console.log("Drop: Cannot drop item into itself.");
+            clearDragState();
+            return;
+        }
+        // Prevent dropping if it's the same container it came from
+        if (String(originalContainerId) === String(targetContainerMapId)) { // Ensure type comparison
+            // console.log("Drop: Item is already in this container.");
+            clearDragState();
+            return;
+        }
+
+        const itemMapId = draggedItem.dataset.mapId;
+        const sheetId = inventoryContainer.dataset.sheetId;
+
+        // console.log(`Attempting to move item map_id=${itemMapId} to container map_id=${targetContainerMapId} for sheet_id=${sheetId}`);
+
+        try {
+            // --- Send Update to Backend --- 
+            const data = await fetchInventoryAPI('update_inventory_container.php', 'POST', {
+                sheet_id: sheetId,
+                item_map_id: itemMapId,
+                target_container_map_id: targetContainerMapId
+            });
+
+            if (data.success) {
+                 console.log("Update successful:", data.message || 'Item moved.');
+                 showFeedback(data.message || 'Item moved successfully.', 'success');
+
+                 // --- Update UI on Success ---
+                 // Instead of manual DOM manipulation, reload the inventory section 
+                 // to ensure the hierarchy is perfectly re-rendered based on the new DB state.
+                 // moveItemAndUpdateHierarchy(draggedItem, targetContainerMapId, inventoryTableBody);
+                 reloadInventorySection(); 
+
+            } else {
+                console.error('Failed to update container:', data.message);
+                showFeedback(`Error moving item: ${data.message}`, 'error');
+                // Optionally revert visual position if backend fails? Or rely on reload.
+            }
+        } catch (error) {
+            // Error already logged by fetchInventoryAPI
+            // showFeedback is also called within fetchInventoryAPI on error
+            // Maybe show a generic message if needed
+        } finally {
+            clearDragState();
+        }
+    });
+
+    inventoryTableBody.addEventListener('dragend', (e) => {
+        // Clean up after drag ends (regardless of success/failure)
+        clearDragState();
+    });
+
+    function removeDragOverStyles() {
+        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    }
+
+    function clearDragState() {
+        if (draggedItem) {
+            draggedItem.classList.remove('dragging');
+        }
+        removeDragOverStyles(); // Ensure highlights are cleared
+        draggedItem = null;
+        originalContainerId = null;
+    }
+
+     // Function to handle moving the item in the DOM and updating levels
+     function moveItemAndUpdateHierarchy(itemRow, targetContainerMapId, tableBody) {
+         const targetContainerRow = tableBody.querySelector(`tr[data-map-id="${targetContainerMapId}"]`);
+         let newLevel = 0;
+
+         // Determine insertion point and new level
+         if (targetContainerMapId === 'root' || !targetContainerRow) {
+             // Move to the end of the root level items
+             tableBody.appendChild(itemRow); // Appending moves the element
+             newLevel = 0;
+         } else {
+             // Insert after the target container row or the last item already inside it
+             let insertAfter = targetContainerRow;
+             const existingItemsInContainer = tableBody.querySelectorAll(`tr[data-container-id="${targetContainerMapId}"]`);
+             if (existingItemsInContainer.length > 0) {
+                 insertAfter = existingItemsInContainer[existingItemsInContainer.length - 1];
+             }
+             // Use insertAdjacentElement for clarity and potentially better handling
+             insertAfter.insertAdjacentElement('afterend', itemRow); // Inserting also moves the element
+             
+             // Calculate new level based on target container
+             const targetLevelMatch = targetContainerRow.className.match(/container-level-(\d+)/);
+             const targetLevel = targetLevelMatch ? parseInt(targetLevelMatch[1], 10) : 0;
+             newLevel = targetLevel + 1;
+         }
+
+         // Update the moved item's level and indentation
+         updateItemLevel(itemRow, newLevel);
+
+         // Recursively update levels and indentation for any items *inside* the moved item
+         if (itemRow.classList.contains('droppable-container')) {
+             const movedItemId = itemRow.dataset.mapId;
+             // Find direct children *after* the move
+             const children = Array.from(tableBody.children).filter(row => row.dataset.containerId === movedItemId);
+             children.forEach(child => {
+                 moveItemAndUpdateHierarchy(child, movedItemId, tableBody); // Recursive call to update children
+             });
+         }
+
+         // TODO: Update visual state of the *target* container (e.g., show/hide expand/collapse icon)
+         // This might involve checking if targetContainerRow now has children (elements with data-container-id matching its map-id)
+     }
+
+     // Helper to update a single item's class and indentation
+     function updateItemLevel(itemRow, level) {
+         const nameSpan = itemRow.querySelector('.item-name-text');
+         const indentation = level * 30; // Increased indentation to 30px per level
+         if (nameSpan) {
+             nameSpan.style.paddingLeft = `${indentation}px`;
+         }
+         // Remove existing level class and add the new one
+         itemRow.className = itemRow.className.replace(/\s?container-level-\d+/, '');
+         itemRow.classList.add(`container-level-${level}`);
+     }
+}
 
 // --- Global Initialization Function ---
 // This function should be called *after* the character sheet HTML (including inventory)
@@ -433,10 +730,11 @@ window.initializeInventorySystem = function(loadedSheetId) {
             handleUpdateQuantity(mapId, 1);
         } else if (button.classList.contains('decrease-btn')) {
             handleUpdateQuantity(mapId, -1);
-        } else if (button.classList.contains('item-delete-btn')) {
-            const itemName = row.querySelector('.item-name-text')?.textContent || 'Item';
+        } else if (button.classList.contains('inventory-delete-btn')) {
+            // Get the name specifically from the item-name-value span
+            const itemName = row.querySelector('.item-name-value')?.textContent || 'Item';
             handleRemoveItem(mapId, itemName.trim());
-        } else if (button.classList.contains('item-info-btn')) {
+        } else if (button.classList.contains('inventory-details-btn')) {
             if (itemId && detailsModal) { // Check modal exists
                 showItemDetails(itemId);
             } else if (!detailsModal) {
@@ -483,6 +781,14 @@ window.initializeInventorySystem = function(loadedSheetId) {
 
     // --- Final Steps ---
     checkIfInventoryEmpty(); // Update empty message display
+
+    // --- Setup Drag and Drop --- 
+    if (sheetDisplay && inventoryContainer) {
+        setupDragAndDrop(sheetDisplay.querySelector('table.inventory-table'), inventoryContainer);
+         console.log("Drag and drop listeners initialized.");
+    } else {
+        console.warn("Could not initialize drag and drop - table body or container missing.");
+    }
 
     // console.log(`✅ Inventory System JS Initialized successfully for Sheet ID: ${sheetId}`);
 

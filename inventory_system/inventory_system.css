@@ -72,9 +72,14 @@
 }
 
 /* Quantity Controls */
-.inventory-table .item-quantity .quantity-controls {
+.inventory-table .item-quantity {
+    text-align: center; /* Center-align quantity column content */
+}
+
+.inventory-table .item-quantity .quantity-control {
     display: flex;
     align-items: center;
+    justify-content: center; /* Center controls horizontally */
     gap: 8px;
     white-space: nowrap; /* Prevent wrapping */
 }
@@ -111,7 +116,7 @@
 
 /* Action Buttons (Remove) */
 .inventory-table .item-actions {
-    text-align: right;
+    text-align: center; /* Center-align the action column content */
     white-space: nowrap;
 }
 
@@ -119,7 +124,7 @@
 .inventory-table .item-action-buttons {
     display: flex;
     align-items: center;
-    justify-content: flex-end; /* Align buttons to the right */
+    justify-content: center; /* Center buttons horizontally */
     gap: 8px; /* Space between buttons */
 }
 
@@ -195,24 +200,46 @@
 /* General Modal Styles (apply to both Add and Details) */
 #add-inventory-modal,
 #item-details-modal {
-    background-color: rgba(0, 0, 0, 0.7); /* Darker overlay */
+    /* These are the backdrop styles - mostly inherited from .modal */
+    background-color: rgba(0, 0, 0, 0.7); /* Darker overlay (can override .modal if needed) */
+    /* REMOVED layout properties - should be handled by .modal */
 }
 
 #add-inventory-modal .modal-content,
 #item-details-modal .modal-content {
-    background-color: var(--popup-bg); /* Use --dark-gray */
+    /* These are the content box styles */
+    background-color: var(--popup-bg); 
     color: var(--text);
     border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 5px 25px rgba(0, 0, 0, 0.4);
-    max-width: 600px; /* Adjust width as needed */
+    max-width: 600px; 
+    width: 90%; 
+    /* --- Flexbox for internal layout & height constraint (keep this) --- */
+    display: flex; 
+    flex-direction: column;
+    max-height: 85vh; 
+    overflow: hidden; 
+    /* margin: auto; Let parent flex handle centering */
 }
 
 #add-inventory-modal .modal-header,
 #item-details-modal .modal-header {
     border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-    padding-bottom: 15px;
-    margin-bottom: 20px;
+    padding: 15px 20px;
+    margin-bottom: 0; /* Remove default bottom margin */
+    display: flex; /* Ensure flex properties if not already present */
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+/* Ensure modal body takes up space and scrolls */
+#add-inventory-modal .modal-body,
+#item-details-modal .modal-body {
+     padding: 20px;
+     color: var(--text);
+     overflow-y: auto; /* Allow scrolling */
 }
 
 #add-inventory-modal h3,
@@ -243,11 +270,14 @@
 /* Modal Action Buttons (Footer) */
 #add-inventory-modal .modal-actions,
 #item-details-modal .modal-actions {
-    margin-top: 25px;
+    margin-top: auto; /* Push footer to bottom in flex container */
     padding-top: 20px;
     border-top: 1px solid rgba(255, 255, 255, 0.15);
     display: flex;
     justify-content: flex-end; /* Align buttons to the right */
+    gap: 10px;
+    background-color: var(--popup-bg); /* Ensure background */
+    flex-shrink: 0; /* Prevent shrinking */
 }
 
 /* Add Item Modal Specifics */
@@ -400,4 +430,67 @@
     color: var(--gray);
     text-align: center;
     padding: 20px 0;
-} 
+}
+
+/* Add styles for drag and drop */
+.inventory-item.dragging {
+    opacity: 0.6;
+    background-color: var(--medium-gray);
+    border: 1px dashed var(--dark-gray);
+}
+
+/* Highlight potential drop targets (containers/sources) */
+.inventory-item.droppable-container.drag-over {
+    background-color: var(--primary-color-light) !important; /* Use !important to override potential row striping */
+    outline: 2px dashed var(--primary-color);
+    outline-offset: -2px;
+}
+
+/* Highlight the main root dropzone area */
+.inventory-dropzone.drag-over {
+    background-color: var(--light-gray);
+    outline: 2px dashed var(--medium-gray);
+    outline-offset: -2px;
+}
+
+/* Optional: Indicate droppable containers subtly */
+tr.droppable-container .item-name-text {
+    /* Example: Add a slightly bolder font or a subtle indicator */
+    /* font-weight: 500; */
+    /* Or maybe change cursor on hover slightly? */
+    /* cursor: grab; /* Might interfere with text selection */
+}
+
+/* When dragging, indicate non-droppable rows */
+.dragging ~ tr:not(.droppable-container),
+tr:not(.droppable-container) {
+    /* Example: slightly dimmed */
+    /* opacity: 0.8; */ 
+}
+
+/* Style for the inline item type tag (Base Structure) */
+.item-type-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: 500;
+    margin-left: 8px;
+    vertical-align: middle;
+    line-height: 1.2;
+    text-transform: uppercase;
+    /* Colors defined by modifier classes below */
+}
+
+/* Color Modifier Classes */
+.item-tag-default {
+    background-color: rgba(65, 200, 212, 0.2); /* Transparent accent-secondary */
+    color: var(--accent-secondary);
+}
+
+.item-tag-magic {
+    background-color: rgba(251, 208, 41, 0.2); /* Transparent #FBD029 */
+    color: #FBD029;
+}
+
+/* Add more color tags here as needed */ 
