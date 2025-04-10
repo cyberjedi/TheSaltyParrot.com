@@ -1,0 +1,403 @@
+/* ============================================= */
+/* == Inventory Section Styles (sheets.php) == */
+/* ============================================= */
+
+.sheets-content .section .inventory-section-wrapper {
+    margin-top: 15px; /* Add some space below the section title */
+}
+
+/* Assume a container div might be inside the wrapper */
+.character-inventory {
+    /* Add styles if needed */
+}
+
+.inventory-controls {
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: flex-end; /* Align Add button to the right */
+}
+
+.inventory-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    background-color: rgba(0, 0, 0, 0.1); /* Slightly transparent dark background */
+    border-radius: 6px;
+    overflow: hidden; /* Ensures border-radius applies to table */
+    font-size: 0.9rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.inventory-table th,
+.inventory-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Subtle separator */
+}
+
+.inventory-table th {
+    background-color: rgba(0, 0, 0, 0.2); /* Darker header */
+    color: var(--accent-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.8rem;
+}
+
+.inventory-table tr:last-child td {
+    border-bottom: none; /* Remove border from last row */
+}
+
+.inventory-table tr:hover {
+    background-color: rgba(255, 255, 255, 0.05); /* Subtle hover effect */
+}
+
+/* Item Name / Details Button */
+.inventory-table .item-name .item-details-btn {
+    background: none;
+    border: none;
+    color: var(--accent-secondary); /* Use accent color */
+    cursor: pointer;
+    padding: 0;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline; /* Act like text */
+    transition: color 0.2s ease;
+    font-size: inherit; /* Inherit font size from cell */
+}
+
+.inventory-table .item-name .item-details-btn:hover {
+    color: var(--accent-primary); /* Change color on hover */
+    text-decoration: underline;
+}
+
+/* Quantity Controls */
+.inventory-table .item-quantity .quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap; /* Prevent wrapping */
+}
+
+.inventory-table .quantity-value {
+    font-weight: 600;
+    min-width: 20px; /* Ensure space for number */
+    text-align: center;
+}
+
+.inventory-table .quantity-adjust-btn {
+    background-color: var(--dark-gray);
+    color: var(--text);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    width: 24px;
+    height: 24px;
+    font-size: 1rem;
+    line-height: 22px; /* Center text vertically */
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+    padding: 0; /* Reset padding */
+}
+
+.inventory-table .quantity-adjust-btn:hover {
+    background-color: var(--blue);
+    border-color: var(--blue);
+}
+
+.inventory-table .quantity-adjust-btn:active {
+    background-color: color-mix(in srgb, var(--blue) 80%, black);
+}
+
+/* Action Buttons (Remove) */
+.inventory-table .item-actions {
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* Style for the container of the action buttons */
+.inventory-table .item-action-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* Align buttons to the right */
+    gap: 8px; /* Space between buttons */
+}
+
+/* Shared style for round action buttons */
+.inventory-action-btn {
+    background: none; /* Base, overridden by specific rules */
+    border: none;
+    padding: 0; /* Remove padding, use fixed size */
+    cursor: pointer;
+    border-radius: 50%; /* Make it a circle */
+    font-size: 0.9rem;
+    line-height: 1; /* Ensure icon is centered vertically */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px; /* Fixed width for circle */
+    height: 30px; /* Fixed height for circle */
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    color: var(--white); /* Make icon white */
+}
+
+.inventory-action-btn:hover {
+    transform: scale(1.1);
+}
+
+/* Specific button styles */
+.inventory-details-btn {
+    background-color: var(--info); /* Blue background for info */
+}
+.inventory-details-btn:hover {
+    background-color: color-mix(in srgb, var(--info) 85%, black); /* Darker blue on hover */
+}
+
+.inventory-delete-btn {
+    background-color: var(--danger); /* Red background for delete */
+}
+.inventory-delete-btn:hover {
+    background-color: color-mix(in srgb, var(--danger) 85%, black); /* Darker red on hover */
+}
+
+/* Disabled/Locked Container Button */
+.container-locked-btn {
+    background-color: var(--gray); /* Grey background */
+    border: none;
+    padding: 0;
+    cursor: not-allowed; /* Indicate non-interactive */
+    border-radius: 50%;
+    font-size: 0.9rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    color: var(--dark-gray); /* Darker icon color */
+    opacity: 0.7;
+}
+
+/* Empty message */
+.inventory-empty-message {
+    padding: 20px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.7);
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    margin-top: 15px;
+}
+
+/* ========================================== */
+/* == Inventory Modals (sheets.php) Styles == */
+/* ========================================== */
+
+/* General Modal Styles (apply to both Add and Details) */
+#add-inventory-modal,
+#item-details-modal {
+    background-color: rgba(0, 0, 0, 0.7); /* Darker overlay */
+}
+
+#add-inventory-modal .modal-content,
+#item-details-modal .modal-content {
+    background-color: var(--popup-bg); /* Use --dark-gray */
+    color: var(--text);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.4);
+    max-width: 600px; /* Adjust width as needed */
+}
+
+#add-inventory-modal .modal-header,
+#item-details-modal .modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+#add-inventory-modal h3,
+#item-details-modal h3 {
+    color: var(--accent-primary); /* Orange header */
+    margin: 0;
+    font-size: 1.4rem;
+}
+
+#add-inventory-modal .close-modal,
+#item-details-modal .close-modal {
+    color: var(--gray);
+    font-size: 1.8rem;
+    font-weight: bold;
+    transition: color 0.2s ease;
+    position: absolute;
+    top: 15px;
+    right: 20px;
+}
+
+#add-inventory-modal .close-modal:hover,
+#item-details-modal .close-modal:hover {
+    color: var(--text);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Modal Action Buttons (Footer) */
+#add-inventory-modal .modal-actions,
+#item-details-modal .modal-actions {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right */
+}
+
+/* Add Item Modal Specifics */
+#add-inventory-modal .item-search-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+#add-inventory-modal .form-group label {
+    color: var(--accent-secondary); /* Light teal labels */
+    font-weight: 500;
+    margin-bottom: 8px;
+    display: block;
+    font-size: 0.9rem;
+}
+
+#add-inventory-modal .form-group input,
+#add-inventory-modal .form-group select {
+    width: 100%;
+    padding: 10px 12px;
+    background-color: rgba(255, 255, 255, 0.05); /* Slightly lighter dark bg */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+#add-inventory-modal .form-group input:focus,
+#add-inventory-modal .form-group select:focus {
+    outline: none;
+    border-color: var(--accent-secondary);
+    box-shadow: 0 0 0 3px rgba(65, 200, 212, 0.2); /* Light teal focus ring */
+}
+
+#add-inventory-modal .form-group select option {
+    background-color: var(--popup-bg); /* Match modal background */
+    color: var(--text);
+}
+
+#add-inventory-modal .available-items-container h4 {
+    color: var(--accent-primary);
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+#add-inventory-modal .available-items-list {
+    max-height: 300px; /* Limit height */
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.1); /* Slightly darker list background */
+}
+
+#add-inventory-modal .available-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    transition: background-color 0.2s ease;
+}
+
+#add-inventory-modal .available-item:last-child {
+    border-bottom: none;
+}
+
+#add-inventory-modal .available-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+#add-inventory-modal .available-item-name {
+    font-weight: 500;
+}
+
+#add-inventory-modal .available-item .btn-add-this-item {
+    /* Use global .btn styles, possibly .btn-sm */
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    background-color: var(--blue); /* Default button blue */
+    color: var(--white);
+}
+
+#add-inventory-modal .available-item .btn-add-this-item:hover {
+    background-color: color-mix(in srgb, var(--blue) 90%, black);
+}
+
+#add-inventory-modal .loading-items,
+#add-inventory-modal .available-items-list p { /* Style 'No matching items' */
+    padding: 20px;
+    text-align: center;
+    color: var(--gray);
+}
+
+/* Item Details Modal Specifics */
+#item-details-modal .item-details-content {
+    line-height: 1.6;
+}
+
+#item-details-modal .item-detail-row {
+    display: flex;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+#item-details-modal .item-detail-row:last-of-type {
+     border-bottom: none;
+     margin-bottom: 0;
+     padding-bottom: 0;
+}
+
+#item-details-modal .item-detail-label {
+    font-weight: 600;
+    color: var(--accent-secondary);
+    width: 80px; /* Fixed width for alignment */
+    flex-shrink: 0;
+}
+
+#item-details-modal .item-detail-value {
+    color: var(--text);
+}
+
+#item-details-modal .item-description-container {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+#item-details-modal .item-description-container h4 {
+    color: var(--accent-primary);
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+#item-details-modal .item-description {
+    background-color: rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    max-height: 200px; /* Limit description height */
+    overflow-y: auto;
+}
+
+#item-details-modal .item-details-content p { /* For Loading/Error messages */
+    color: var(--gray);
+    text-align: center;
+    padding: 20px 0;
+} 

@@ -203,7 +203,15 @@
             <!-- Additional character information sections -->
             <div class="character-details">
                 <!-- Include Inventory Section -->
-                <?php include_once dirname(__FILE__) . '/character_sheet_inventory.php'; ?>
+                <?php 
+                // Pass the sheet_id to the inventory display component
+                $sheet_id = $character['id'] ?? null; 
+                if ($sheet_id) {
+                    require_once dirname(__DIR__) . '/inventory_system/inventory_display.php'; 
+                } else {
+                    echo '<div class="alert alert-warning">Cannot display inventory: Character ID missing.</div>';
+                }
+                ?>
             </div>
         </div>
     </div>

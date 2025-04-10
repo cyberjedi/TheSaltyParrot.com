@@ -886,4 +886,6 @@
         color: #000 !important;
         text-decoration: none;
     }
-} 
+}
+
+/* Removed inventory styles - they are now in inventory_system/inventory_system.css */

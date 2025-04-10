@@ -60,4 +60,25 @@
 
 ## Backend / PHP Notes
 
-- **Session Key:** The user identifier stored in the PHP session (`$_SESSION`) is consistently named `uid`, **not** `user_id`. Ensure all API scripts that check for a logged-in user use `$_SESSION['uid']`. 
+- **Session Key:** The user identifier stored in the PHP session (`$_SESSION`) is consistently named `uid`, **not** `user_id`. Ensure all API scripts that check for a logged-in user use `$_SESSION['uid']`.
+
+## UI / CSS Notes
+
+### Button Styles
+
+There are two primary button styles used throughout the application for consistency:
+
+1.  **Default Buttons (Icon + Text):**
+    *   **Usage:** Standard actions (Save, Create, Cancel, Connect, Add Item, etc.).
+    *   **Structure:** `<button class="btn btn-{color}"> <i class="fas fa-{icon-name}"></i> Button Text </button>`
+    *   **CSS Classes:** Base `.btn` class combined with a semantic color class from `css/styles.css` (e.g., `.btn-primary` (blue), `.btn-submit` (yellow), `.btn-danger` (red), `.btn-secondary` (gray), `.btn-discord` (discord blue)).
+    *   **Example:** `<button id="add-inventory-item-btn" class="btn btn-submit" title="Add Item"> <i class="fas fa-plus"></i> Add Item </button>`
+
+2.  **Icon-Only Buttons (Round):**
+    *   **Usage:** Compact actions within tables, lists, or tight spaces where text is unnecessary (e.g., View Details, Edit, Delete, Set GM).
+    *   **Structure:** `<button class="{base-round-class} {specific-modifier-class}" title="Action Description"> <i class="fas fa-{icon-name}"></i> </button>`
+    *   **CSS Classes:** Requires a shared base class defining the round shape, size, and icon centering (e.g., `.inventory-action-btn` defined in `inventory_system/inventory_system.css`) and a specific modifier class for background color and function (e.g., `.inventory-details-btn`, `.inventory-delete-btn`).
+    *   **Styling:** Fixed `width`/`height` (e.g., 30px), `border-radius: 50%`, `display: flex`, `align-items: center`, `justify-content: center`, `color: var(--white)`.
+    *   **Example:** `<button class="inventory-action-btn inventory-delete-btn" title="Remove Item"> <i class="fas fa-trash-alt"></i> </button>`
+
+Always refer to `css/styles.css` for base button styles and color variables, and specific component CSS (like `inventory_system/inventory_system.css` or `css/account.css`) for specialized button implementations. 

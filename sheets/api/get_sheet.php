@@ -63,6 +63,21 @@ try {
     }
     // Add elseif blocks for other systems here in the future
     
+    // --- Add Inventory HTML --- 
+    $inventory_html = '';
+    if ($sheet_id) {
+        // Use output buffering to capture the included file's HTML
+        ob_start();
+        // Define $sheet_id for the included file scope
+        require dirname(__DIR__, 2) . '/inventory_system/inventory_display.php';
+        $inventory_html = ob_get_clean(); // Get buffered content and stop buffering
+    } else {
+        $inventory_html = '<div class="alert alert-warning">Cannot display inventory: Character ID missing.</div>';
+    }
+    // Add the captured HTML to the sheet data
+    $sheet['inventory_html'] = $inventory_html;
+    // --- End Add Inventory HTML ---
+    
     // Return sheet as JSON
     echo json_encode([
         'success' => true,

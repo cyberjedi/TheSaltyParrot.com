@@ -32,6 +32,7 @@ $page_title = 'Character Sheets';
     <link rel="stylesheet" href="css/topbar.css">
     <link rel="stylesheet" href="css/character-sheet.css">
     <link rel="stylesheet" href="css/size-adjustments.css">
+    <link rel="stylesheet" href="inventory_system/inventory_system.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0v4LLanw2qksYuRlEzO+tcaEPQogQ0KaoGN26/zrn20ImR1DfuLWnOo7aBA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
@@ -118,6 +119,61 @@ $page_title = 'Character Sheets';
             </div>
         </div>
     </div>
+
+    <!-- Inventory Modals (needed for inventory_system/inventory.js) -->
+    <!-- Add Inventory Item Modal -->
+    <div id="add-inventory-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" title="Close">&times;</span>
+            <h3>Add Inventory Item</h3>
+            
+            <div class="item-search-controls">
+                <div class="form-group">
+                    <label for="item-type-filter">Filter by Type:</label>
+                    <select id="item-type-filter">
+                        <option value="">All Types</option>
+                        <?php 
+                        // We need to fetch item types here or make the JS fetch them
+                        // Simpler approach: JS fetches types when modal opens. Remove PHP loop.
+                        ?>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="item-search">Search by Name:</label>
+                    <input type="text" id="item-search" placeholder="Search items...">
+                </div>
+            </div>
+            
+            <div class="available-items-container">
+                <h4>Available Items</h4>
+                <div class="available-items-list">
+                    <!-- Items will be loaded here via AJAX -->
+                    <div class="loading-items">Loading available items...</div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                 <button type="button" class="btn btn-secondary close-modal-button">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Item Details Modal -->
+    <div id="item-details-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" title="Close">&times;</span>
+            <h3 id="item-detail-name">Item Details</h3>
+            
+            <div class="item-details-content">
+                <!-- Details will be loaded here via AJAX -->
+                <p>Loading details...</p>
+            </div>
+             <div class="modal-actions">
+                 <button type="button" class="btn btn-secondary close-modal-button">Close</button>
+            </div>
+        </div>
+    </div>
+    <!-- End Inventory Modals -->
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -268,12 +324,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Load the sheet content
-        loadSheetContent(id);
+        // Load the sheet content using the globally accessible function
+        window.fetchSheetDetails(id);
     }
     
     // Load a sheet's content
-    function loadSheetContent(id) {
+    // Make this function globally accessible for inventory updates
+    window.fetchSheetDetails = function(id) {
         // Show loading state
         sheetDisplay.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading sheet...</div>';
         sheetPlaceholder.style.display = 'none';
@@ -338,6 +395,16 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update the display
         sheetDisplay.innerHTML = contentHTML;
+
+        // *** Initialize Inventory System JS now that HTML is loaded ***
+        // console.log("Checking for window.initializeInventorySystem:", typeof window.initializeInventorySystem);
+        if (window.initializeInventorySystem) {
+            // console.log("Calling window.initializeInventorySystem for sheet:", sheet.id);
+            window.initializeInventorySystem(sheet.id);
+        } else {
+            console.error("Inventory system script (initializeInventorySystem) not found!");
+        }
+        // *** End Inventory System Init ***
         
         // Add event listeners to action buttons
         const makeActiveBtn = sheetDisplay.querySelector('.make-active-btn');
@@ -412,9 +479,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="attribute-label">Hit Points</div>
                         <div class="hp-value-controls-wrapper">
                             <div class="hp-display">
-                                <span class="hp-value current-hp" id="hp-current-${sheet.id}">${currentHp}</span>
+                                <span class="hp-value current-hp" id="hp-current-val-${sheet.id}">${currentHp}</span>
                                 <span class="hp-separator">/</span>
-                                <span class="hp-value max-hp" id="hp-max-${sheet.id}">${maxHp}</span>
+                                <span class="hp-value max-hp" id="hp-max-val-${sheet.id}">${maxHp}</span>
                             </div>
                             <div class="hp-controls">
                                 <button class="hp-adjust-btn" data-change="-1" title="Decrease HP">-</button>
@@ -426,9 +493,9 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             
             <div class="section">
-                <h4 class="section-title">Equipment</h4>
-                <div class="equipment-list">
-                    ${sheet.equipment ? sheet.equipment.split('\n').map(item => `<div class="equipment-item">${item}</div>`).join('') : 'No equipment'}
+                <h4 class="section-title">Inventory</h4>
+                <div class="inventory-section-wrapper">
+                    ${sheet.inventory_html || '<div class="alert alert-warning">Inventory data missing.</div>'}
                 </div>
             </div>
             
@@ -619,8 +686,8 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             if (data.success) {
-                const currentHpElement = document.getElementById(`hp-current-${sheetId}`);
-                const maxHpElement = document.getElementById(`hp-max-${sheetId}`);
+                const currentHpElement = document.getElementById(`hp-current-val-${sheetId}`);
+                const maxHpElement = document.getElementById(`hp-max-val-${sheetId}`);
                 if (currentHpElement) {
                     currentHpElement.textContent = data.hp_current;
                 }
@@ -640,5 +707,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+    <!-- Add the Inventory System Javascript -->
+    <script src="/inventory_system/inventory.js" defer></script>
+
 </body>
 </html> 
