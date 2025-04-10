@@ -1,12 +1,18 @@
 // Firebase Configuration Loader
-// This script loads the Firebase configuration from PHP constants
+// This script loads the Firebase configuration from a global variable set by firebase-config.js
 
 // Export the Firebase config for use in other modules
-export const firebaseConfig = {
-    apiKey: document.currentScript?.getAttribute('data-api-key') || '',
-    authDomain: document.currentScript?.getAttribute('data-auth-domain') || '',
-    projectId: document.currentScript?.getAttribute('data-project-id') || '',
-    storageBucket: document.currentScript?.getAttribute('data-storage-bucket') || '',
-    messagingSenderId: document.currentScript?.getAttribute('data-messaging-sender-id') || '',
-    appId: document.currentScript?.getAttribute('data-app-id') || ''
-}; 
+export const firebaseConfig = window.firebaseConfigData || {
+    apiKey: '',
+    authDomain: '',
+    projectId: '',
+    storageBucket: '',
+    messagingSenderId: '',
+    appId: ''
+};
+
+// Debug logging - can be removed after confirming it works
+console.log("Firebase Module Loaded Config:", {
+    apiKey: firebaseConfig.apiKey?.substring(0, 5) + "..." || "not set",
+    isValid: !!window.firebaseConfigData?.apiKey
+}); 
