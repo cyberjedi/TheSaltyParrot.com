@@ -85,6 +85,9 @@ try {
     <link rel="stylesheet" href="css/account.css">
     <link rel="stylesheet" href="image_management/photo_manager.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
+    
+    <!-- Load Firebase Configuration Script -->
+    <?php include 'components/firebase-script.php'; ?>
 </head>
 <body class="account-page" data-user-uid="<?php echo htmlspecialchars($_SESSION['uid']); ?>">
     <!-- Include the topbar -->

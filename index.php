@@ -24,6 +24,9 @@ require_once 'config/firebase-config.php';
     <link rel="stylesheet" href="css/topbar.css">
     <link rel="stylesheet" href="css/discord.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
+    
+    <!-- Load Firebase Configuration Script -->
+    <?php include 'components/firebase-script.php'; ?>
 </head>
 <body>
     <!-- Include the topbar -->

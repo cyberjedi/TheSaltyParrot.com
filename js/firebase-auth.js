@@ -11,20 +11,9 @@ import {
     connectAuthEmulator,
     updatePassword // Ensure updatePassword is imported if needed directly
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+import { firebaseConfig } from './firebase-config-loader.js';
 
-// Your web app's Firebase configuration
-// It's often better to load this from a separate config file or environment variables,
-// but keeping it here as it was originally.
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY", // Replace with your actual API key if not done
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
-
-// Initialize Firebase
+// Initialize Firebase with the imported config
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
