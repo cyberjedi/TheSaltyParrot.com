@@ -221,6 +221,53 @@ function setGameMaster($partyId, $gmUserId, $requesterId) {
 }
 
 /**
+ * Set Party Owner for a party (transfers ownership)
+ */
+function setPartyOwner($partyId, $newOwnerId, $requesterId) {
+    global $conn;
+    
+    try {
+        // Check if requester is the current party creator
+        $stmt = $conn->prepare("SELECT creator_id FROM parties WHERE id = ?");
+        $stmt->execute([$partyId]);
+        $party = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$party) {
+            return ['success' => false, 'error' => 'Party not found.'];
+        }
+
+        if ($party['creator_id'] !== $requesterId) {
+            return ['success' => false, 'error' => 'Not authorized to transfer ownership.'];
+        }
+        
+        // Ensure the new owner is not the current owner
+        if ($newOwnerId === $requesterId) {
+             return ['success' => false, 'error' => 'Cannot transfer ownership to yourself.'];
+        }
+
+        // Check if newOwnerId is a member of the party
+        $stmt = $conn->prepare("SELECT id FROM party_members WHERE party_id = ? AND user_id = ?");
+        $stmt->execute([$partyId, $newOwnerId]);
+        if (!$stmt->fetch()) {
+            return ['success' => false, 'error' => 'The target user is not a member of this party.'];
+        }
+        
+        // Update the party with the new creator_id
+        $stmt = $conn->prepare("UPDATE parties SET creator_id = ? WHERE id = ?");
+        $stmt->execute([$newOwnerId, $partyId]);
+        
+        // Optional: Consider if the GM should also be updated if the old owner was the GM
+        // $stmt = $conn->prepare("UPDATE parties SET game_master_id = ? WHERE id = ? AND game_master_id = ?");
+        // $stmt->execute([$newOwnerId, $partyId, $requesterId]);
+        
+        return ['success' => true];
+    } catch (PDOException $e) {
+        error_log("Error setting party owner: " . $e->getMessage());
+        return ['success' => false, 'error' => 'Failed to transfer party ownership.'];
+    }
+}
+
+/**
  * Rename a party
  */
 function renameParty($partyId, $newName, $requesterId) {

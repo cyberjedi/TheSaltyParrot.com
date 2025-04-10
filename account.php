@@ -83,6 +83,7 @@ try {
     <link rel="stylesheet" href="css/topbar.css">
     <link rel="stylesheet" href="css/discord.css">
     <link rel="stylesheet" href="css/account.css">
+    <link rel="stylesheet" href="image_management/photo_manager.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
 <body class="account-page" data-user-uid="<?php echo htmlspecialchars($_SESSION['uid']); ?>">

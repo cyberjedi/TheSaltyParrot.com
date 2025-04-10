@@ -77,6 +77,16 @@ switch ($action) {
         echo json_encode(setGameMaster($partyId, $gmUserId, $userId));
         break;
 
+    case 'set_owner':
+        $partyId = $data['party_id'] ?? '';
+        $newOwnerId = $data['new_owner_id'] ?? '';
+        if (empty($partyId) || empty($newOwnerId)) {
+            echo json_encode(['success' => false, 'error' => 'Party ID and new owner ID are required']);
+            exit;
+        }
+        echo json_encode(setPartyOwner($partyId, $newOwnerId, $userId));
+        break;
+
     case 'rename_party':
         $partyId = $data['partyId'] ?? '';
         $newName = $data['newName'] ?? '';

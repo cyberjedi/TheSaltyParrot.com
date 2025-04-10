@@ -1,0 +1,382 @@
+/* 
+ * Styles for the Photo Management Modal Component
+ */
+
+/* Photo Management Popup */
+.photo-management-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    overflow-y: auto;
+    align-items: center; /* Vertically center for smaller modals */
+    justify-content: center; /* Horizontally center */
+}
+
+.photo-management-container {
+    background-color: var(--popup-bg);
+    border-radius: 8px;
+    margin: 2rem; /* Use margin instead of auto for centering with flex */
+    width: 90%;
+    max-width: 900px;
+    padding: 1.5rem;
+    position: relative;
+    display: flex; /* Use flex for better internal layout */
+    flex-direction: column;
+    max-height: calc(100vh - 4rem); /* Limit height */
+}
+
+.photo-management-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--accent-secondary);
+    flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+.photo-management-header h3 {
+    margin: 0;
+    color: var(--accent-primary);
+    font-size: 1.5rem;
+}
+
+.photo-management-close {
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1; /* Ensure consistent size */
+}
+
+.photo-management-close:hover {
+    color: var(--accent-primary);
+}
+
+.upload-section {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    flex-shrink: 0; /* Prevent upload section from shrinking */
+}
+
+.upload-section h4 {
+    margin: 0 0 1rem;
+    color: var(--text);
+}
+
+.upload-dropzone {
+    border: 2px dashed var(--accent-secondary);
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.upload-dropzone:hover {
+    border-color: var(--accent-primary);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.upload-dropzone.drag-over {
+    border-color: var(--accent-primary);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.upload-dropzone i {
+    font-size: 2rem;
+    color: var(--accent-secondary);
+    margin-bottom: 1rem;
+}
+
+.upload-dropzone p {
+    margin: 0;
+    color: var(--text);
+}
+
+.upload-form {
+    /* Hidden by default, triggered by JS */
+    display: none; 
+}
+
+.photo-gallery-container {
+    /* Container for the gallery title and the gallery itself */
+    margin-bottom: 1.5rem;
+    overflow-y: auto; /* Make gallery scrollable if needed */
+    flex-grow: 1; /* Allow gallery to take available space */
+}
+
+.photo-gallery-container h4 {
+    margin: 0 0 1rem;
+    color: var(--text);
+}
+
+.photo-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.photo-item {
+    position: relative;
+    height: 150px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: rgba(0,0,0,0.2); /* Background for loading/error states */
+}
+
+.photo-item.selected {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 10px var(--accent-primary);
+}
+
+.photo-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block; /* Remove extra space below image */
+}
+
+.photo-item.img-error img {
+    display: none; /* Hide broken image */
+}
+
+.img-error-indicator {
+    display: none; /* Hidden by default */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    color: var(--danger);
+    font-size: 2rem;
+    font-weight: bold;
+    align-items: center;
+    justify-content: center;
+}
+
+.photo-item.img-error .img-error-indicator {
+    display: flex; /* Show error indicator */
+}
+
+.photo-action-btn { /* Base styles inherited by delete */
+    background-color: rgba(0, 0, 0, 0.6);
+    color: var(--text);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.photo-action-btn:hover {
+    background-color: var(--accent-primary);
+}
+
+.photo-action-delete {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background-color: rgba(220, 53, 69, 0.8); /* Use var(--danger) maybe? */
+    opacity: 0;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+    /* Inherits size, display, etc. from .photo-action-btn via JS */
+}
+
+.photo-item:hover .photo-action-delete {
+    opacity: 1;
+}
+
+.photo-action-delete:hover {
+    background-color: rgba(220, 53, 69, 1); /* Darker red */
+}
+
+.photo-management-actions {
+    display: flex;
+    justify-content: space-between; /* Space out msg and button */
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem; /* Add padding above actions */
+    border-top: 1px solid var(--accent-secondary); /* Separator line */
+    flex-shrink: 0; /* Prevent actions area from shrinking */
+}
+
+.photo-management-messages {
+    flex-grow: 1; /* Allow messages to take space */
+    text-align: left;
+}
+
+/* Combine error/success message styles */
+#photo-manager-error,
+#photo-manager-success {
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    display: none; /* Hidden by default */
+    margin: 0; /* Reset margin */
+}
+
+#photo-manager-error {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: var(--danger);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+#photo-manager-success {
+    background-color: rgba(40, 167, 69, 0.2);
+    color: var(--success);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.loading-photos,
+.no-photos {
+    grid-column: 1 / -1; /* Span across grid */
+    text-align: center;
+    padding: 2rem;
+    color: var(--text);
+    min-height: 100px; /* Ensure it takes some space */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.loading-photos i {
+    font-size: 1.5rem;
+}
+
+.no-photos {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+/* Delete Confirmation Modal Styles (from character-sheet.css) */
+.delete-photo-modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8); /* Darker overlay */
+    z-index: 1100; /* Ensure it's above the photo manager */
+    display: flex; /* Use flex for centering */
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-photo-container {
+    background-color: var(--popup-bg);
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    padding: 1.5rem 2rem; /* More padding */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.delete-photo-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Use subtle border */
+}
+
+.delete-photo-header h3 {
+    margin: 0;
+    color: var(--danger);
+    font-size: 1.3rem;
+    text-align: center;
+}
+
+.delete-photo-body {
+    margin-bottom: 1.5rem;
+}
+
+.delete-photo-body p {
+    margin: 0 0 1rem; /* Increase spacing */
+    color: var(--text);
+    line-height: 1.5;
+}
+
+.delete-photo-body strong {
+    color: var(--accent-secondary);
+}
+
+.delete-photo-sheets {
+    background-color: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    border-radius: 4px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.delete-photo-sheets ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 150px; /* Limit height */
+    overflow-y: auto;
+}
+
+.delete-photo-sheets li {
+    padding: 0.25rem 0;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.delete-photo-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+/* Responsive adjustments for photo manager if needed */
+@media (max-width: 768px) {
+    .photo-gallery {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+    .photo-item {
+        height: 120px;
+    }
+    .photo-management-actions {
+        flex-direction: column;
+        align-items: stretch; /* Make buttons full width */
+    }
+    .photo-management-messages {
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .photo-gallery {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    }
+     .photo-item {
+        height: 100px;
+    }
+     .photo-management-container {
+         margin: 1rem;
+         padding: 1rem;
+         max-height: calc(100vh - 2rem);
+     }
+} 

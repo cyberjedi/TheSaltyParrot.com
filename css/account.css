@@ -392,213 +392,6 @@
     margin-top: 0.5rem;
 }
 
-/* Photo Management Popup */
-.photo-management-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    z-index: 1000;
-    overflow-y: auto;
-}
-
-.photo-management-container {
-    background-color: var(--popup-bg);
-    border-radius: 8px;
-    margin: 2rem auto;
-    width: 90%;
-    max-width: 900px;
-    padding: 1.5rem;
-    position: relative;
-}
-
-.photo-management-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--accent-secondary);
-}
-
-.photo-management-header h3 {
-    margin: 0;
-    color: var(--accent-primary);
-    font-size: 1.5rem;
-}
-
-.photo-management-close {
-    background: none;
-    border: none;
-    color: var(--text);
-    font-size: 1.5rem;
-    cursor: pointer;
-}
-
-.photo-management-close:hover {
-    color: var(--accent-primary);
-}
-
-.photo-gallery {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.photo-item {
-    position: relative;
-    height: 150px;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 2px solid transparent;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.photo-item.selected {
-    border-color: var(--accent-primary);
-}
-
-.photo-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.photo-item .photo-actions {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-.photo-item:hover .photo-actions {
-    opacity: 1;
-}
-
-.photo-action-btn {
-    background-color: rgba(0, 0, 0, 0.6);
-    color: var(--text);
-    border: none;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.photo-action-btn:hover {
-    background-color: var(--accent-primary);
-}
-
-.photo-action-delete {
-    background-color: rgba(220, 53, 69, 0.8);
-}
-
-.photo-action-delete:hover {
-    background-color: rgba(220, 53, 69, 1);
-}
-
-.upload-section {
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.upload-section h4 {
-    margin: 0 0 1rem;
-    color: var(--text);
-}
-
-.upload-dropzone {
-    border: 2px dashed var(--accent-secondary);
-    border-radius: 8px;
-    padding: 2rem;
-    text-align: center;
-    margin-bottom: 1rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.upload-dropzone:hover {
-    border-color: var(--accent-primary);
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
-.upload-dropzone.drag-over {
-    border-color: var(--accent-primary);
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-.upload-dropzone i {
-    font-size: 2rem;
-    color: var(--accent-secondary);
-    margin-bottom: 1rem;
-}
-
-.upload-dropzone p {
-    margin: 0;
-    color: var(--text);
-}
-
-.upload-form {
-    display: none;
-}
-
-.photo-management-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-.loading-photos {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 2rem;
-    color: var(--text);
-}
-
-.loading-photos i {
-    font-size: 1.5rem;
-    margin-right: 0.5rem;
-}
-
-.no-photos {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 2rem;
-    color: var(--text);
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
-}
-
-.error-message {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 2rem;
-    color: var(--danger);
-    background-color: rgba(220, 53, 69, 0.1);
-    border-radius: 8px;
-    border: 1px solid rgba(220, 53, 69, 0.3);
-}
-
 /* Add some spacing between profile buttons */
 #profile-image-btn {
     margin-bottom: 1rem;
@@ -859,44 +652,58 @@
 }
 
 .btn-kick-member,
-.btn-set-gm {
-    background: none;
+.btn-set-gm,
+.btn-set-owner {
+    background: none; /* Base, overridden by specific rules */
     border: none;
-    color: var(--text);
+    padding: 0; /* Remove padding, use fixed size */
     cursor: pointer;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
+    border-radius: 50%; /* Make it a circle */
+    font-size: 0.9rem;
+    line-height: 1;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    width: 30px; /* Fixed width for circle */
+    height: 30px; /* Fixed height for circle */
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    color: white; /* Make icon white */
 }
 
 .btn-kick-member {
-    background-color: rgba(220, 53, 69, 0.2);
+    background-color: var(--danger); /* Red background */
 }
-
 .btn-kick-member:hover {
-    background-color: rgba(220, 53, 69, 0.4);
-    color: #dc3545;
+    background-color: color-mix(in srgb, var(--danger) 85%, black); /* Darker red on hover */
+    transform: scale(1.1);
 }
 
 .btn-set-gm {
-    background-color: rgba(255, 204, 0, 0.2);
+    background-color: #ffcc00; /* Gold background */
 }
-
 .btn-set-gm:hover {
-    background-color: rgba(255, 204, 0, 0.4);
-    color: #ffcc00;
+    background-color: color-mix(in srgb, #ffcc00 85%, black); /* Darker gold on hover */
+    transform: scale(1.1);
 }
 
+/* Add styles for btn-set-owner */
+.btn-set-owner {
+    background-color: #2c88d9; /* Blue background */
+}
+.btn-set-owner:hover {
+    background-color: color-mix(in srgb, #2c88d9 85%, black); /* Darker blue on hover */
+    transform: scale(1.1);
+}
+
+/* Remove the now redundant icon color rules */
+/*
 .btn-kick-member i,
-.btn-set-gm i {
-    font-size: 14px;
+.btn-set-gm i,
+.btn-set-owner i {
+   
 }
+*/
 
-/* Party Member Role Icons */
 .member-role-icons {
     display: inline-flex;
     align-items: center;
@@ -951,10 +758,4 @@
     background-color: rgba(44, 136, 217, 0.2);
     color: #2c88d9;
     border: 1px solid rgba(44, 136, 217, 0.3);
-}
-
-.gm-badge {
-    background-color: rgba(255, 204, 0, 0.2);
-    color: #ffcc00;
-    border: 1px solid rgba(255, 204, 0, 0.3);
 } 

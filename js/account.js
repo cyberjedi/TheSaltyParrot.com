@@ -80,6 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
         joinParty: document.getElementById('join-party-modal'), 
         addWebhook: document.getElementById('add-webhook-modal'),
         editWebhook: document.getElementById('edit-webhook-modal'),
+        renameParty: document.getElementById('rename-party-modal'),
+        changePassword: document.getElementById('change-password-modal'),
         
         show(modalId) {
             const modal = this[modalId];
@@ -503,6 +505,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         async loadPartyInfo() {
              this.partyLoading.style.display = 'block';
+             this.partyInfo.style.display = 'none'; // Hide info while loading
+             this.partyForms.style.display = 'none'; // Hide forms while loading
              try {
                 const response = await fetch('/party/api.php', {
                     method: 'POST',
@@ -525,7 +529,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) {
                 console.error('Error loading party info:', error);
                 this.showError('Failed to load party information: ' + error.message);
-                 this.showPartyForms();
+                 this.showPartyForms(); // Show forms if loading fails
             } finally {
                 if(this.partyLoading) this.partyLoading.style.display = 'none';
             }
@@ -564,20 +568,28 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${member.uid !== currentUserUid ? 
                                 `<button class="btn-kick-member" data-member-id="${member.uid}" title="Remove Member"><i class="fas fa-times"></i></button>` 
                                 : ''}
-                            ${member.uid !== party.game_master_id ? 
+                            ${member.uid !== party.game_master_id ? // Show if the member is NOT already the GM (Owner can set anyone, including self)
                                 `<button class="btn-set-gm" data-member-id="${member.uid}" title="Set as Game Master"><i class="fas fa-crown"></i></button>` 
+                                : ''}
+                             ${member.uid !== currentUserUid ? // Only show Set Owner button if the user is the creator and not for themselves
+                                `<button class="btn-set-owner" data-member-id="${member.uid}" title="Set as Party Owner"><i class="fas fa-shield-alt"></i></button>`
                                 : ''}
                          </div>` 
                         : ''}
                 </div>
             `).join('');
 
-            // Find the specific containers
+            // Find the specific containers within partyInfo
             const detailsContainer = this.partyInfo.querySelector('#party-details-content');
             const membersContainer = this.partyInfo.querySelector('#party-members-list');
+            const memberActionsDiv = this.partyInfo.querySelector('.party-member-actions'); // Buttons like Leave/Rename
 
-            if (!detailsContainer || !membersContainer) {
-                console.error("Could not find party details or members list containers!");
+            if (!detailsContainer || !membersContainer || !memberActionsDiv) {
+                console.error("Could not find party details, members list, or member actions containers!");
+                // Clear potentially broken HTML and show an error
+                this.partyInfo.innerHTML = '<p class="error">Error displaying party info. UI elements missing.</p>';
+                this.partyInfo.style.display = 'block'; 
+                if(this.partyForms) this.partyForms.style.display = 'none';
                 return;
             }
 
@@ -600,14 +612,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update members list section
             membersContainer.innerHTML = membersHtml;
              
-            // Show the main party info container
+            // Show the main party info container and hide forms
             this.partyInfo.style.display = 'block';
             if(this.partyForms) this.partyForms.style.display = 'none';
 
-            // Show the member action buttons div if the user is a member
-            const memberActionsDiv = this.partyInfo.querySelector('.party-member-actions');
+            // Show the member action buttons div (Leave/Rename) if the user is a member
             if (isMember && memberActionsDiv) {
                  memberActionsDiv.style.display = 'flex'; // Use flex to space buttons
+            } else if (memberActionsDiv) {
+                 memberActionsDiv.style.display = 'none';
             }
 
             // Add event listeners to buttons WITHIN the specific containers/divs
@@ -619,19 +632,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
 
-            // Add listeners for Rename/Leave buttons
-            memberActionsDiv?.querySelector('#leave-party-btn')?.addEventListener('click', () => this.leaveParty(party.id));
-            memberActionsDiv?.querySelector('#rename-party-btn')?.addEventListener('click', () => {
+            // Conditionally show/hide the Rename Party button based on ownership
+            const renameButton = memberActionsDiv.querySelector('#rename-party-btn');
+            if (renameButton) {
+                renameButton.style.display = isCreator ? 'inline-flex' : 'none';
+            }
+
+            // Add listeners for Rename/Leave buttons in the memberActionsDiv
+            memberActionsDiv.querySelector('#leave-party-btn')?.addEventListener('click', () => this.leaveParty(party.id));
+            memberActionsDiv.querySelector('#rename-party-btn')?.addEventListener('click', () => {
                 this.showRenameModal(party.id, party.name); // Call function to show rename modal
             });
 
-            // Add listeners for GM actions (kick/set GM) within the members list
+            // Add listeners for Creator actions (kick/set GM/set Owner) within the members list
             membersContainer.querySelectorAll('.btn-kick-member').forEach(btn => {
                 btn.addEventListener('click', (e) => this.removeMember(party.id, e.currentTarget.dataset.memberId));
             });
             membersContainer.querySelectorAll('.btn-set-gm').forEach(btn => {
                 btn.addEventListener('click', (e) => this.setGameMaster(party.id, e.currentTarget.dataset.memberId));
             });
+             membersContainer.querySelectorAll('.btn-set-owner').forEach(btn => {
+                 btn.addEventListener('click', (e) => this.setPartyOwner(party.id, e.currentTarget.dataset.memberId));
+             });
         },
 
         async getPartyMembers(partyId) {
@@ -648,6 +670,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.success) {
                     const members = await Promise.all(data.members.map(async (member) => {
                         try {
+                            // Fetch active character name for each member
                             const charResponse = await fetch(`/api/get_active_character.php?user_id=${member.uid}`); 
                             const charData = await charResponse.json();
                             
@@ -660,13 +683,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         } catch (err) {
                             console.error(`Error getting active character for ${member.uid}:`, err);
                         }
-                        return member;
+                        // Return member even if character fetch fails
+                        return { ...member, activeCharacterName: null }; 
                     }));
                     return members;
                 }
-                return [];
+                return []; // Return empty if API call wasn't successful
             } catch (error) {
                 console.error('Error getting party members:', error);
+                 this.showError('Failed to load party members: ' + error.message);
                 return [];
             }
         },
@@ -698,6 +723,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const name = document.getElementById('party-name').value;
                     const submitBtn = createForm.querySelector('button[type="submit"]');
                     submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
                     
                     try {
                         const response = await fetch('/party/api.php', {
@@ -711,15 +737,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         const data = await response.json();
                         if (data.success) {
                             modals.hide('createParty');
-                            await this.loadPartyInfo();
+                            await this.loadPartyInfo(); // Reload party info
                         } else {
                             throw new Error(data.error || 'Unknown error creating party');
                         }
                     } catch (error) {
                         console.error('Error creating party:', error);
-                        this.showError('Failed to create party: ' + error.message);
+                        // Show error inside the modal maybe?
+                         alert('Failed to create party: ' + error.message); 
                     } finally {
                          submitBtn.disabled = false;
+                         submitBtn.innerHTML = 'Create Party'; 
                     }
                 });
             }
@@ -729,8 +757,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 joinForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     const code = document.getElementById('party-code').value;
-                    const submitBtn = joinForm.querySelector('button[type="submit"]');
-                    submitBtn.disabled = true;
+                     const submitBtn = joinForm.querySelector('button[type="submit"]');
+                     submitBtn.disabled = true;
+                     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Joining...';
                     
                     try {
                         const response = await fetch('/party/api.php', {
@@ -744,21 +773,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         const data = await response.json();
                         if (data.success) {
                             modals.hide('joinParty');
-                            await this.loadPartyInfo();
+                            await this.loadPartyInfo(); // Reload party info
                         } else {
                             throw new Error(data.error || 'Unknown error joining party');
                         }
                     } catch (error) {
                         console.error('Error joining party:', error);
-                        this.showError('Failed to join party: ' + error.message);
+                         // Show error inside the modal?
+                         alert('Failed to join party: ' + error.message); 
                     } finally {
-                         submitBtn.disabled = false;
+                          submitBtn.disabled = false;
+                          submitBtn.innerHTML = 'Join Party';
                     }
                 });
              }
 
-            // Add listener for rename form
-            document.getElementById('rename-party-form')?.addEventListener('submit', (e) => this.handleRenamePartySubmit(e));
+            // Add listener for rename form (assuming modal exists)
+             const renameForm = document.getElementById('rename-party-form');
+             if(renameForm) {
+                 renameForm.addEventListener('submit', (e) => this.handleRenamePartySubmit(e));
+             }
         },
 
         async removeMember(partyId, memberId) {
@@ -778,7 +812,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
                 if (data.success) {
                     showNotification('Member removed.', 'success');
-                    await this.loadPartyInfo();
+                    await this.loadPartyInfo(); // Reload
                 } else {
                     throw new Error(data.error || 'Failed to remove member');
                 }
@@ -805,7 +839,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
                 if (data.success) {
                     showNotification('You have left the party.', 'success');
-                    await this.loadPartyInfo();
+                    // Reloading the whole section should show the join/create forms
+                    await this.loadPartyInfo(); 
                 } else {
                     throw new Error(data.error || 'Failed to leave party');
                 }
@@ -832,7 +867,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
                 if (data.success) {
                      showNotification('Game Master updated.', 'success');
-                    await this.loadPartyInfo();
+                    await this.loadPartyInfo(); // Reload
                 } else {
                     throw new Error(data.error || 'Failed to set GM');
                 }
@@ -842,8 +877,36 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
+        async setPartyOwner(partyId, newOwnerId) {
+            if (!confirm('Are you sure you want to transfer ownership of this party? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/party/api.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `action=set_owner&party_id=${partyId}&new_owner_id=${newOwnerId}`
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                     showNotification('Party ownership transferred.', 'success');
+                    await this.loadPartyInfo(); // Reload to reflect changes
+                } else {
+                    throw new Error(data.error || 'Failed to transfer ownership');
+                }
+            } catch (error) {
+                console.error('Error setting party owner:', error);
+                this.showError('Failed to transfer ownership: ' + error.message);
+            }
+        },
+
         showError(message) {
-            if(typeof showNotification === 'function') {
+            // Use global notification if available, otherwise alert
+            if(typeof showNotification === 'function') { 
                 showNotification(message, 'error');
             } else {
                  alert(message);
@@ -851,7 +914,7 @@ document.addEventListener('DOMContentLoaded', () => {
              console.error('Party Error Displayed:', message); 
         },
 
-        // Function to show the rename party modal
+        // Function to show the rename party modal (assuming it exists in HTML)
         showRenameModal(partyId, partyName) {
             const modal = document.getElementById('rename-party-modal');
             const form = document.getElementById('rename-party-form');
@@ -861,6 +924,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!modal || !form || !partyIdInput || !partyNameInput || !alertDiv) {
                 console.error('Could not find all elements for rename party modal.');
+                this.showError('Rename party feature is not properly configured (UI elements missing).');
                 return;
             }
 
@@ -868,7 +932,12 @@ document.addEventListener('DOMContentLoaded', () => {
             partyNameInput.value = partyName; // Pre-fill with current name
             alertDiv.style.display = 'none'; // Hide previous alerts
 
-            modal.style.display = 'flex'; // Show the modal (using flex as per other modals)
+            // Use the global modal manager if available
+            if (window.modals && typeof window.modals.show === 'function') {
+                window.modals.show('renameParty'); // Assuming 'renameParty' is the camelCase ID
+            } else {
+                modal.style.display = 'flex'; // Fallback display
+            }
         },
 
         // Function to handle party rename form submission
@@ -877,7 +946,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const form = event.target;
             const partyId = form.elements['rename-party-id'].value;
             const newName = form.elements['rename-party-name'].value.trim();
-            const submitButton = form.querySelector('#save-party-name-btn');
+            const submitButton = form.querySelector('button[type="submit"]'); // More specific selector
             const alertDiv = document.getElementById('rename-party-alert');
 
             if (!newName) {
@@ -904,9 +973,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (data.success) {
                     showNotification('Party renamed successfully!', 'success');
-                    document.getElementById('rename-party-modal').style.display = 'none';
-                    // Reload party info to show the new name
-                    await this.loadPartyInfo(); 
+                    // Use global modal manager if available
+                    if (window.modals && typeof window.modals.hide === 'function') {
+                        window.modals.hide('renameParty'); 
+                    } else {
+                        document.getElementById('rename-party-modal').style.display = 'none'; // Fallback hide
+                    }
+                    await this.loadPartyInfo(); // Reload party info to show the new name
                 } else {
                     throw new Error(data.error || 'Failed to rename party.');
                 }
@@ -921,46 +994,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
 
-    };
+    }; // End of partySection object
 
-    partySection.init();
-
-    // Handle Edit Webhook Form Submission
-    if (editWebhookForm) {
-        editWebhookForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            hideWebhookAlert('modal-edit');
-            const formData = new FormData(editWebhookForm);
-            formData.append('action', 'edit_webhook');
-
-            const submitButton = editWebhookForm.querySelector('button[type="submit"]');
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-
-            try {
-                const response = await fetch(webhookApiUrl, {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await response.json();
-
-                if (data.status === 'success') {
-                    showNotification(data.message || 'Webhook updated successfully!', 'success');
-                    modals.hide('editWebhook');
-                    await fetchWebhooks();
-                } else {
-                    showWebhookAlert(data.message || 'Failed to update webhook.', 'error', 'modal-edit');
-                }
-            } catch (error) {
-                console.error('Error updating webhook:', error);
-                showWebhookAlert('An error occurred while saving the webhook.', 'error', 'modal-edit');
-            } finally {
-                submitButton.disabled = false;
-                submitButton.innerHTML = '<i class="fas fa-save"></i> Save Changes';
-            }
-        });
+    // Initialize party section if the container exists
+    if (document.getElementById('party-section')) { // Check if the main section exists
+        partySection.init();
     }
+    // --- End Party Management ---
 
+    // --- Password Change Logic ---
     const changePasswordButton = document.getElementById('change-password-btn');
     const changePasswordModal = document.getElementById('change-password-modal');
     const changePasswordForm = document.getElementById('change-password-form');
@@ -988,7 +1030,12 @@ document.addEventListener('DOMContentLoaded', () => {
             clearPasswordAlert();
             modalPasswordInput.value = '';
             modalConfirmPasswordInput.value = '';
-            changePasswordModal.style.display = 'block';
+             // Use global modal manager if available
+             if (window.modals && typeof window.modals.show === 'function') {
+                 window.modals.show('changePassword'); // Assuming 'changePassword' is the camelCase ID
+             } else {
+                 changePasswordModal.style.display = 'block'; // Fallback display
+             }
         });
     }
 
@@ -1013,8 +1060,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (newPassword.length < 6) {
                 showPasswordAlert('Password must be at least 6 characters long.');
                  updatePasswordBtn.disabled = false;
-                updatePasswordBtn.innerHTML = 'Update Password';
-                return;
+                 updatePasswordBtn.innerHTML = 'Update Password';
+                 return;
             }
 
             const user = auth.currentUser;
@@ -1025,10 +1072,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     showPasswordAlert('Password updated successfully!', 'success');
                     
                     setTimeout(() => {
-                         if (changePasswordModal) {
-                            changePasswordModal.style.display = 'none'; 
+                         // Use global modal manager if available
+                         if (window.modals && typeof window.modals.hide === 'function') {
+                             window.modals.hide('changePassword'); 
+                         } else if (changePasswordModal) {
+                             changePasswordModal.style.display = 'none'; // Fallback hide
                          }
-                         clearPasswordAlert();
+                         clearPasswordAlert(); // Clear alert after timeout
                     }, 2000);
                 } catch (error) {
                     console.error('Error updating password:', error);
@@ -1046,5 +1096,6 @@ document.addEventListener('DOMContentLoaded', () => {
             updatePasswordBtn.innerHTML = 'Update Password';
         });
     }
+    // --- End Password Change Logic ---
 
-}); 
+}); // End DOMContentLoaded

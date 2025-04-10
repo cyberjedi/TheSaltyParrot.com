@@ -313,15 +313,29 @@ if (!$sheet) {
     $sheet['hp_current'] = $sheet['hp_max']; // Ensure consistency
 } else {
      // Ensure image path is root-relative for display
-     if (strpos($sheet['image_path'], '../') === 0) {
-         $sheet['image_path'] = substr($sheet['image_path'], 3); // Remove ../
+     $currentPath = $sheet['image_path'] ?? null; // Get current path, could be null
+
+     if ($currentPath === null || $currentPath === '') {
+         // If path is null or empty, use default
+         $sheet['image_path'] = '/assets/TSP_default_character.jpg';
+     } elseif (strpos($currentPath, '../') === 0) {
+         // If path starts with ../, remove it and ensure leading slash
+         $relativePath = substr($currentPath, 3);
+         $sheet['image_path'] = '/' . ltrim($relativePath, '/');
+     } elseif ($currentPath === 'assets/TSP_default_character.jpg') {
+         // If path is the non-relative default, make it root-relative
+         $sheet['image_path'] = '/assets/TSP_default_character.jpg';
+     } elseif (strpos($currentPath, '/') !== 0) {
+         // If path doesn't start with /, assume it's a filename in uploads
+         // Ensure it doesn't already contain the full path segment
+         if (strpos($currentPath, 'uploads/character_sheets/') === false) {
+             $sheet['image_path'] = '/uploads/character_sheets/' . basename($currentPath);
+         } else {
+             // Path likely contains 'uploads/...' but missing leading '/'
+             $sheet['image_path'] = '/' . ltrim($currentPath, '/');
+         }
      }
-      if ($sheet['image_path'] === 'assets/TSP_default_character.jpg') {
-         $sheet['image_path'] = '/assets/TSP_default_character.jpg'; // Ensure leading slash
-     } elseif (!empty($sheet['image_path']) && strpos($sheet['image_path'], '/') !== 0) {
-         // Assume it's in uploads if not default and not starting with /
-         $sheet['image_path'] = '/uploads/character_sheets/' . basename($sheet['image_path']);
-     }
+     // If path already starts with /, it's assumed to be correct root-relative path, do nothing
 }
 ?>
 
@@ -333,8 +347,11 @@ if (!$sheet) {
     <title><?php echo empty($sheet_id) ? 'Create Character Sheet' : 'Edit ' . htmlspecialchars($sheet['name']); ?></title>
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/topbar.css">
+    <link rel="stylesheet" href="../css/sheets.css">
     <link rel="stylesheet" href="../css/character-sheet.css">
-    <link rel="stylesheet" href="../css/size-adjustments.css">
+    <link rel="stylesheet" href="../css/inventory.css">
+    <link rel="stylesheet" href="../image_management/photo_manager.css">
+    <link rel="icon" href="../favicon.ico" type="image/x-icon">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0v4LLanw2qksYuRlEzO+tcaEPQogQ0KaoGN26/zrn20ImR1DfuLWnOo7aBA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
@@ -478,27 +495,6 @@ if (!$sheet) {
     
     <?php include '../image_management/photo_manager_modal.php'; // UPDATED path ?>
 
-    <!-- Delete Photo Confirmation Modal (Keep this one for now as it has sheet-specific checks) -->
-    <div id="delete-photo-modal" class="delete-photo-modal">
-        <div class="delete-photo-container">
-            <div class="delete-photo-header">
-                <h3>Delete Photo</h3>
-            </div>
-            <div class="delete-photo-body">
-                <p>Are you sure you want to delete this photo?</p>
-                <div id="delete-photo-sheets" class="delete-photo-sheets" style="display: none;">
-                    <p><strong>Warning:</strong> This photo is currently used by the following character sheets:</p>
-                    <ul id="delete-photo-sheets-list"></ul>
-                    <p>If you delete this photo, it will be replaced with the default image on these sheets.</p>
-                </div>
-            </div>
-            <div class="delete-photo-actions">
-                <button id="cancel-photo-delete" class="btn btn-secondary">Cancel</button>
-                <button id="confirm-photo-delete" class="btn btn-danger">Delete Photo</button>
-            </div>
-        </div>
-    </div>
-    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Image preview functionality
@@ -634,16 +630,6 @@ if (!$sheet) {
                 console.error("Photo Manager script not loaded or failed to initialize.");
             }
             
-            // Keep the delete photo modal logic for now as it's sheet-specific
-            const confirmDeleteBtn = document.getElementById('confirm-photo-delete');
-            const cancelDeleteBtn = document.getElementById('cancel-photo-delete');
-            if (confirmDeleteBtn) {
-                confirmDeleteBtn.addEventListener('click', deletePhoto);
-            }
-             if (cancelDeleteBtn) {
-                cancelDeleteBtn.addEventListener('click', closeDeletePhotoModal);
-            }
-
         }); // End of DOMContentLoaded listener
 
         // Function to open the shared photo manager (can be defined outside DOMContentLoaded)
@@ -654,97 +640,6 @@ if (!$sheet) {
                   console.error("Cannot open Photo Manager: Not initialized or show function missing.");
                   alert("Error: Could not open the photo manager. Please refresh the page.");
              }
-        }
-        
-        // Delete photo modal functions (can be defined outside DOMContentLoaded)
-        let photoToDelete = null;
-
-        function confirmDeletePhoto(path) {
-            photoToDelete = path; 
-            const checkPath = path.startsWith('../') ? path.substring(3) : path; // Ensure root-relative
-            fetch(`/image_management/check_photo_usage.php?path=${encodeURIComponent(checkPath)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const usedBySheets = data.sheets || [];
-                        const deletePhotoSheets = document.getElementById('delete-photo-sheets');
-                        const deletePhotoSheetsList = document.getElementById('delete-photo-sheets-list');
-                        
-                        if (usedBySheets.length > 0) {
-                            deletePhotoSheetsList.innerHTML = '';
-                            usedBySheets.forEach(sheet => {
-                                const li = document.createElement('li');
-                                li.textContent = sheet.name;
-                                deletePhotoSheetsList.appendChild(li);
-                            });
-                            deletePhotoSheets.style.display = 'block';
-                        } else {
-                            deletePhotoSheets.style.display = 'none';
-                        }
-                        
-                        const deleteModal = document.getElementById('delete-photo-modal');
-                         if (deleteModal) {
-                            deleteModal.style.display = 'flex';
-                         }
-                    } else {
-                        alert(data.error || 'Failed to check photo usage');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error checking photo usage:', error);
-                    alert('Failed to check photo usage. Please try again.');
-                });
-        }
-
-        function deletePhoto() {
-            if (!photoToDelete) {
-                return;
-            }
-            const deletePath = photoToDelete.startsWith('../') ? photoToDelete.substring(3) : photoToDelete;
-
-            fetch('/image_management/delete_photo.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    path: deletePath // Send root-relative path
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    closeDeletePhotoModal();
-                    const previewImg = document.getElementById('image-preview');
-                    if (previewImg && previewImg.src.includes(deletePath)) {
-                         // Use root-relative default path
-                         previewImg.src = '/assets/TSP_default_character.jpg'; 
-                         const hiddenInput = document.getElementById('selected_image_path');
-                         if (hiddenInput) {
-                            hiddenInput.value = '';
-                         }
-                    }
-                    alert('Photo deleted. You may need to reopen the manager to see the change.');
-                    // Potentially call photoManager.loadPhotos() if the shared modal might be open?
-                    if (window.photoManager && typeof window.photoManager.loadPhotos === 'function') {
-                         window.photoManager.loadPhotos(); // Refresh the shared gallery if it's defined
-                    }
-                } else {
-                    alert(data.error || 'Failed to delete photo');
-                }
-            })
-            .catch(error => {
-                console.error('Error deleting photo:', error);
-                alert('Failed to delete photo. Please try again.');
-            });
-        }
-
-        function closeDeletePhotoModal() {
-            const deleteModal = document.getElementById('delete-photo-modal');
-             if (deleteModal) {
-                 deleteModal.style.display = 'none';
-             }
-            photoToDelete = null;
         }
         
     </script>
