@@ -1,0 +1,395 @@
+# The Salty Parrot - Code Map
+
+## Project Overview
+The Salty Parrot is a web application for Pirate Borg tabletop RPG players, providing character sheets, inventory management, and Discord integration tools. The application follows a component-based architecture with PHP server-side rendering and JavaScript client-side interactivity.
+
+## Documentation Maintenance
+- After completing development tasks, update this code map to reflect any changes to the codebase structure.
+
+## Directory Structure
+
+### Root Files
+- **index.php** - Main entry point for the application (1.7KB)
+  - **Dependencies:** config/firebase-config.php, components/firebase-script.php, components/topbar.php, css/styles.css, css/topbar.css, css/discord.css, assets/TSP_Logo_3inch.svg
+  - **Description:** Landing page for the application with a clean, minimal design. Displays the logo, welcome message, and basic navigation through the topbar component.
+- **account.php** - User account management page (18KB)
+  - **Dependencies:** config/firebase-config.php, discord/discord-config.php, config/db_connect.php, components/topbar.php, components/firebase-script.php, css/styles.css, css/topbar.css, css/discord.css, css/account.css, image_management/photo_manager.css, js/account.js
+  - **Description:** Handles user profile settings, authentication management, and service integrations. Includes sections for profile editing, Discord integration, and webhook management.
+- **sheets.php** - Character sheets functionality page (29KB)
+  - **Dependencies:** components/topbar.php, css/styles.css, css/sheets.css, css/topbar.css, css/character-sheet.css, css/size-adjustments.css, inventory_system/inventory_system.css, js/character_sheet.js
+  - **Description:** Main interface for managing character sheets with a sidebar for sheet selection and main content area for displaying the selected sheet. Includes functionality for creating, editing, and displaying character data.
+- **generators.php** - Random generators for gameplay elements (15KB)
+  - **Dependencies:** components/discord_webhook_modal.php, components/topbar.php, css/styles.css, css/topbar.css, css/discord.css, css/discord_components.css, js/utils.js, js/discord_integration.js
+  - **Description:** Provides random generators for game elements like ships and loot. Features a left sidebar with generator buttons and right panel for displaying generated content with options to share via Discord webhooks.
+- **README.md** - Project overview information (brief description)
+  - **Dependencies:** None
+  - **Description:** Brief project description identifying the application as "The Salty Parrot - A Pirate Borg Toolbox."
+- **DEV_NOTES.md** - Development guidelines and notes (5.9KB)
+  - **Dependencies:** None
+  - **Description:** Documentation of development standards, including color schemes, button styles, Firebase Emulator setup, database configuration, and UI/CSS guidelines.
+- **codebase_structure.txt** - Documentation of codebase structure (4.6KB)
+  - **Dependencies:** None
+  - **Description:** Overview of the codebase structure explaining the purpose of each file and directory in the project, organized by category.
+- **deploy_info.txt** - Deployment information and instructions
+  - **Dependencies:** None
+  - **Description:** Contains information related to deploying the application to production servers, including steps and requirements.
+- **database_updates.sql** - Database schema update statements
+  - **Dependencies:** None
+  - **Description:** SQL statements for updating the database schema during version migrations.
+- **setup-emulator-users.js** - Script to set up users in Firebase emulator
+  - **Dependencies:** users.json, Node.js http module
+  - **Description:** Node.js script that loads users from users.json and creates them in the Firebase Authentication Emulator for local testing.
+- **users.json** - Sample user data for testing
+  - **Dependencies:** None
+  - **Description:** Contains sample user data in JSON format for testing purposes, including user IDs, emails, and authentication information.
+- **.gitignore** - Specifies files to be ignored by Git
+  - **Dependencies:** None
+  - **Description:** Configuration file that tells Git which files and directories to ignore, including private configuration, OS files, dependencies, and logs.
+- **.cpanel.yml** - cPanel deployment configuration
+  - **Dependencies:** None
+  - **Description:** Configuration file for cPanel's Git deployment feature, specifying deployment paths and tasks.
+- **.htaccess** - Apache server configuration
+  - **Dependencies:** None 
+  - **Description:** Apache server rules, particularly focused on handling Discord callback redirects based on specific conditions.
+- **CLAUDE.md** - Notes related to Claude AI assistance
+  - **Dependencies:** None
+  - **Description:** Documentation related to using Claude AI for development assistance with this project.
+
+### Configuration
+- **config/**
+  - **db_connect.php** - Database connection handling
+    - **Dependencies:** private/secure_variables.php, PDO PHP extension
+    - **Description:** Creates and manages database connections using credentials from secure_variables.php. Implements error handling and connection validation. Supports multiple possible paths for secure configuration.
+  - **firebase-config.php** - Firebase configuration for authentication
+    - **Dependencies:** PHP session management
+    - **Description:** Defines Firebase API constants and helper functions for Firebase authentication. Includes functions to check authentication status and retrieve user information.
+  - **temp-debug.php** - Temporary debugging utilities
+    - **Dependencies:** config/firebase-config.php
+    - **Description:** Outputs Firebase configuration constants for debugging purposes. Intended to be removed after confirming configuration is correct.
+
+### Frontend Structure
+
+#### Components (PHP)
+- **components/**
+  - **topbar.php** - Navigation bar displayed at the top of all pages
+    - **Dependencies:** config/firebase-config.php, css/topbar.css, js/firebase-auth.js
+    - **Description:** Provides site-wide navigation including logo, authentication buttons, and a hamburger menu dropdown. Handles user login/signup through Firebase authentication via modals.
+  - **character_controller.php** - Core logic for character management
+    - **Dependencies:** config/db_connect.php
+    - **Description:** Manages character-related operations including creation, updates, loading, and switching between characters. Maps authenticated users to database records and handles form processing and image uploads.
+  - **character_sheet.php** - Character sheet data and operations
+    - **Dependencies:** config/db_connect.php, components/character_controller.php
+    - **Description:** Handles loading and manipulating character sheet data, providing interfaces for accessing character attributes, skills, equipment, and other game statistics.
+  - **character_sheet_view.php** - Renders the character sheet UI
+    - **Dependencies:** components/character_sheet.php, css/character-sheet.css
+    - **Description:** Generates the HTML interface for displaying character sheets with sections for attributes, skills, inventory, and other character details in a visually organized layout.
+  - **character_sheet_inventory.php** - Character inventory management
+    - **Dependencies:** inventory_system/inventory_display.php
+    - **Description:** Specialized component for managing a character's inventory, including display and manipulation of items, containers, and equipment.
+  - **discord_webhook_modal.php** - Modal for Discord integration
+    - **Dependencies:** discord/webhook_service.php, css/discord_components.css
+    - **Description:** Reusable component that renders a modal dialog for selecting Discord webhooks and sending content to Discord channels. Handles authentication checks, preview generation, and content formatting.
+  - **print_helper.php** - Utilities for print-friendly versions
+    - **Dependencies:** css/print.css
+    - **Description:** Helper functions for generating print-friendly versions of character sheets and other content, applying special styling and formatting for paper output.
+  - **firebase-script.php** - Firebase authentication integration
+    - **Dependencies:** js/firebase-auth.js, js/firebase-config.js, config/firebase-config.php
+    - **Description:** Injects Firebase configuration from PHP into JavaScript by creating script tags with data attributes containing Firebase API keys and configuration values.
+
+#### CSS
+- **css/**
+  - **styles.css** - Main application styles and variables (23KB)
+    - **Dependencies:** None (base stylesheet)
+    - **Description:** Defines the global color palette, CSS variables, and core styling for the entire application. Includes a CSS reset, base typography, button styles, utility classes, responsive layouts, and specialized components like cards and alerts.
+  - **account.css** - Account page styling (14KB)
+    - **Dependencies:** css/styles.css
+    - **Description:** Specific styles for the account management interface, including profile information display, account settings forms, and Discord integration sections. Contains specialized UI components for user profile management.
+  - **sheets.css** - Character sheets styling (19KB)
+    - **Dependencies:** css/styles.css
+    - **Description:** Styling for the character sheets interface with a focus on layout and organization. Includes sidebar navigation, sheet display containers, attribute styling, and specialized components like HP attributes with controls. Contains print-specific styles for creating physical character sheets.
+  - **character-sheet.css** - Individual character sheet styling
+    - **Dependencies:** css/styles.css
+    - **Description:** Detailed styling for specific character sheet elements including attribute blocks, skill lists, inventory displays, and character information sections. Focuses on the visual appearance of character data within the sheets.
+  - **topbar.css** - Navigation bar styling
+    - **Dependencies:** css/styles.css
+    - **Description:** Styles for the top navigation bar that appears on all pages. Includes logo positioning, navigation links, authentication buttons, hamburger menu for mobile, and dropdown menu styling. Contains responsive adjustments for different screen sizes.
+  - **inventory.css** - Basic inventory styling
+    - **Dependencies:** css/styles.css
+    - **Description:** Core styles for the inventory interface elements, including item listings, containers, and item details. Provides the foundation for more specific inventory styling in inventory_system.css.
+  - **discord.css** - Discord integration styling
+    - **Dependencies:** css/styles.css
+    - **Description:** Styling for Discord-related UI components like connection buttons, user profile displays, webhook interfaces, status indicators, and toast notifications. Uses Discord's brand colors for consistent visual integration.
+  - **discord_components.css** - Discord UI components
+    - **Dependencies:** css/styles.css
+    - **Description:** Specialized styles for Discord components such as webhook modals, channel selectors, message preview panels, and Discord-specific forms. Separates complex Discord UI from the general Discord integration styles.
+  - **print.css** - Print-specific styles
+    - **Dependencies:** None (specialized for printing)
+    - **Description:** Styles applied only when printing content, particularly focused on character sheets. Hides unnecessary UI elements, adjusts layouts for paper format, modifies colors for better printing, and ensures character data is clearly presented on physical media.
+  - **size-adjustments.css** - Responsive design adjustments
+    - **Dependencies:** css/styles.css
+    - **Description:** Contains media queries and responsive styling to adapt the application layout to different screen sizes. Handles breakpoints for desktop, tablet, and mobile views, ensuring a consistent experience across devices.
+  - **colors.guide.txt** - Documentation of color scheme
+    - **Dependencies:** None
+    - **Description:** Text documentation of the application's color palette, including hex codes, variable names, and usage guidelines. Serves as a reference for developers to maintain consistent coloring across the application.
+
+#### JavaScript
+- **js/**
+  - **character_sheet.js** - Character sheet functionality (23KB)
+    - **Dependencies:** js/utils.js, js/modal.js
+    - **Description:** Handles all client-side interactions for character sheets including attribute display, dice rolling, character editing and switching, and image preview handling. Implements debugging functionality and robust error handling through custom logging.
+  - **account.js** - Account page functionality (50KB)
+    - **Dependencies:** js/firebase-auth.js, js/utils.js
+    - **Description:** Manages user account operations including profile updates, password changes, Discord webhooks management, and party system integration. Implements modal dialogs for various account actions and provides comprehensive error handling.
+  - **inventory.js** - Inventory management (24KB)
+    - **Dependencies:** js/utils.js, js/inventory_containers.js
+    - **Description:** Client-side inventory management including item listing, adding/removing items, managing item quantities, and displaying detailed item information. Handles AJAX communication with server-side inventory API endpoints.
+  - **inventory_containers.js** - Container management within inventory
+    - **Dependencies:** js/utils.js
+    - **Description:** Specialized functionality for managing inventory containers like bags, boxes, and other storage mechanisms. Handles nesting containers, moving items between containers, and updating container properties.
+  - **firebase-auth.js** - Firebase authentication (7.4KB)
+    - **Dependencies:** js/firebase-config.js, Firebase JS SDK
+    - **Description:** Implements authentication flows using Firebase, including email/password authentication, Google sign-in, account creation, and session management. Integrates with PHP backend to synchronize authentication state and handles Firebase emulator detection for local development.
+  - **firebase-config.js** - Firebase configuration
+    - **Dependencies:** js/firebase-config-loader.js
+    - **Description:** Contains Firebase configuration constants and initialization logic. Stores API keys and project settings as data attributes that are loaded from PHP.
+  - **firebase-config-loader.js** - Loads Firebase config based on environment
+    - **Dependencies:** None
+    - **Description:** Extracts Firebase configuration from script data attributes and dynamically sets up the correct environment. Handles development vs. production environments and exports the configuration for other modules.
+  - **discord_integration.js** - Discord integration functionality
+    - **Dependencies:** js/utils.js
+    - **Description:** Manages Discord authentication flow, webhook interactions, and message formatting. Provides utility functions for generating Discord-compatible content and handles the OAuth2 authorization flow.
+  - **modal.js** - Modal dialogs functionality
+    - **Dependencies:** None
+    - **Description:** Generic modal handling for the application. Provides event listeners for opening and closing modals, handling backdrop clicks, and keyboard shortcuts (Escape key). Uses event delegation for optimal performance.
+  - **utils.js** - Shared utility functions
+    - **Dependencies:** None
+    - **Description:** Common utility functions used throughout the application, including notification display, data formatting, form validation, and error handling. Acts as a centralized repository for reusable code snippets.
+
+### Character Sheets
+- **sheets/**
+  - **edit.php** - Character sheet editing interface (33KB)
+    - **Dependencies:** config/db_connect.php, components/topbar.php, css/styles.css, css/character-sheet.css, css/size-adjustments.css, js/character_sheet.js, js/modal.js, inventory_system/inventory_display.php
+    - **Description:** Main interface for creating and editing character sheets. Handles form submission, attribute updates, image uploads, and database operations. Supports multiple game systems with a current focus on the Pirate Borg system. Includes transaction handling for data consistency across character and system-specific tables.
+  - **print.php** - Print-friendly character sheet view
+    - **Dependencies:** config/db_connect.php, css/styles.css, css/character-sheet.css, css/print.css, css/size-adjustments.css
+    - **Description:** Provides a printable version of character sheets with a clean layout optimized for printing. Retrieves character data from the database, renders it in a printer-friendly format, and displays character attributes, notes, and system-specific branding. Includes print-specific controls and actions.
+  - **api/** - API endpoints specific to character sheets
+    - **get_sheet.php** - Retrieves a single character sheet
+      - **Dependencies:** config/db_connect.php, inventory_system/inventory_display.php
+      - **Description:** Retrieves a single character sheet by ID as JSON, including system-specific data and associated inventory HTML. Performs access control validation to ensure users can only access their own sheets. Returns sheet data formatted for the client-side character sheet display.
+    - **get_sheets.php** - Retrieves all user's character sheets
+      - **Dependencies:** config/db_connect.php
+      - **Description:** Retrieves all character sheets for the current user with optional system filtering as JSON. Orders sheets with active sheets first, then by last update time. Joins character data with system-specific data for a complete representation.
+    - **update_hp.php** - Updates character hit points
+      - **Dependencies:** config/db_connect.php
+      - **Description:** Updates the current hit points for a character sheet. Handles increment/decrement operations with validation to ensure HP stays within valid ranges (0 to max_hp). Implements database transactions for data consistency.
+    - **delete_sheet.php** - Deletes a character sheet
+      - **Dependencies:** config/db_connect.php
+      - **Description:** Deletes a character sheet and its associated system-specific data. Includes cleanup of custom character images. Implements transaction handling to ensure all related records are deleted consistently.
+    - **set_active_sheet.php** - Sets the active character sheet
+      - **Dependencies:** config/db_connect.php
+      - **Description:** Marks a specific character sheet as the active sheet for a user, which affects display order and default selection. Updates the database to ensure only one sheet is marked as active per user.
+    - **update_sheet_photo.php** - Updates character portrait
+      - **Dependencies:** config/db_connect.php
+      - **Description:** Handles character portrait updates through a dedicated endpoint separate from the main edit form. Processes image path updates and maintains database consistency.
+
+### Inventory System
+- **inventory_system/**
+  - **inventory_display.php** - Inventory UI rendering (15KB)
+    - **Dependencies:** config/db_connect.php, inventory_system/inventory_system.css, js/utils.js
+    - **Description:** Core component for rendering inventory UI based on character data. Queries the database for all items associated with a character, organizes them by container, and generates HTML markup for displaying items with appropriate styling. Implements access control to ensure users only see their own inventory items.
+  - **inventory.js** - Client-side inventory management (37KB)
+    - **Dependencies:** js/utils.js, js/modal.js
+    - **Description:** Handles all client-side inventory interactions including adding/removing items, updating quantities, moving items between containers, and displaying item details. Implements AJAX communication with server-side API endpoints for persistent data storage and retrieval. Features drag-and-drop functionality and real-time feedback for inventory changes.
+  - **inventory_system.css** - Inventory styling (14KB)
+    - **Dependencies:** css/styles.css
+    - **Description:** Styling specific to the inventory system, including item cards, containers, quantity indicators, type tags, and action buttons. Implements responsive design for various screen sizes and defines specialized styling for different item types and rarities. Uses CSS variables defined in styles.css for consistent theming.
+  - **get_inventory_html.php** - Generates HTML for inventory
+    - **Dependencies:** config/db_connect.php, inventory_system/inventory_display.php
+    - **Description:** API endpoint that provides a complete HTML representation of a character's inventory. Used for AJAX updates to refresh inventory display without full page reload. Validates user authentication and sheet ownership before returning inventory HTML.
+  - **update_inventory_container.php** - Updates inventory containers
+    - **Dependencies:** config/db_connect.php
+    - **Description:** Handles changes to inventory containers including creation, renaming, deletion, and capacity adjustments. Implements database transactions to ensure data consistency when moving multiple items between containers or restructuring container hierarchy.
+  - **get_item_details.php** - Retrieves detailed item information
+    - **Dependencies:** config/db_connect.php
+    - **Description:** API endpoint that returns detailed information about a specific inventory item, including full description, properties, and usage instructions. Used for item detail modals and tooltips in the UI. Validates user authorization to view the requested item.
+  - **get_available_items.php** - Gets available items list
+    - **Dependencies:** config/db_connect.php
+    - **Description:** Provides a list of all items available to be added to an inventory, including predefined game items and custom user-created items. Supports filtering by item type, rarity, and search terms. Returns results as a JSON array for use in item selection interfaces.
+  - **update_quantity.php** - Updates item quantities
+    - **Dependencies:** config/db_connect.php
+    - **Description:** API endpoint for updating the quantity of an inventory item. Handles validation of min/max quantities and ensures data consistency. Updates the database and returns success/failure status with the new quantity for UI synchronization.
+  - **remove_item.php** - Removes items from inventory
+    - **Dependencies:** config/db_connect.php
+    - **Description:** Handles the removal of items from a character's inventory. Includes validation to prevent deletion of special or quest items when appropriate. Implements proper database transactions for data integrity and ensures the operation is authorized.
+  - **add_item.php** - Adds items to inventory
+    - **Dependencies:** config/db_connect.php
+    - **Description:** API endpoint for adding new items to a character's inventory. Supports adding both predefined game items and custom user-created items. Validates inventory capacity limits and ensures proper container assignment. Returns item details for immediate UI update.
+
+### Image Management
+- **image_management/**
+  - **photo_manager.css** - Styling for photo management UI
+    - **Dependencies:** css/styles.css
+    - **Description:** Provides specialized styling for the photo management interface, including the photo grid, upload controls, photo selection indicators, and deletion confirmations. Implements responsive layout for different screen sizes and defines transitions for user interactions.
+  - **photo_manager.js** - Client-side photo management functionality
+    - **Dependencies:** js/utils.js, js/modal.js
+    - **Description:** Handles all client-side interactions for the photo management system including uploading new images, selecting photos, deleting images, and updating profile or character portraits. Implements AJAX communication with server-side endpoints and provides real-time feedback through the notification system.
+  - **photo_manager_modal.php** - Modal dialog for photo management
+    - **Dependencies:** image_management/photo_manager.css, image_management/photo_manager.js, config/db_connect.php
+    - **Description:** Renders the modal interface for managing user photos. Includes the photo grid display, upload controls, and action buttons. This component is designed to be included in various pages where photo management is needed, such as character sheets and account pages.
+  - **upload_photo.php** - Handles photo uploads
+    - **Dependencies:** config/db_connect.php
+    - **Description:** API endpoint that processes image uploads, validates file types and sizes, generates unique filenames, and stores image metadata in the database. Implements security checks to ensure only authorized users can upload photos and handles error states appropriately.
+  - **delete_photo.php** - Handles photo deletion
+    - **Dependencies:** config/db_connect.php, image_management/check_photo_usage.php
+    - **Description:** API endpoint for deleting user photos. Checks if the photo is in use before deletion, removes the file from the filesystem, and updates the database. Includes transaction handling to ensure data consistency and prevents deletion of photos in active use.
+  - **get_user_photos.php** - Retrieves user's photos
+    - **Dependencies:** config/db_connect.php
+    - **Description:** API endpoint that returns a list of all photos associated with the current user. Returns metadata including creation date, file path, and usage information. Supports pagination for users with large photo collections and can filter photos by category or usage.
+  - **check_photo_usage.php** - Checks if a photo is in use
+    - **Dependencies:** config/db_connect.php
+    - **Description:** Utility script that checks if a photo is currently in use by any character sheets, profiles, or other application elements. Prevents accidental deletion of photos that are actively being used. Returns detailed information about where and how the photo is being used.
+  - **update_profile_photo.php** - Updates user's profile photo
+    - **Dependencies:** config/db_connect.php
+    - **Description:** API endpoint for setting a specific photo as the user's profile picture. Updates the user record in the database with the new photo reference. Includes validation to ensure the photo exists and belongs to the user making the request.
+
+### API Endpoints
+- **api/**
+  - **update_profile.php** - Updates user profile data
+    - **Dependencies:** config/db_connect.php
+    - **Description:** API endpoint for updating user profile information including display name, email preferences, and profile settings. Validates input data, securely updates the user record in the database, and returns success/error status. Implements proper authentication checks to ensure users can only update their own profiles.
+  - **update_session.php** - Updates session information
+    - **Dependencies:** config/db_connect.php
+    - **Description:** Synchronizes Firebase authentication state with the PHP session and MySQL database. Receives user data from Firebase (UID, email, display name, photo URL) and updates both the session variables and database records. Critical component for maintaining consistent user state across the application.
+  - **get_active_character.php** - Gets currently active character
+    - **Dependencies:** config/db_connect.php
+    - **Description:** Retrieves the currently active character for the authenticated user. Returns character data including system-specific attributes. Used on the dashboard and game pages to automatically load the user's primary character. Returns appropriate error responses if no active character exists.
+  - **clear_session.php** - Clears user session
+    - **Dependencies:** None
+    - **Description:** Destroys the current PHP session during logout, removing all session variables and invalidating the session ID. Works in conjunction with Firebase authentication to ensure complete user logout. Returns a success message after session destruction.
+  - **update_container.php** - Updates inventory containers
+    - **Dependencies:** config/db_connect.php
+    - **Description:** Modifies inventory container properties including name, capacity, and parent container. Implements validation to prevent circular container references and ensures proper access control. Essential for inventory organization functionality. Returns updated container data on success.
+  - **update_item_quantity.php** - Updates item quantities
+    - **Dependencies:** config/db_connect.php
+    - **Description:** Adjusts the quantity of a specific inventory item, handling both increment and decrement operations. Enforces minimum and maximum quantity limits and performs data validation. Updates the database and returns current quantity information for UI synchronization.
+  - **add_inventory_item.php** - Adds items to inventory
+    - **Dependencies:** config/db_connect.php
+    - **Description:** Creates new inventory item entries for a character, supporting both predefined game items and custom user items. Handles input validation, assigns default properties based on item type, and manages container assignment. Returns complete item data for immediate display in the inventory UI.
+  - **remove_inventory_item.php** - Removes items from inventory
+    - **Dependencies:** config/db_connect.php
+    - **Description:** Deletes items from a character's inventory with appropriate validation and authorization checks. Implements safeguards against removing quest-critical or special items. Uses database transactions to ensure data integrity and returns confirmation of the deletion.
+  - **send_webhook.php** - Sends data to Discord webhooks
+    - **Dependencies:** config/db_connect.php, discord/webhook_service.php
+    - **Description:** Processes and sends formatted messages to Discord channels via webhooks. Supports various content types including character information, dice rolls, and generator results. Validates webhook URLs, formats messages with proper Discord message structure, and handles rate limiting compliance.
+  - **generate_loot.php** - Generates random loot items
+    - **Dependencies:** config/db_connect.php
+    - **Description:** Creates randomized loot tables based on game settings and difficulty parameters. Generates treasure items, equipment, and special items with appropriate rarity distribution. Returns structured JSON data that can be displayed in the UI or sent to Discord via webhooks.
+  - **generate_ship.php** - Generates random ship encounters
+    - **Dependencies:** config/db_connect.php
+    - **Description:** Produces randomized ship encounters for Pirate Borg gameplay, including vessel type, crew details, cargo, and special features. Uses weighted tables to create balanced encounters appropriate for different gameplay situations. Returns complete ship data in JSON format for use in the generators UI.
+  - **get_available_items.php** - Gets available inventory items
+    - **Dependencies:** config/db_connect.php
+    - **Description:** Provides a comprehensive list of items that can be added to a character's inventory. Supports filtering by category, rarity, and search terms. Combines standard game items with any custom items created by the user. Returns paginated results to support large item databases.
+  - **get_container_contents.php** - Gets items in a container
+    - **Dependencies:** config/db_connect.php
+    - **Description:** Retrieves all items stored within a specific inventory container, including nested containers. Implements proper access control to ensure users can only access containers belonging to their characters. Returns structured item data with container hierarchy information for accurate inventory display.
+
+### Authentication
+- **auth/**
+  - **sync_user.php** - Synchronizes user data between Firebase and MySQL
+    - **Dependencies:** config/db_connect.php, private/secure_variables.php
+    - **Description:** Core synchronization service that maintains consistency between Firebase authentication state and the local MySQL database. Receives user data (UID, email, displayName, photoURL) from Firebase and ensures the corresponding user record exists and is updated in the MySQL users table. Creates new user records when needed and updates existing ones with the latest authentication data.
+  - **callback.php** - Authentication callback handler
+    - **Dependencies:** config/db_connect.php, auth/sync_user.php
+    - **Description:** Processes authentication callbacks from various providers (Firebase, Discord) after successful authentication. Handles redirect flows, processes tokens, and initiates user synchronization through sync_user.php. Implements security measures like CSRF token validation and implements proper error handling for failed authentication attempts.
+
+### Discord Integration
+- **discord/**
+  - **discord-config.php** - Discord API configuration
+    - **Dependencies:** private/secure_variables.php
+    - **Description:** Loads and configures Discord API credentials and settings from secure_variables.php. Determines appropriate redirect URIs based on environment (development/production) and provides configuration constants used by all Discord integration components.
+  - **discord-login.php** - Initiates Discord OAuth flow
+    - **Dependencies:** discord/discord-config.php, js/utils.js
+    - **Description:** Initiates the Discord OAuth2 authentication flow by generating the authorization URL with appropriate scopes and state parameters for CSRF protection. Sets session variables for state verification and redirects users to the Discord authorization page.
+  - **discord-callback.php** - Processes Discord OAuth callback
+    - **Dependencies:** discord/discord-config.php, config/db_connect.php, discord/discord_service.php
+    - **Description:** Processes callbacks from Discord OAuth flow, verifies state parameters to prevent CSRF attacks, exchanges the authorization code for access tokens, retrieves user profile data, and stores connection information in the database.
+  - **discord_service.php** - Core Discord API interaction
+    - **Dependencies:** config/db_connect.php, private/secure_variables.php
+    - **Description:** Provides core functionality for interacting with the Discord API, including user profile retrieval, server/guild information, channel access, and message sending. Handles token refresh, API rate limiting, and error handling.
+  - **webhook_service.php** - Discord webhook management
+    - **Dependencies:** config/db_connect.php
+    - **Description:** Manages Discord webhooks for users, including storage, validation, message formatting, and sending. Supports character sheet data, dice roll results, and generator output formatting specifically for Discord's message structure.
+  - **webhooks.php** - Webhook management interface
+    - **Dependencies:** config/db_connect.php, components/topbar.php, css/discord.css, js/utils.js
+    - **Description:** User interface for managing Discord webhooks, including adding, editing, and testing webhook configurations. Displays connection status, server/channel information, and provides webhook selection and management tools.
+  - **test_webhook.php** - Tests Discord webhook functionality
+    - **Dependencies:** discord/webhook_service.php, config/db_connect.php
+    - **Description:** Provides a testing interface for Discord webhooks, allowing users to send test messages to verify their webhook configurations. Validates webhook URLs, handles formatting of test messages, and processes the API response.
+  - **get_channels.php** - Retrieves Discord channels
+    - **Dependencies:** discord/discord_service.php, config/db_connect.php
+    - **Description:** API endpoint that retrieves available channels from a Discord server for webhook configuration. Filters channels based on permissions and supports pagination for servers with many channels.
+  - **webhook_api.php** - Webhook API endpoints
+    - **Dependencies:** discord/webhook_service.php, config/db_connect.php
+    - **Description:** API endpoints for managing Discord webhooks programmatically, including creating, updating, testing, and deleting webhooks. Used by the client-side webhook interface for AJAX operations.
+  - **discord-direct-popup.php** - Direct Discord authorization popup
+    - **Dependencies:** discord/discord-config.php
+    - **Description:** Implements a popup window approach for Discord authorization, providing a more seamless user experience for Discord connections without full page navigation.
+  - **discord-logout.php** - Disconnects Discord integration
+    - **Dependencies:** config/db_connect.php, discord/discord_service.php
+    - **Description:** Handles the disconnection of a user's Discord account from the application, removing stored tokens and connection data.
+  - **discord_login_button.php** - Discord login button component
+    - **Dependencies:** js/utils.js
+    - **Description:** Reusable component that displays the Discord login button with appropriate styling and handles the login flow initialization.
+  - **reauth.php** - Handles Discord reauthorization
+    - **Dependencies:** discord/discord-config.php, discord/discord_service.php
+    - **Description:** Manages the process of refreshing Discord authentication when tokens expire or permissions need to be updated.
+  - **send_to_webhook.php** - Sends messages to webhooks
+    - **Dependencies:** discord/webhook_service.php
+    - **Description:** Endpoint for sending formatted messages to Discord webhooks, supporting different message types and content formats.
+  - **simple_auth.php** - Simplified Discord authentication
+    - **Dependencies:** discord/discord-config.php
+    - **Description:** Streamlined authentication flow for Discord, used in specific contexts where the full OAuth flow isn't needed.
+
+### Party Management
+- **party/**
+  - **party-functions.php** - Core functions for party management (10KB)
+    - **Dependencies:** config/db_connect.php
+    - **Description:** Central library for party-related operations including creation, member management, and role assignments. Implements functions for creating parties, adding/removing members, setting Game Master roles, and tracking party status. Contains validation logic to prevent conflicts in party structures and ensures proper access control for party operations.
+  - **api.php** - API endpoints for party functionality
+    - **Dependencies:** config/db_connect.php, party/party-functions.php
+    - **Description:** RESTful API interface for party management operations, exposing JSON endpoints for client-side party interactions. Handles party creation, joining, leaving, member management, and party information retrieval. Implements proper authentication checks on all operations and returns structured responses with appropriate HTTP status codes.
+
+### Cairn Map Generator
+- **Cairn/**
+  - **topography.html** - Main HTML for topography generator
+    - **Dependencies:** Cairn/topography-style.css, Cairn/topography-core.js
+    - **Description:** Primary interface for the procedural map generation tool. Contains the canvas element where maps are rendered, control panels for map settings, generation buttons, and export options. Provides user interface elements for adjusting terrain parameters, scale, and map features.
+  - **topography-core.js** - Core functionality for map generation
+    - **Dependencies:** Cairn/topography-dice.js
+    - **Description:** Central engine for the map generator that coordinates all map creation systems. Manages the canvas context, implements the main generation algorithm, and orchestrates the different generation modules (terrain, water, regions). Handles map initialization, rendering loops, and export functionality for saving maps as images.
+  - **topography-dice.js** - Dice rolling utilities for map generation
+    - **Dependencies:** None
+    - **Description:** Provides randomization functions used throughout the map generation process. Implements various dice-rolling utilities (d4, d6, d8, d10, d12, d20, etc.) along with weighted random selections and distribution functions. Creates the core randomness that drives the procedural generation.
+  - **topography-regions.js** - Region generation for maps
+    - **Dependencies:** Cairn/topography-core.js, Cairn/topography-terrain.js
+    - **Description:** Handles the creation and placement of distinct regions within the map, including settlements, forests, and special landmarks. Uses terrain data to determine appropriate region placement and implements procedural naming for locations based on thematic word lists. Adds storytelling elements to generated maps.
+  - **topography-terrain.js** - Terrain generation for maps
+    - **Dependencies:** Cairn/topography-core.js
+    - **Description:** Creates the base terrain elevation and type data for maps. Implements noise functions (Perlin, Simplex) and algorithms that generate realistic mountain ranges, valleys, plains, and other terrain features. Provides the foundation upon which other map elements are built.
+  - **topography-water.js** - Water feature generation for maps
+    - **Dependencies:** Cairn/topography-core.js
+    - **Description:** Generates water elements on the map including oceans, lakes, rivers, and coastal features. Uses terrain elevation data to determine natural water flow, creates realistic river networks based on watershed algorithms, and handles coastline generation with appropriate erosion patterns.
+  - **topography-style.css** - Styling for the map generator
+    - **Dependencies:** None
+    - **Description:** Provides styling for the map generator interface including control panels, buttons, sliders, color schemes, and responsive layout. Defines the visual appearance of the generator UI while the actual map visualization is handled through canvas drawing operations in JavaScript.
+
+### Additional Directories
+- **assets/** - Images, logos, and other static assets
+  - **Dependencies:** None
+- **uploads/** - User uploaded content (images, etc.)
+  - **Dependencies:** None
+- **private/** - Contains secure variables and sensitive configuration
+  - **secure_variables.php** (not in Git) - Critical configuration variables
+    - **Dependencies:** None

@@ -1,5 +1,8 @@
 # Development Notes
 
+## Documentation Maintenance
+- After the end of each prompt session, be sure to update the CODE_MAP.md with any changes.
+
 ## Color Scheme. 
 
 - Always check the /css/styles.css when building new elements to ensure the correct colors are used.
